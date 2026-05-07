@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { useAppContext } from '../context';
 import { LogOut, Settings, User as UserIcon, Package, MapPin, Phone, Mail, Save } from 'lucide-react';
 import { useState } from 'react';
@@ -35,10 +35,10 @@ export default function ProfilePage() {
         <h2 className="font-bold text-xl">{user.name}</h2>
         <p className="text-gray-500 text-sm mt-1">{user.email}</p>
         {user.role === 'admin' && (
-          <a href="/admin" className="mt-4 bg-indigo-50 text-indigo-600 font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+          <Link to="/admin" className="mt-4 bg-indigo-50 text-indigo-600 font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2">
             <Settings size={16} />
             Admin Dashboard
-          </a>
+          </Link>
         )}
       </div>
 
@@ -104,7 +104,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <a href="/order" className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+        <Link to="/order" className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
           <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 shrink-0">
             <Package size={18} />
           </div>
@@ -112,7 +112,7 @@ export default function ProfilePage() {
             <div className="text-sm font-medium text-gray-800">My Orders</div>
             <div className="text-xs text-gray-500">View and track your orders</div>
           </div>
-        </a>
+        </Link>
       </div>
 
       <button onClick={() => { logout(); navigate('/login'); }} className="w-full bg-white text-red-600 border border-red-100 font-bold py-3.5 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2">

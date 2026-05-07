@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet, Navigate, NavLink } from 'react-router';
+import { BrowserRouter, Routes, Route, Outlet, Navigate, NavLink, Link } from 'react-router';
 import { AppProvider, useAppContext } from './context';
 import { useEffect, useState } from 'react';
 import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket } from 'lucide-react';
@@ -47,13 +47,13 @@ const UserLayout = () => {
               <button onClick={() => setSidebarOpen(false)}><X size={24} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 text-gray-700">
-              <a href="/" className="font-medium hover:text-indigo-600">Home</a>
-              <a href="/order" className="font-medium hover:text-indigo-600">My Orders</a>
-              <a href="/profile" className="font-medium hover:text-indigo-600">My Account</a>
+              <Link to="/" className="font-medium hover:text-indigo-600" onClick={() => setSidebarOpen(false)}>Home</Link>
+              <Link to="/order" className="font-medium hover:text-indigo-600" onClick={() => setSidebarOpen(false)}>My Orders</Link>
+              <Link to="/profile" className="font-medium hover:text-indigo-600" onClick={() => setSidebarOpen(false)}>My Account</Link>
               <hr />
               <div className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Categories</div>
-              <a href="/?cat=electronics" className="hover:text-indigo-500">Electronics</a>
-              <a href="/?cat=fashion" className="hover:text-indigo-500">Fashion</a>
+              <Link to="/?cat=electronics" className="hover:text-indigo-500" onClick={() => setSidebarOpen(false)}>Electronics</Link>
+              <Link to="/?cat=fashion" className="hover:text-indigo-500" onClick={() => setSidebarOpen(false)}>Fashion</Link>
             </div>
           </div>
         </div>
@@ -66,21 +66,21 @@ const UserLayout = () => {
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 w-full md:w-full md:absolute bg-white border-t border-gray-200 flex justify-around py-3 pb-safe z-30 transition-all">
-        <a href="/" className="flex justify-center flex-col items-center gap-1 text-gray-400 hover:text-indigo-600">
+        <NavLink to="/" className={({isActive}) => `flex justify-center flex-col items-center gap-1 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
           <Home size={22} />
           <span className="text-[10px] font-bold">Home</span>
-        </a>
-        <a href="/cart" className="flex justify-center flex-col items-center gap-1 text-gray-400 hover:text-indigo-600 relative">
+        </NavLink>
+        <NavLink to="/cart" className={({isActive}) => `flex justify-center flex-col items-center gap-1 transition-colors relative ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
           <div className="relative">
             <ShoppingCart size={22} />
             {cart.length > 0 && <div className="absolute -top-2 -right-2 bg-indigo-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold">{cart.length}</div>}
           </div>
           <span className="text-[10px] font-bold">Cart</span>
-        </a>
-        <a href="/profile" className="flex justify-center flex-col items-center gap-1 text-gray-400 hover:text-indigo-600">
+        </NavLink>
+        <NavLink to="/profile" className={({isActive}) => `flex justify-center flex-col items-center gap-1 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
           <UserIcon size={22} />
           <span className="text-[10px] font-bold">Profile</span>
-        </a>
+        </NavLink>
       </nav>
     </div>
   );
@@ -135,7 +135,7 @@ const AdminLayout = () => {
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
               {isOnline ? 'Network Online' : 'Network Offline'}
             </div>
-            <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 text-gray-700 font-medium transition-colors border-t"><Globe size={20} /> View Site</a>
+            <Link to="/" className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 text-gray-700 font-medium transition-colors border-t"><Globe size={20} /> View Site</Link>
             <div className="mt-1 text-center pb-2">
               <button onClick={logout} className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold transition-colors"><LogOut size={20} /> Logout</button>
             </div>
