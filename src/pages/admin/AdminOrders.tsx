@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { ChevronDown, ChevronUp, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
@@ -133,33 +133,48 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const fetchOrders = async () => {
-    setLoading(true);
-    const usersSnap = await getDocs(collection(db, 'users'));
-    const usersMap = new Map(usersSnap.docs.map(d => [d.id, d.data().name]));
-    
-    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    const ordersSnap = await getDocs(q);
-    const data = ordersSnap.docs.map(d => ({
-      id: d.id,
-      ...d.data(),
-      user_name: usersMap.get(d.data().userId) || 'Unknown'
-    }));
-    setOrders(data);
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchOrders();
+    setLoading(true);
+    let usersMap = new Map<string, string>();
+
+    // First get users to map names (users don't change as often, but we could listen to them too if needed)
+    const fetchUsers = async () => {
+      try {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        usersMap = new Map(usersSnap.docs.map(d => [d.id, d.data().name]));
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+
+    fetchUsers().then(() => {
+      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      const unsub = onSnapshot(q, (ordersSnap) => {
+        const data = ordersSnap.docs.map(d => ({
+          id: d.id,
+          ...d.data(),
+          user_name: usersMap.get((d.data() as any).userId) || 'Unknown'
+        }));
+        setOrders(data);
+        if (!ordersSnap.metadata.hasPendingWrites) setLoading(false);
+      }, (err) => {
+        console.error('Error listening to orders:', err);
+        setLoading(false);
+      });
+
+      return () => unsub();
+    });
   }, []);
 
   const updateStatus = async (id: string, status: string) => {
     const loadingToast = toast.loading('Updating status...');
     try {
+      console.log('Updating order status...', { id, status });
       await updateDoc(doc(db, 'orders', id), { status });
+      console.log('Order status updated successfully');
       toast.success(`Order status updated to ${status}`, { id: loadingToast });
-      fetchOrders();
     } catch(err:any) {
+      console.error('Error updating status:', err);
       toast.error('Failed to update status', { id: loadingToast });
     }
   };

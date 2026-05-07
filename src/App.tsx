@@ -89,6 +89,18 @@ const UserLayout = () => {
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAppContext();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   if (!user || user.role !== 'admin') {
     return <Navigate to="/admin/login" />;
@@ -110,16 +122,23 @@ const AdminLayout = () => {
           <h2 className="font-black text-2xl text-gray-900 tracking-tight">EVIA <span className="text-indigo-600 font-medium text-lg">Admin</span></h2>
           <button className="md:hidden" onClick={() => setSidebarOpen(false)}><X size={24} /></button>
         </div>
-        <nav className="p-4 flex flex-col gap-2">
-          <NavLink to="/admin" end className={({isActive}) => `flex items-center gap-3 p-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><LayoutDashboard size={20} /> Dashboard</NavLink>
-          <NavLink to="/admin/category" className={({isActive}) => `flex items-center gap-3 p-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Package size={20} /> Categories</NavLink>
-          <NavLink to="/admin/product" className={({isActive}) => `flex items-center gap-3 p-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><ShoppingBag size={20} /> Products</NavLink>
-          <NavLink to="/admin/order" className={({isActive}) => `flex items-center gap-3 p-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><ShoppingCart size={20} /> Orders</NavLink>
-          <NavLink to="/admin/user" className={({isActive}) => `flex items-center gap-3 p-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Users size={20} /> Users</NavLink>
-          <NavLink to="/admin/coupons" className={({isActive}) => `flex items-center gap-3 p-3 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Ticket size={20} /> Coupons</NavLink>
-          <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 text-gray-700 font-medium transition-colors mt-auto border-t"><Globe size={20} /> View Site</a>
-          <div className="mt-2 text-center pb-2">
-            <button onClick={logout} className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold transition-colors"><LogOut size={20} /> Logout</button>
+        <nav className="p-2 flex flex-col gap-1 h-[calc(100vh-140px)] overflow-y-auto">
+          <NavLink to="/admin" end className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><LayoutDashboard size={20} /> Dashboard</NavLink>
+          <NavLink to="/admin/category" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Package size={20} /> Categories</NavLink>
+          <NavLink to="/admin/product" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><ShoppingBag size={20} /> Products</NavLink>
+          <NavLink to="/admin/order" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><ShoppingCart size={20} /> Orders</NavLink>
+          <NavLink to="/admin/user" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Users size={20} /> Users</NavLink>
+          <NavLink to="/admin/coupons" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Ticket size={20} /> Coupons</NavLink>
+          
+          <div className="mt-auto pt-4 flex flex-col gap-1">
+            <div className={`mx-2 p-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${isOnline ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              {isOnline ? 'Network Online' : 'Network Offline'}
+            </div>
+            <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 text-gray-700 font-medium transition-colors border-t"><Globe size={20} /> View Site</a>
+            <div className="mt-1 text-center pb-2">
+              <button onClick={logout} className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold transition-colors"><LogOut size={20} /> Logout</button>
+            </div>
           </div>
         </nav>
       </div>

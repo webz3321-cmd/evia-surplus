@@ -1,26 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [image, setImage] = useState('');
   
-  const fetchCategories = async () => {
-    setLoading(true);
-    const snap = await getDocs(collection(db, 'categories'));
-    setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchCategories();
+    setLoading(true);
+    const unsub = onSnapshot(collection(db, 'categories'), (snap) => {
+      setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      if (!snap.metadata.hasPendingWrites) setLoading(false);
+    }, (err) => {
+      console.error('Error listening to categories:', err);
+      toast.error('Failed to load categories');
+      setLoading(false);
+    });
+
+    return () => unsub();
   }, []);
 
   const openAddModal = () => {
@@ -42,7 +46,6 @@ export default function AdminCategories() {
     try {
       await deleteDoc(doc(db, 'categories', id));
       toast.success('Category deleted');
-      fetchCategories();
     } catch(err:any) {
       toast.error('Error deleting category');
     }
@@ -50,19 +53,30 @@ export default function AdminCategories() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
     const loadingToast = toast.loading('Saving category...');
     try {
+      const categoryData = { 
+        name: name.trim(), 
+        image: image.trim(),
+        updatedAt: Date.now()
+      };
+
       if (editId) {
-        await updateDoc(doc(db, 'categories', editId), { name, image });
+        await updateDoc(doc(db, 'categories', editId), categoryData);
         toast.success('Category updated', { id: loadingToast });
       } else {
-        await addDoc(collection(db, 'categories'), { name, image, createdAt: Date.now() });
+        await addDoc(collection(db, 'categories'), { ...categoryData, createdAt: Date.now() });
         toast.success('Category created', { id: loadingToast });
       }
       setShowModal(false);
-      fetchCategories();
     } catch(err:any) {
-      toast.error('Error saving category', { id: loadingToast });
+      console.error('Error saving:', err);
+      toast.error(err.message || 'Error saving category', { id: loadingToast });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -123,8 +137,11 @@ export default function AdminCategories() {
                 <input required value={image} onChange={e=>setImage(e.target.value)} type="url" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" />
               </div>
               <div className="flex gap-3 mt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">{editId ? 'Update' : 'Save'}</button>
+                <button type="button" disabled={submitting} onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex justify-center items-center gap-2">
+                   {submitting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {editId ? 'Update' : 'Save'}
+                </button>
               </div>
             </form>
           </div>

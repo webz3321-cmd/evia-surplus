@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../../lib/firestoreUtils';
 import toast from 'react-hot-toast';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   
   // form state
   const [catId, setCatId] = useState('');
+  const [isNewCat, setIsNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatImage, setNewCatImage] = useState('');
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [price, setPrice] = useState('');
@@ -21,44 +26,80 @@ export default function AdminProducts() {
   const [secondaryImages, setSecondaryImages] = useState(''); // comma separated
   const [sizes, setSizes] = useState(''); // comma separated
 
-  const fetchData = async () => {
-    setLoading(true);
-    const [prodSnap, catSnap] = await Promise.all([
-      getDocs(collection(db, 'products')),
-      getDocs(collection(db, 'categories'))
-    ]);
-    const prods = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const cats = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setProducts(prods);
-    setCategories(cats);
-    if(cats.length > 0 && !catId) setCatId(cats[0].id.toString());
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchData();
-  }, []);
+    setLoading(true);
+    
+    // Listen to categories
+    const unsubCats = onSnapshot(collection(db, 'categories'), (catSnap) => {
+      const cats = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      setCategories(cats);
+      if (cats.length > 0 && !catId) setCatId(cats[0].id);
+      
+      // Update products with new category info if products are loaded
+      setProducts(prevProds => prevProds.map(p => {
+        const cat = cats.find(c => c.id === p.catId);
+        return { ...p, categoryName: cat ? cat.name : 'Unknown' };
+      }));
+
+      if (!catSnap.metadata.hasPendingWrites) setLoading(false);
+    }, (err) => {
+      console.error('Error listening to categories:', err);
+      handleFirestoreError(err, OperationType.GET, 'categories_stream');
+      setLoading(false);
+    });
+
+    // Listen to products
+    const unsubProds = onSnapshot(collection(db, 'products'), (prodSnap) => {
+      const prods = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      
+      // Map cat names to prods using latest categories state
+      setProducts(prods.map((p: any) => {
+        const cat = categories.find(c => c.id === p.catId);
+        return { ...p, categoryName: cat ? cat.name : 'Unknown' };
+      }));
+
+      if (!prodSnap.metadata.hasPendingWrites) setLoading(false);
+    }, (err) => {
+      console.error('Error listening to products:', err);
+      handleFirestoreError(err, OperationType.GET, 'products_stream');
+      setLoading(false);
+    });
+
+    return () => {
+      unsubCats();
+      unsubProds();
+    };
+  }, [categories.length]); // Re-run mapping when categories length changes
 
   const openAddModal = () => {
     setEditId(null);
+    setIsNewCat(false);
+    setNewCatName('');
+    setNewCatImage('');
     setName('');
     setDesc('');
     setPrice('');
     setStock('');
     setImage('');
+    setNewCatName('');
+    setNewCatImage('');
     setSecondaryImages('');
     setSizes('');
-    if (categories.length > 0) setCatId(categories[0].id.toString());
+    if (categories.length > 0) setCatId(categories[0].id);
+    else setCatId('new');
     setShowModal(true);
   };
 
   const openEditModal = (prod: any) => {
     setEditId(prod.id);
+    setIsNewCat(false);
     setName(prod.name);
     setDesc(prod.description || '');
     setPrice(prod.price.toString());
     setStock(prod.stock.toString());
     setImage(prod.image);
+    setNewCatName('');
+    setNewCatImage('');
     setSecondaryImages(prod.secondaryImages?.join(', ') || '');
     setSizes(prod.sizes?.join(', ') || '');
     setCatId(prod.catId);
@@ -70,7 +111,6 @@ export default function AdminProducts() {
     try {
       await deleteDoc(doc(db, 'products', id));
       toast.success('Product deleted successfully');
-      fetchData();
     } catch(err:any) {
       toast.error(err.message || 'Error deleting product');
     }
@@ -78,38 +118,56 @@ export default function AdminProducts() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!catId) {
-      toast.error('Please select a category first. If none exist, create one.');
-      return;
-    }
+    if (submitting) return;
 
-    const sImages = secondaryImages.split(',').map(s => s.trim()).filter(s => s !== '');
-    const sSizes = sizes.split(',').map(s => s.trim()).filter(s => s !== '');
-
+    let finalCatId = catId;
+    setSubmitting(true);
     const loadingToast = toast.loading('Saving product...');
+    
     try {
+      console.log('Starting product save...', { editId, finalCatId });
+      if (catId === 'new') {
+        const catRes = await addDoc(collection(db, 'categories'), { 
+          name: newCatName.trim(), 
+          image: newCatImage.trim(), 
+          createdAt: Date.now() 
+        });
+        finalCatId = catRes.id;
+        console.log('New category created:', finalCatId);
+      }
+
+      if (!finalCatId) throw new Error('Please select or create a category');
+
+      const sImages = secondaryImages.split(',').map(s => s.trim()).filter(s => s !== '');
+      const sSizes = sizes.split(',').map(s => s.trim()).filter(s => s !== '');
+
       const productData = { 
-        catId, 
-        name, 
-        description: desc, 
+        catId: finalCatId, 
+        name: name.trim(), 
+        description: desc.trim(), 
         price: Number(price), 
         stock: Number(stock), 
-        image,
+        image: image.trim(),
         secondaryImages: sImages,
-        sizes: sSizes
+        sizes: sSizes,
+        updatedAt: Date.now()
       };
 
       if (editId) {
         await updateDoc(doc(db, 'products', editId), productData);
+        console.log('Product updated successfully');
         toast.success('Product updated', { id: loadingToast });
       } else {
         await addDoc(collection(db, 'products'), { ...productData, createdAt: Date.now() });
+        console.log('Product created successfully');
         toast.success('Product created', { id: loadingToast });
       }
       setShowModal(false);
-      fetchData();
     } catch(err:any) {
+      console.error('Error saving:', err);
       toast.error(err.message || 'Error saving product', { id: loadingToast });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -168,10 +226,63 @@ export default function AdminProducts() {
             <h3 className="text-xl font-bold mb-4 text-gray-900">{editId ? 'Edit Product' : 'Add New Product'}</h3>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
-                <select required value={catId} onChange={e=>setCatId(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors">
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Category</label>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      if (catId === 'new') {
+                        if (categories.length > 0) setCatId(categories[0].id);
+                        else setCatId('');
+                      } else {
+                        setCatId('new');
+                      }
+                    }}
+                    className="text-xs font-bold text-indigo-600 hover:underline"
+                  >
+                    {catId === 'new' ? 'Choose Existing' : '+ Create New Category'}
+                  </button>
+                </div>
+                
+                {catId !== 'new' ? (
+                  <select 
+                    required 
+                    value={catId} 
+                    onChange={e=>setCatId(e.target.value)} 
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors appearance-none"
+                  >
+                    <option value="" disabled>Select a category</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                ) : (
+                  <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                      <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">New Category Detail</h4>
+                    </div>
+                    <div>
+                      <input 
+                        required={catId === 'new'}
+                        value={newCatName} 
+                        onChange={e=>setNewCatName(e.target.value)} 
+                        type="text" 
+                        placeholder="New Category Name (e.g. Jeans)" 
+                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-indigo-500 transition-colors text-sm font-medium" 
+                      />
+                    </div>
+                    <div>
+                      <input 
+                        required={catId === 'new'}
+                        value={newCatImage} 
+                        onChange={e=>setNewCatImage(e.target.value)} 
+                        type="url" 
+                        placeholder="Image URL: https://..." 
+                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-indigo-500 transition-colors text-sm font-medium" 
+                      />
+                      <p className="text-[9px] text-indigo-400 mt-1 ml-1 font-bold italic">Unsplash or Pexels URLs work best!</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Product Name</label>
@@ -205,8 +316,11 @@ export default function AdminProducts() {
               </div>
               
               <div className="flex gap-3 mt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">{editId ? 'Update' : 'Save'}</button>
+                <button type="button" disabled={submitting} onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex justify-center items-center gap-2">
+                  {submitting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {editId ? 'Update' : 'Save'}
+                </button>
               </div>
             </form>
           </div>

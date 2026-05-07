@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Ticket } from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 export default function AdminCoupons() {
@@ -17,22 +17,19 @@ export default function AdminCoupons() {
   const [minAmount, setMinAmount] = useState('');
   const [isActive, setIsActive] = useState(true);
 
-  const fetchCoupons = async () => {
-    setLoading(true);
-    try {
-      const q = query(collection(db, 'coupons'), orderBy('createdAt', 'desc'));
-      const snap = await getDocs(q);
-      setCoupons(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to fetch coupons');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchCoupons();
+    setLoading(true);
+    const q = query(collection(db, 'coupons'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      setCoupons(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      if (!snap.metadata.hasPendingWrites) setLoading(false);
+    }, (err) => {
+      console.error(err);
+      toast.error('Failed to listen to coupons');
+      setLoading(false);
+    });
+
+    return () => unsub();
   }, []);
 
   const resetForm = () => {
@@ -59,7 +56,6 @@ export default function AdminCoupons() {
     try {
       await deleteDoc(doc(db, 'coupons', id));
       toast.success('Coupon deleted');
-      fetchCoupons();
     } catch (err) {
       toast.error('Error deleting coupon');
     }
@@ -95,7 +91,6 @@ export default function AdminCoupons() {
       }
       setShowModal(false);
       resetForm();
-      fetchCoupons();
     } catch (err: any) {
       toast.error(err.message || 'Error saving coupon', { id: loadingToast });
     }
