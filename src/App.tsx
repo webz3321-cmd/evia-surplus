@@ -1,6 +1,6 @@
-import { BrowserRouter, Routes, Route, Outlet, Navigate, NavLink, Link } from 'react-router';
+import { BrowserRouter, Routes, Route, Outlet, Navigate, NavLink, Link, useLocation } from 'react-router';
 import { AppProvider, useAppContext } from './context';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
@@ -18,23 +18,53 @@ import AdminCategories from './pages/admin/AdminCategories';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminOffers from './pages/admin/AdminOffers';
 
 // Layout for general users
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { cart } = useAppContext();
+  const location = useLocation();
+
+  const hideNav = useMemo(() => {
+    const pathsToHide = ['/cart', '/checkout', '/product/'];
+    return pathsToHide.some(path => location.pathname.startsWith(path));
+  }, [location.pathname]);
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pb-16 overflow-x-hidden md:max-w-md md:mx-auto md:border-x md:border-gray-200 md:shadow-xl md:relative relative">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden md:max-w-md md:mx-auto md:border-x md:border-gray-200 md:shadow-xl md:relative relative">
       {/* Header */}
-      <header className="bg-white px-4 py-3 sticky top-0 z-30 shadow-sm flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(true)} className="p-1"><Menu size={24} /></button>
-          <h1 className="text-xl font-black tracking-tighter text-indigo-600">EVIA</h1>
+      <header className="bg-white px-4 py-3 sticky top-0 z-30 shadow-sm flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="p-1"><Menu size={24} /></button>
+            <h1 className="text-xl font-black tracking-tighter text-indigo-600">EVIA</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <Search size={20} className="text-gray-600" />
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Search size={20} className="text-gray-600" />
-        </div>
+
+        {/* Global Navigation in Header */}
+        {!hideNav && (
+          <nav className="flex justify-around py-1 border-t border-gray-50">
+            <NavLink to="/" className={({isActive}) => `flex justify-center flex-col items-center gap-0.5 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
+              <Home size={18} />
+              <span className="text-[9px] font-bold uppercase tracking-wider">Home</span>
+            </NavLink>
+            <NavLink to="/cart" className={({isActive}) => `flex justify-center flex-col items-center gap-0.5 transition-colors relative ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
+              <div className="relative">
+                <ShoppingCart size={18} />
+                {cart.length > 0 && <div className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[8px] font-black">{cart.length}</div>}
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-wider">Cart</span>
+            </NavLink>
+            <NavLink to="/profile" className={({isActive}) => `flex justify-center flex-col items-center gap-0.5 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
+              <UserIcon size={18} />
+              <span className="text-[9px] font-bold uppercase tracking-wider">Profile</span>
+            </NavLink>
+          </nav>
+        )}
       </header>
 
       {/* Sidebar */}
@@ -63,25 +93,6 @@ const UserLayout = () => {
       <main className="flex-1">
         <Outlet />
       </main>
-
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 w-full md:w-full md:absolute bg-white border-t border-gray-200 flex justify-around py-3 pb-safe z-30 transition-all">
-        <NavLink to="/" className={({isActive}) => `flex justify-center flex-col items-center gap-1 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
-          <Home size={22} />
-          <span className="text-[10px] font-bold">Home</span>
-        </NavLink>
-        <NavLink to="/cart" className={({isActive}) => `flex justify-center flex-col items-center gap-1 transition-colors relative ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
-          <div className="relative">
-            <ShoppingCart size={22} />
-            {cart.length > 0 && <div className="absolute -top-2 -right-2 bg-indigo-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold">{cart.length}</div>}
-          </div>
-          <span className="text-[10px] font-bold">Cart</span>
-        </NavLink>
-        <NavLink to="/profile" className={({isActive}) => `flex justify-center flex-col items-center gap-1 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
-          <UserIcon size={22} />
-          <span className="text-[10px] font-bold">Profile</span>
-        </NavLink>
-      </nav>
     </div>
   );
 };
@@ -129,6 +140,7 @@ const AdminLayout = () => {
           <NavLink to="/admin/order" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><ShoppingCart size={20} /> Orders</NavLink>
           <NavLink to="/admin/user" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Users size={20} /> Users</NavLink>
           <NavLink to="/admin/coupons" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Ticket size={20} /> Coupons</NavLink>
+          <NavLink to="/admin/offers" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Sparkles size={20} /> Offers</NavLink>
           
           <div className="mt-auto pt-4 flex flex-col gap-1">
             <div className={`mx-2 p-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${isOnline ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
@@ -202,6 +214,7 @@ const AppContent = () => {
           <Route path="order" element={<AdminOrders />} />
           <Route path="user" element={<AdminUsers />} />
           <Route path="coupons" element={<AdminCoupons />} />
+          <Route path="offers" element={<AdminOffers />} />
         </Route>
       </Routes>
     </BrowserRouter>

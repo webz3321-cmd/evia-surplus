@@ -53,9 +53,25 @@
         "createdAt": { "type": "number" }
       },
       "required": ["userId", "totalAmount", "status", "items"]
+    },
+    "Offer": {
+      "title": "Offer",
+      "description": "A promotional offer banner",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "text": { "type": "string" },
+        "active": { "type": "boolean" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["title", "text", "active"]
     }
   },
   "firestore": {
+    "/offers/{offerId}": {
+      "schema": { "$ref": "#/entities/Offer" },
+      "description": "Cart promotional offers"
+    },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "User profiles"

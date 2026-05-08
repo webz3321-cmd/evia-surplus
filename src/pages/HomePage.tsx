@@ -203,6 +203,11 @@ export default function HomePage() {
                   <div className="bg-white/90 backdrop-blur text-indigo-600 text-[9px] font-black px-2 py-1 rounded-lg uppercase shadow-sm border border-indigo-50">
                     Trusted
                   </div>
+                  {p.productType === 'rent' && (
+                    <div className="bg-indigo-600 text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase shadow-lg shadow-indigo-100 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-white rounded-full animate-pulse"></span> For Rent
+                    </div>
+                  )}
                 </div>
 
                 {p.stock === 0 && (

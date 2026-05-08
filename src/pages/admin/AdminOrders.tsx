@@ -14,17 +14,19 @@ const OrderRow = ({ order, updateStatus }: { order: any, updateStatus: any, key?
     doc.text(`Order Invoice #${order.id.slice(-6)}`, 20, 20);
     
     doc.setFontSize(14);
-    doc.text(`Customer: ${order.user_name}`, 20, 40);
-    doc.text(`Status: ${order.status}`, 20, 50);
-    doc.text(`Date: ${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}`, 20, 60);
+    doc.text(`Customer: ${order.shippingDetails?.fullName || order.user_name}`, 20, 40);
+    doc.text(`Phone: ${order.shippingDetails?.phone || 'N/A'}`, 20, 50);
+    doc.text(`Status: ${order.status}`, 20, 60);
+    doc.text(`Date: ${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}`, 20, 70);
     
     doc.setFontSize(12);
-    doc.text(`Delivery Address:`, 20, 80);
-    const addressLines = doc.splitTextToSize(order.address || 'N/A', 170);
-    doc.text(addressLines, 20, 90);
+    doc.text(`Delivery Address:`, 20, 90);
+    const fullAddress = order.address || 'N/A';
+    const addressLines = doc.splitTextToSize(fullAddress, 170);
+    doc.text(addressLines, 20, 100);
 
-    doc.text(`Items:`, 20, 110 + (addressLines.length * 5));
-    let y = 120 + (addressLines.length * 5);
+    doc.text(`Items:`, 20, 120 + (addressLines.length * 5));
+    let y = 130 + (addressLines.length * 5);
     (order.items || []).forEach((item: any, idx: number) => {
       doc.text(`${idx + 1}. ${item.name || 'Product'} (Qty: ${item.quantity}) - Rs. ${item.price?.toLocaleString()}`, 20, y);
       y += 10;
@@ -80,9 +82,27 @@ const OrderRow = ({ order, updateStatus }: { order: any, updateStatus: any, key?
           <td colSpan={5} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Delivery Address</h4>
-                <div className="bg-white p-4 rounded-xl border border-gray-200 text-sm text-gray-700">
-                  {order.address ? <p className="whitespace-pre-wrap">{order.address}</p> : <p className="text-gray-400 italic">No address provided</p>}
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Customer & Shipping Details</h4>
+                <div className="bg-white p-4 rounded-xl border border-gray-200 text-sm text-gray-700 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-bold uppercase text-[9px]">Name</span>
+                    <span className="font-black">{order.shippingDetails?.fullName || order.user_name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-bold uppercase text-[9px]">Phone</span>
+                    <span className="font-black">{order.shippingDetails?.phone || 'N/A'}</span>
+                  </div>
+                  <div className="h-px bg-gray-50 my-1"></div>
+                  <div className="pt-1">
+                    <span className="text-gray-400 font-bold uppercase text-[9px] block mb-1">Full Address</span>
+                    <p className="font-bold leading-relaxed">{order.address}</p>
+                  </div>
+                  {order.shippingDetails?.landmark && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400 font-bold uppercase text-[9px]">Landmark</span>
+                      <span className="font-bold">{order.shippingDetails.landmark}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div>

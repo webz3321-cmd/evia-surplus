@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppContext } from '../context';
 import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, query, where, limit, doc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, limit, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { MapPin, AlertCircle, ShoppingBag, CreditCard, CheckCircle2 } from 'lucide-react';
 
@@ -18,12 +18,37 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponLoading, setCouponLoading] = useState(false);
 
-  // Listen to user changes to get latest address
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [shippingForm, setShippingForm] = useState({
+    fullName: '',
+    phone: '',
+    addressLine: '',
+    landmark: '',
+    taluq: '',
+    state: '',
+    pincode: ''
+  });
+
+  // Listen to user data
   useEffect(() => {
     if (user) {
       const unsub = onSnapshot(doc(db, 'users', user.id), (snap) => {
         if (snap.exists()) {
-          setCurrentUserData(snap.data());
+          const data = snap.data();
+          setCurrentUserData(data);
+          setShippingForm({
+            fullName: data.fullName || data.name || '',
+            phone: data.phone || '',
+            addressLine: data.addressLine || data.address || '',
+            landmark: data.landmark || '',
+            taluq: data.taluq || '',
+            state: data.state || '',
+            pincode: data.pincode || ''
+          });
+          // If profile is incomplete, force edit mode
+          if (!data.fullName || !data.addressLine || !data.pincode) {
+            setIsEditingAddress(true);
+          }
         }
       });
       return () => unsub();
@@ -73,28 +98,49 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!user || cart.length === 0) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (!user || cart.length === 0) {
+      navigate('/');
+    }
+  }, [user, cart.length, navigate]);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUserData?.address) {
-      toast.error('Please add an address in your profile first');
-      navigate('/profile');
+    
+    if (isEditingAddress) {
+      if (!shippingForm.fullName || !shippingForm.phone || !shippingForm.addressLine || !shippingForm.pincode) {
+        toast.error('Please complete your shipping details');
+        return;
+      }
+    } else if (!currentUserData?.fullName || !currentUserData?.addressLine) {
+      setIsEditingAddress(true);
+      toast.error('Please complete your shipping details');
       return;
     }
+
     setLoading(true);
     
     try {
+      const finalShipping = isEditingAddress ? shippingForm : {
+        fullName: currentUserData.fullName,
+        phone: currentUserData.phone,
+        addressLine: currentUserData.addressLine,
+        landmark: currentUserData.landmark,
+        taluq: currentUserData.taluq,
+        state: currentUserData.state,
+        pincode: currentUserData.pincode
+      };
+
+      const printableAddress = `${finalShipping.addressLine}, ${finalShipping.landmark ? `Near ${finalShipping.landmark}, ` : ''}${finalShipping.taluq}, ${finalShipping.state} - ${finalShipping.pincode}`;
+
       const orderData = {
-        userId: user.id,
+        userId: user!.id,
         subtotal: cartTotal,
         discount: discount,
         totalAmount: discountedTotal,
         couponUsed: appliedCoupon ? appliedCoupon.code : null,
-        address: currentUserData.address,
+        address: printableAddress,
+        shippingDetails: finalShipping,
         status: 'Placed',
         paymentMethod: 'COD',
         createdAt: Date.now(),
@@ -108,16 +154,28 @@ export default function CheckoutPage() {
         }))
       };
 
+      // Also update user profile with latest address if it was edited
+      if (isEditingAddress) {
+        await updateDoc(doc(db, 'users', user!.id), {
+          ...finalShipping,
+          address: printableAddress
+        });
+      }
+
       await addDoc(collection(db, 'orders'), orderData);
       clearCart();
       toast.success('Order placed successfully!');
       navigate('/order');
     } catch (err) {
-      setError('Network error');
+      setError('Network error: ' + (err instanceof Error ? err.message : 'Unknown'));
     } finally {
       setLoading(false);
     }
   };
+
+  if (!user || cart.length === 0) {
+    return null;
+  }
 
   return (
     <div className="p-4 bg-gray-50 min-h-screen pb-20">
@@ -220,29 +278,92 @@ export default function CheckoutPage() {
             {error && <div className="p-3 mb-5 text-sm bg-red-50 text-red-600 rounded-xl font-medium border border-red-100">{error}</div>}
 
             <div className="flex flex-col gap-5">
-              {/* Address Display */}
-              <div className={`p-4 rounded-2xl border-2 transition-all ${currentUserData?.address ? 'border-gray-100 bg-gray-50/50' : 'border-dashed border-red-200 bg-red-50'}`}>
-                <div className="flex items-center justify-between mb-3">
+              {/* Address Form or Display */}
+              <div className={`p-4 rounded-2xl border-2 transition-all ${isEditingAddress ? 'border-indigo-100 bg-indigo-50/10' : 'border-gray-100 bg-gray-50/50'}`}>
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-gray-500">
                     <MapPin size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Delivery Address</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Shipping Details</span>
                   </div>
-                  <button type="button" onClick={() => navigate('/profile')} className="text-xs font-black text-indigo-600 hover:underline">Change</button>
+                  <button type="button" onClick={() => setIsEditingAddress(!isEditingAddress)} className="text-xs font-black text-indigo-600 hover:underline">
+                    {isEditingAddress ? 'Cancel' : 'Edit Info'}
+                  </button>
                 </div>
                 
-                {currentUserData?.address ? (
-                  <p className="text-sm font-bold text-gray-800 leading-relaxed">
-                    {currentUserData.address}
-                  </p>
-                ) : (
-                  <div className="flex items-center gap-2 text-red-600 py-2">
-                    <AlertCircle size={16} />
-                    <span className="text-sm font-bold">No saved address found</span>
+                {isEditingAddress ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input 
+                        placeholder="Full Name" 
+                        value={shippingForm.fullName} 
+                        onChange={e => setShippingForm({...shippingForm, fullName: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                        required
+                      />
+                      <input 
+                        placeholder="Mobile Number" 
+                        value={shippingForm.phone} 
+                        onChange={e => setShippingForm({...shippingForm, phone: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                        required
+                      />
+                    </div>
+                    <textarea 
+                      placeholder="Full Address (House No, Area, Street)" 
+                      value={shippingForm.addressLine} 
+                      onChange={e => setShippingForm({...shippingForm, addressLine: e.target.value})}
+                      rows={2}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 resize-none"
+                      required
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input 
+                        placeholder="Near / Landmark" 
+                        value={shippingForm.landmark} 
+                        onChange={e => setShippingForm({...shippingForm, landmark: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                      />
+                      <input 
+                        placeholder="Taluq" 
+                        value={shippingForm.taluq} 
+                        onChange={e => setShippingForm({...shippingForm, taluq: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input 
+                        placeholder="State" 
+                        value={shippingForm.state} 
+                        onChange={e => setShippingForm({...shippingForm, state: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                      />
+                      <input 
+                        placeholder="Pincode" 
+                        value={shippingForm.pincode} 
+                        onChange={e => setShippingForm({...shippingForm, pincode: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                        required
+                      />
+                    </div>
                   </div>
+                ) : (
+                  currentUserData?.fullName ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-black text-gray-900 mb-1 uppercase tracking-tight">{currentUserData.fullName}</p>
+                      <p className="text-xs text-gray-600 font-bold mb-2">{currentUserData.phone}</p>
+                      <p className="text-xs text-gray-500 leading-relaxed italic">
+                        {currentUserData.address}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-red-600 py-2">
+                      <AlertCircle size={16} />
+                      <span className="text-sm font-bold">Please add shipping details</span>
+                    </div>
+                  )
                 )}
               </div>
 
-              {/* Payment Method - Fixed to COD */}
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2 text-gray-500">
                   <CreditCard size={16} />
@@ -253,7 +374,7 @@ export default function CheckoutPage() {
                     <CheckCircle2 size={16} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-black text-indigo-900">Cash on Delivery</span>
+                    <span className="font-black text-indigo-900 uppercase tracking-tight">Cash on Delivery</span>
                     <span className="text-[10px] text-indigo-600 font-bold uppercase mt-0.5">Pay in cash when reached</span>
                   </div>
                 </div>
@@ -261,19 +382,19 @@ export default function CheckoutPage() {
             </div>
 
             <button 
-              disabled={loading || !currentUserData?.address} 
+              disabled={loading} 
               type="submit" 
               className="w-full mt-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 flex justify-center items-center gap-3 disabled:opacity-50 disabled:grayscale"
             >
               {loading ? <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div> : (
                 <>
-                  <span>Confirm Order</span>
+                  <span>Place Order Now</span>
                   <span className="h-4 w-px bg-white/30"></span>
                   <span>₹{discountedTotal.toLocaleString()}</span>
                 </>
               )}
             </button>
-            <p className="text-center text-[10px] text-gray-400 mt-4 font-medium uppercase tracking-widest">Safe & Secure Payments Only</p>
+            <p className="text-center text-[10px] text-gray-400 mt-4 font-medium uppercase tracking-widest">Immediate Confirmation</p>
           </form>
         </div>
       </div>

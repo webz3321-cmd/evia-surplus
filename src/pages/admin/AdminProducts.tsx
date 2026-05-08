@@ -25,6 +25,7 @@ export default function AdminProducts() {
   const [image, setImage] = useState('');
   const [secondaryImages, setSecondaryImages] = useState(''); // comma separated
   const [sizes, setSizes] = useState(''); // comma separated
+  const [productType, setProductType] = useState<'buy' | 'rent'>('buy');
 
   useEffect(() => {
     setLoading(true);
@@ -33,32 +34,16 @@ export default function AdminProducts() {
     const unsubCats = onSnapshot(collection(db, 'categories'), (catSnap) => {
       const cats = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       setCategories(cats);
-      if (cats.length > 0 && !catId) setCatId(cats[0].id);
-      
-      // Update products with new category info if products are loaded
-      setProducts(prevProds => prevProds.map(p => {
-        const cat = cats.find(c => c.id === p.catId);
-        return { ...p, categoryName: cat ? cat.name : 'Unknown' };
-      }));
-
-      if (!catSnap.metadata.hasPendingWrites) setLoading(false);
     }, (err) => {
       console.error('Error listening to categories:', err);
       handleFirestoreError(err, OperationType.GET, 'categories_stream');
-      setLoading(false);
     });
 
     // Listen to products
     const unsubProds = onSnapshot(collection(db, 'products'), (prodSnap) => {
       const prods = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-      
-      // Map cat names to prods using latest categories state
-      setProducts(prods.map((p: any) => {
-        const cat = categories.find(c => c.id === p.catId);
-        return { ...p, categoryName: cat ? cat.name : 'Unknown' };
-      }));
-
-      if (!prodSnap.metadata.hasPendingWrites) setLoading(false);
+      setProducts(prods);
+      setLoading(false);
     }, (err) => {
       console.error('Error listening to products:', err);
       handleFirestoreError(err, OperationType.GET, 'products_stream');
@@ -69,7 +54,13 @@ export default function AdminProducts() {
       unsubCats();
       unsubProds();
     };
-  }, [categories.length]); // Re-run mapping when categories length changes
+  }, []);
+
+  // Derived products with category names
+  const productsWithCat = products.map(p => {
+    const cat = categories.find(c => c.id === p.catId);
+    return { ...p, categoryName: cat ? cat.name : 'Unknown' };
+  });
 
   const openAddModal = () => {
     setEditId(null);
@@ -85,6 +76,7 @@ export default function AdminProducts() {
     setNewCatImage('');
     setSecondaryImages('');
     setSizes('');
+    setProductType('buy');
     if (categories.length > 0) setCatId(categories[0].id);
     else setCatId('new');
     setShowModal(true);
@@ -102,6 +94,7 @@ export default function AdminProducts() {
     setNewCatImage('');
     setSecondaryImages(prod.secondaryImages?.join(', ') || '');
     setSizes(prod.sizes?.join(', ') || '');
+    setProductType(prod.productType || 'buy');
     setCatId(prod.catId);
     setShowModal(true);
   };
@@ -150,6 +143,7 @@ export default function AdminProducts() {
         image: image.trim(),
         secondaryImages: sImages,
         sizes: sSizes,
+        productType,
         updatedAt: Date.now()
       };
 
@@ -195,9 +189,9 @@ export default function AdminProducts() {
             <tbody>
               {loading ? (
                  <tr><td colSpan={5} className="p-8 text-center text-gray-500 flex justify-center"><div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></td></tr>
-              ) : products.length === 0 ? (
+              ) : productsWithCat.length === 0 ? (
                 <tr><td colSpan={5} className="p-8 text-center text-gray-500 font-medium">No products found.</td></tr>
-              ) : products.map(prod => (
+              ) : productsWithCat.map(prod => (
                 <tr key={prod.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                   <td className="p-4 w-24">
                     <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200">
@@ -309,6 +303,25 @@ export default function AdminProducts() {
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Available Sizes (Comma Separated)</label>
                 <input value={sizes} onChange={e=>setSizes(e.target.value)} type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" placeholder="XL, L, M, S" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Listing Type</label>
+                <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
+                  <button 
+                    type="button" 
+                    onClick={() => setProductType('buy')}
+                    className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${productType === 'buy' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400'}`}
+                  >
+                    Sale (Buy)
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setProductType('rent')}
+                    className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${productType === 'rent' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400'}`}
+                  >
+                    Rental (Rent)
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>

@@ -122,6 +122,11 @@ export default function ProductPage() {
               <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-2.5 py-1.5 rounded-full uppercase tracking-wider shadow-sm border border-indigo-100 italic">
                 {category?.name || 'Exclusive'}
               </span>
+              {product.productType === 'rent' && (
+                <span className="bg-indigo-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-full uppercase tracking-wider shadow-md italic">
+                  For Rent
+                </span>
+              )}
               <div className="h-0.5 w-4 bg-gray-200"></div>
               <div className="flex items-center gap-1">
                 <span className="text-[10px] font-black text-emerald-600">★ 4.9</span>
