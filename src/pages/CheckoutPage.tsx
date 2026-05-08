@@ -178,224 +178,310 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen pb-20">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-          <ShoppingBag size={20} />
-        </div>
-        <h2 className="font-black text-2xl text-gray-900 tracking-tight">Checkout</h2>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Summary & Coupon */}
-        <div className="flex flex-col gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
-              Order Summary
-            </h3>
-            <div className="flex flex-col gap-4 mb-4">
-              {cart.map((item, idx) => (
-                <div key={`${item.product.id}-${idx}`} className="flex gap-3">
-                  <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0 border border-gray-100">
-                    <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span className="text-sm font-bold text-gray-900 line-clamp-1">{item.product.name}</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-medium text-gray-500">Qty: {item.quantity}</span>
-                      {item.size && <span className="text-[10px] bg-indigo-50 text-indigo-600 font-black px-1.5 py-0.5 rounded uppercase">Size: {item.size}</span>}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end justify-center">
-                    <span className="font-black text-sm text-gray-900">₹{(item.product.price * item.quantity).toLocaleString()}</span>
-                  </div>
-                </div>
-              ))}
+    <div className="p-6 bg-[#FAFAFB] min-h-screen pb-24">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-gray-200">
+              <ShoppingBag size={24} />
             </div>
-            
-            <div className="h-px bg-gray-50 my-4"></div>
-            
-            {appliedCoupon ? (
-              <div className="flex justify-between items-center mb-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-emerald-600" />
-                  <span className="text-xs font-black text-emerald-700 uppercase tracking-wider">{appliedCoupon.code} Applied</span>
-                </div>
-                <button onClick={() => { setDiscount(0); setAppliedCoupon(null); setCouponCode(''); }} className="text-xs font-bold text-red-500 bg-white px-2 py-1 rounded-lg border border-red-100">Remove</button>
-              </div>
-            ) : (
-              <div className="flex gap-2 mb-4">
-                <input 
-                  value={couponCode}
-                  onChange={e => setCouponCode(e.target.value)}
-                  placeholder="Promo Code" 
-                  className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 uppercase placeholder:normal-case font-mono transition-all"
-                />
-                <button 
-                  type="button"
-                  onClick={applyCoupon}
-                  disabled={couponLoading || !couponCode}
-                  className="px-6 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black disabled:opacity-50 transition-all flex items-center justify-center"
-                >
-                  {couponLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Apply'}
-                </button>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm font-medium text-gray-500">
-                <span>Subtotal</span>
-                <span>₹{cartTotal.toLocaleString()}</span>
-              </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-sm text-emerald-600 font-bold">
-                  <span>Coupon Discount</span>
-                  <span>- ₹{discount.toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm font-medium text-gray-500">
-                <span>Delivery Charge</span>
-                <span className="text-emerald-600">FREE</span>
-              </div>
-              <div className="h-px bg-gray-50 pt-2"></div>
-              <div className="flex justify-between items-end">
-                <span className="font-bold text-gray-900">Final Total</span>
-                <span className="font-black text-2xl text-indigo-600 tracking-tight">₹{discountedTotal.toLocaleString()}</span>
-              </div>
+            <div>
+              <h2 className="font-black text-3xl text-gray-900 tracking-tighter leading-none">Checkout</h2>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Review & Place Order</p>
             </div>
           </div>
+          <button 
+            onClick={() => navigate('/cart')}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all shadow-sm"
+          >
+            Back to Cart
+          </button>
         </div>
-
-        {/* Right Column: Address & Payment */}
-        <div className="flex flex-col gap-6">
-          <form onSubmit={handlePlaceOrder} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
-              Shipping & Payment
-            </h3>
-            
-            {error && <div className="p-3 mb-5 text-sm bg-red-50 text-red-600 rounded-xl font-medium border border-red-100">{error}</div>}
-
-            <div className="flex flex-col gap-5">
-              {/* Address Form or Display */}
-              <div className={`p-4 rounded-2xl border-2 transition-all ${isEditingAddress ? 'border-indigo-100 bg-indigo-50/10' : 'border-gray-100 bg-gray-50/50'}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <MapPin size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Shipping Details</span>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Column */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
+            {/* Shipping Section */}
+            <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 p-8 overflow-hidden">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                    <MapPin size={18} />
                   </div>
-                  <button type="button" onClick={() => setIsEditingAddress(!isEditingAddress)} className="text-xs font-black text-indigo-600 hover:underline">
-                    {isEditingAddress ? 'Cancel' : 'Edit Info'}
-                  </button>
+                  <h3 className="font-extrabold text-xl text-gray-900 tracking-tight">Shipping Information</h3>
                 </div>
-                
-                {isEditingAddress ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setIsEditingAddress(!isEditingAddress)} 
+                  className="text-xs font-black text-indigo-600 px-4 py-2 bg-indigo-50 rounded-full hover:bg-indigo-100 transition-all uppercase tracking-wider"
+                >
+                  {isEditingAddress ? 'Cancel Edit' : 'Change Address'}
+                </button>
+              </div>
+              
+              {isEditingAddress ? (
+                <div className="grid grid-cols-1 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
                       <input 
-                        placeholder="Full Name" 
+                        placeholder="e.g. John Doe" 
                         value={shippingForm.fullName} 
                         onChange={e => setShippingForm({...shippingForm, fullName: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
-                        required
-                      />
-                      <input 
-                        placeholder="Mobile Number" 
-                        value={shippingForm.phone} 
-                        onChange={e => setShippingForm({...shippingForm, phone: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                        className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
                         required
                       />
                     </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mobile Number</label>
+                      <input 
+                        placeholder="10-digit number" 
+                        value={shippingForm.phone} 
+                        onChange={e => setShippingForm({...shippingForm, phone: e.target.value})}
+                        className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full House Address</label>
                     <textarea 
-                      placeholder="Full Address (House No, Area, Street)" 
+                      placeholder="House No, Street, Road, Area" 
                       value={shippingForm.addressLine} 
                       onChange={e => setShippingForm({...shippingForm, addressLine: e.target.value})}
                       rows={2}
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 resize-none"
+                      className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none"
                       required
                     />
-                    <div className="grid grid-cols-2 gap-3">
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Landmark</label>
                       <input 
-                        placeholder="Near / Landmark" 
+                        placeholder="Near Temple / Mall" 
                         value={shippingForm.landmark} 
                         onChange={e => setShippingForm({...shippingForm, landmark: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
-                      />
-                      <input 
-                        placeholder="Taluq" 
-                        value={shippingForm.taluq} 
-                        onChange={e => setShippingForm({...shippingForm, taluq: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                        className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Taluq / City</label>
                       <input 
-                        placeholder="State" 
+                        placeholder="City name" 
+                        value={shippingForm.taluq} 
+                        onChange={e => setShippingForm({...shippingForm, taluq: e.target.value})}
+                        className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">State</label>
+                      <input 
+                        placeholder="State name" 
                         value={shippingForm.state} 
                         onChange={e => setShippingForm({...shippingForm, state: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                        className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
                       />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pincode</label>
                       <input 
-                        placeholder="Pincode" 
+                        placeholder="6-digit PIN" 
                         value={shippingForm.pincode} 
                         onChange={e => setShippingForm({...shippingForm, pincode: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500"
+                        className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
                         required
                       />
                     </div>
                   </div>
-                ) : (
-                  currentUserData?.fullName ? (
-                    <div className="space-y-1">
-                      <p className="text-sm font-black text-gray-900 mb-1 uppercase tracking-tight">{currentUserData.fullName}</p>
-                      <p className="text-xs text-gray-600 font-bold mb-2">{currentUserData.phone}</p>
-                      <p className="text-xs text-gray-500 leading-relaxed italic">
-                        {currentUserData.address}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-red-600 py-2">
-                      <AlertCircle size={16} />
-                      <span className="text-sm font-bold">Please add shipping details</span>
-                    </div>
-                  )
-                )}
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-gray-500">
-                  <CreditCard size={16} />
-                  <span className="text-xs font-bold uppercase tracking-wider">Payment Method</span>
                 </div>
-                <div className="p-4 border-2 border-indigo-600 bg-indigo-50/50 rounded-2xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-3 bg-indigo-600 text-white rounded-bl-2xl">
-                    <CheckCircle2 size={16} />
+              ) : (
+                currentUserData?.fullName ? (
+                  <div className="flex items-start gap-4 p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-400 shadow-sm border border-gray-100">
+                      <MapPin size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <p className="text-lg font-black text-gray-900 leading-none">{currentUserData.fullName}</p>
+                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 text-[9px] font-black rounded-full uppercase tracking-tighter">Current Default</span>
+                      </div>
+                      <p className="text-sm text-gray-500 font-bold mb-3">{currentUserData.phone}</p>
+                      <div className="flex items-start gap-2 text-gray-600 leading-relaxed max-w-md">
+                        <span className="text-sm font-medium italic underline decoration-indigo-200 underline-offset-4">{currentUserData.address}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-12 bg-red-50/50 rounded-3xl border border-dashed border-red-200 text-center">
+                    <AlertCircle size={32} className="text-red-400 mb-3" />
+                    <p className="text-red-600 font-black text-sm uppercase tracking-widest leading-none">Shipping Details Missing</p>
+                    <p className="text-red-400 text-xs mt-2 font-medium">Please provide an address to proceed</p>
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Payment Section */}
+            <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                  <CreditCard size={18} />
+                </div>
+                <h3 className="font-extrabold text-xl text-gray-900 tracking-tight">Payment Method</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-6 border-2 border-indigo-600 bg-indigo-50/30 rounded-3xl relative overflow-hidden group border-opacity-100">
+                  <div className="absolute top-0 right-0 p-4 bg-indigo-600 text-white rounded-bl-3xl">
+                    <CheckCircle2 size={20} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-black text-indigo-900 uppercase tracking-tight">Cash on Delivery</span>
-                    <span className="text-[10px] text-indigo-600 font-bold uppercase mt-0.5">Pay in cash when reached</span>
+                    <span className="font-black text-indigo-900 text-lg tracking-tight uppercase">Cash on Delivery</span>
+                    <span className="text-xs text-indigo-600 font-bold uppercase mt-1 tracking-wider opacity-60">Pay when order arrives</span>
+                  </div>
+                </div>
+                
+                <div className="p-6 border-2 border-gray-100 bg-gray-50/30 rounded-3xl relative overflow-hidden opacity-40 cursor-not-allowed">
+                  <div className="flex flex-col">
+                    <span className="font-black text-gray-400 text-lg tracking-tight uppercase">Online Payment</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-wider">Coming Soon</span>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <button 
-              disabled={loading} 
-              type="submit" 
-              className="w-full mt-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 flex justify-center items-center gap-3 disabled:opacity-50 disabled:grayscale"
-            >
-              {loading ? <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div> : (
-                <>
-                  <span>Place Order Now</span>
-                  <span className="h-4 w-px bg-white/30"></span>
-                  <span>₹{discountedTotal.toLocaleString()}</span>
-                </>
-              )}
-            </button>
-            <p className="text-center text-[10px] text-gray-400 mt-4 font-medium uppercase tracking-widest">Immediate Confirmation</p>
-          </form>
+          {/* Sidebar Column */}
+          <div className="lg:col-span-4 lg:sticky lg:top-24 flex flex-col gap-6">
+            <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 p-6">
+              <h3 className="font-black text-lg text-gray-900 mb-6 uppercase tracking-tight flex items-center justify-between">
+                Order Summary
+                <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{cart.length} ITEMS</span>
+              </h3>
+              
+              <div className="flex flex-col gap-4 mb-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {cart.map((item, idx) => (
+                  <div key={`${item.product.id}-${idx}`} className="flex gap-4">
+                    <div className="w-16 h-16 bg-gray-50 rounded-2xl overflow-hidden shrink-0 border border-gray-100 relative group">
+                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                      <div className="absolute top-1 right-1 bg-black/80 text-white text-[9px] font-black px-1.5 py-0.5 rounded-lg flex items-center gap-0.5">
+                        x{item.quantity}
+                      </div>
+                    </div>
+                    <div className="flex-1 flex flex-col justify-center min-w-0">
+                      <span className="text-xs font-black text-gray-900 truncate leading-tight mb-1">{item.product.name}</span>
+                      <div className="flex items-center gap-2">
+                        {item.size && (
+                          <span className="text-[8px] bg-indigo-50 text-indigo-700 font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">
+                            SIZE: {item.size}
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold text-gray-400">₹{item.product.price.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end justify-center">
+                      <span className="font-black text-xs text-gray-900">₹{(item.product.price * item.quantity).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="h-px bg-gray-50 mb-6"></div>
+
+              {/* Coupon Section */}
+              <div className="mb-6">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Have a promo code?</p>
+                {appliedCoupon ? (
+                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                        <CheckCircle2 size={14} />
+                      </div>
+                      <span className="text-xs font-black text-emerald-800 uppercase tracking-wider">{appliedCoupon.code}</span>
+                    </div>
+                    <button 
+                      onClick={() => { setDiscount(0); setAppliedCoupon(null); setCouponCode(''); }} 
+                      className="text-[10px] font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-widest"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input 
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value)}
+                      placeholder="ENTER CODE" 
+                      className="flex-1 px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-indigo-500 focus:bg-white uppercase tracking-widest placeholder:normal-case transition-all"
+                    />
+                    <button 
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponCode}
+                      className="px-5 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all disabled:opacity-20 flex items-center justify-center"
+                    >
+                      {couponLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Apply'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 bg-gray-50/50 p-6 rounded-3xl border border-gray-100/50">
+                <div className="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <span className="opacity-60">Subtotal</span>
+                  <span className="text-gray-900">₹{cartTotal.toLocaleString()}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-xs text-emerald-600 font-bold uppercase tracking-wider">
+                    <span>Discount</span>
+                    <span>- ₹{discount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <span className="opacity-60">Shipping</span>
+                  <span className="text-emerald-500">FREE</span>
+                </div>
+                <div className="h-px bg-gray-200 mt-2 mb-1"></div>
+                <div className="flex justify-between items-end">
+                  <span className="font-black text-gray-900 uppercase text-xs tracking-widest">Grand Total</span>
+                  <span className="font-black text-3xl text-black tracking-tight">₹{discountedTotal.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <form onSubmit={handlePlaceOrder}>
+                <button 
+                  disabled={loading} 
+                  type="submit" 
+                  className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 px-6 rounded-3xl shadow-2xl shadow-indigo-100 transition-all active:scale-[0.98] flex flex-col justify-center items-center gap-1 disabled:opacity-50 group overflow-hidden relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  {loading ? (
+                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <span className="text-xl tracking-tighter leading-none">Confirm Order</span>
+                      <span className="text-[10px] font-black text-white/60 tracking-[0.2em] uppercase">Final Amount: ₹{discountedTotal.toLocaleString()}</span>
+                    </>
+                  )}
+                </button>
+              </form>
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Secure Checkout</p>
+                </div>
+                <div className="flex gap-4 opacity-30 grayscale saturate-0">
+                  <CreditCard size={16} />
+                  <ShoppingBag size={16} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
