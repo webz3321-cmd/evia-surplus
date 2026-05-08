@@ -67,12 +67,16 @@ const OrderRow = ({ order, updateStatus }: { order: any, updateStatus: any, key?
               order.status === 'Placed' ? 'bg-amber-50 text-amber-700 border-amber-200' :
               order.status === 'Dispatched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
               order.status === 'Delivered' ? 'bg-green-50 text-green-700 border-green-200' :
+              order.status === 'Return Requested' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+              order.status === 'Returned' ? 'bg-gray-100 text-gray-700 border-gray-300' :
               'bg-red-50 text-red-700 border-red-200'
             }`}
           >
             <option value="Placed">Placed</option>
             <option value="Dispatched">Dispatched</option>
             <option value="Delivered">Delivered</option>
+            <option value="Return Requested">Return Requested</option>
+            <option value="Returned">Returned</option>
             <option value="Cancelled">Cancelled</option>
           </select>
         </td>

@@ -1,14 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context';
-import { Package, Truck, CheckCircle, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Package, Truck, CheckCircle, ChevronDown, ChevronUp, Download, XCircle, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, updateDoc } from 'firebase/firestore';
 import jsPDF from 'jspdf';
+import toast from 'react-hot-toast';
 
-const OrderItem = ({ order }: { order: any, key?: any }) => {
+const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?: string }) => {
   const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
   const items = order.items || [];
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    if (!window.confirm(`Are you sure you want to ${newStatus === 'Cancelled' ? 'cancel' : 'return'} this order?`)) return;
+    
+    setLoading(true);
+    try {
+      await updateDoc(doc(db, 'orders', order.id), {
+        status: newStatus,
+        updatedAt: Date.now()
+      });
+      toast.success(`Order ${newStatus === 'Cancelled' ? 'cancelled' : 'return requested'} successfully`);
+      onUpdate();
+    } catch (err) {
+      toast.error('Failed to update order status');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const downloadPDF = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -97,9 +117,37 @@ const OrderItem = ({ order }: { order: any, key?: any }) => {
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] uppercase tracking-wider text-indigo-600 font-black">
-          {expanded ? 'Hide Details' : 'View Details'}
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+          <button 
+            onClick={() => setExpanded(!expanded)}
+            className="text-[11px] uppercase tracking-wider text-indigo-600 font-black flex items-center gap-1"
+          >
+            {expanded ? 'Hide Details' : 'View Details'}
+            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          <div className="flex gap-2">
+            {order.status === 'Placed' && (
+              <button 
+                disabled={loading}
+                onClick={(e) => { e.stopPropagation(); handleStatusUpdate('Cancelled'); }}
+                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-red-100 transition-colors disabled:opacity-50"
+              >
+                <XCircle size={14} />
+                Cancel
+              </button>
+            )}
+            {order.status === 'Delivered' && (
+              <button 
+                disabled={loading}
+                onClick={(e) => { e.stopPropagation(); handleStatusUpdate('Return Requested'); }}
+                className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                <RotateCcw size={14} />
+                Return
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -136,26 +184,33 @@ export default function OrderPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [tab, setTab] = useState<'active' | 'history'>('active');
+  const [loading, setLoading] = useState(true);
+
+  const fetchOrders = async () => {
+    if (!user) return;
+    setLoading(true);
+    const q = query(
+      collection(db, 'orders'),
+      where('userId', '==', user.id),
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    setOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
       return;
     }
-    const q = query(
-      collection(db, 'orders'),
-      where('userId', '==', user.id),
-      orderBy('createdAt', 'desc')
-    );
-    getDocs(q).then(snap => {
-      setOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    fetchOrders();
   }, [user, navigate]);
 
   if (!user) return null;
 
-  const activeOrders = orders.filter(o => ['Placed', 'Dispatched'].includes(o.status));
-  const historyOrders = orders.filter(o => ['Delivered', 'Cancelled'].includes(o.status));
+  const activeOrders = orders.filter(o => ['Placed', 'Dispatched', 'Return Requested'].includes(o.status));
+  const historyOrders = orders.filter(o => ['Delivered', 'Cancelled', 'Returned'].includes(o.status));
   
   const displayOrders = tab === 'active' ? activeOrders : historyOrders;
 
@@ -180,14 +235,18 @@ export default function OrderPage() {
       </div>
 
       <div className="pb-10">
-        {displayOrders.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center p-10">
+            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : displayOrders.length === 0 ? (
           <div className="bg-white p-6 rounded-xl border border-gray-100 text-center">
             <Package size={40} className="mx-auto text-gray-300 mb-3" />
             <h3 className="font-bold text-gray-700">No {tab} orders found.</h3>
             <p className="text-sm text-gray-500 mt-1">When you place an order, it will appear here.</p>
           </div>
         ) : (
-          displayOrders.map(order => <OrderItem key={order.id} order={order} />)
+          displayOrders.map(order => <OrderItem key={order.id} order={order} onUpdate={fetchOrders} />)
         )}
       </div>
     </div>
