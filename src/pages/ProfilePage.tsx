@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [state, setState] = useState(user?.state || '');
   const [pincode, setPincode] = useState(user?.pincode || '');
   
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {

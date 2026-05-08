@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Outlet, Navigate, NavLink, Link, useLocation } from 'react-router';
 import { AppProvider, useAppContext } from './context';
 import { useEffect, useState, useMemo } from 'react';
-import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket } from 'lucide-react';
+import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket, Sparkles } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import { db } from './lib/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -23,8 +25,16 @@ import AdminOffers from './pages/admin/AdminOffers';
 // Layout for general users
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
   const { cart } = useAppContext();
   const location = useLocation();
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'categories'), (snap) => {
+      setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
+  }, []);
 
   const hideNav = useMemo(() => {
     const pathsToHide = ['/cart', '/checkout', '/product/'];
@@ -82,8 +92,16 @@ const UserLayout = () => {
               <Link to="/profile" className="font-medium hover:text-indigo-600" onClick={() => setSidebarOpen(false)}>My Account</Link>
               <hr />
               <div className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Categories</div>
-              <Link to="/?cat=electronics" className="hover:text-indigo-500" onClick={() => setSidebarOpen(false)}>Electronics</Link>
-              <Link to="/?cat=fashion" className="hover:text-indigo-500" onClick={() => setSidebarOpen(false)}>Fashion</Link>
+              {categories.map((cat: any) => (
+                <Link 
+                  key={cat.id} 
+                  to={`/?cat=${cat.name.toLowerCase()}`} 
+                  className="hover:text-indigo-500 font-bold text-sm uppercase tracking-tight" 
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {cat.name}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
