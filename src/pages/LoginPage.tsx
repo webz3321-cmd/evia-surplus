@@ -225,6 +225,19 @@ export default function LoginPage() {
     }
   };
 
+  const apiSendOtp = async (type: 'email' | 'sms', target: string, code: string) => {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, target, code })
+    });
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.error || 'Gateway server authentication failed');
+    }
+    return await res.json();
+  };
+
   const initiateGmailOtpChallenge = async (targetEmail: string) => {
     setLoading(true);
     setShowGoogleModal(false);
@@ -234,15 +247,20 @@ export default function LoginPage() {
       setGeneratedOtp(generatedCode);
       setTimer(60);
       
-      await new Promise(resolve => setTimeout(resolve, 600));
+      const resData = await apiSendOtp('email', targetEmail.toLowerCase().trim(), generatedCode);
       
       setAuthType('gmail_otp');
       setOtpStep('verify');
       setNotificationType('gmail');
       setShowNotification(true);
-      toast.success(`Google workspace connected. Secure verification code sent to ${targetEmail}`);
+      
+      if (resData.status === 'simulated') {
+        toast.success(`[Sandbox Mode] Enter test email passcode to proceed: ${generatedCode}`, { duration: 9000, icon: '🛡️' });
+      } else {
+        toast.success(`Google workspace connected. Secure verification code sent to ${targetEmail}`);
+      }
     } catch (err: any) {
-      toast.error('Error establishing security tunnel for Gmail verification');
+      toast.error(err.message || 'Error establishing security tunnel for Gmail verification');
     } finally {
       setLoading(false);
     }
@@ -263,14 +281,20 @@ export default function LoginPage() {
       setGeneratedOtp(code);
       setTimer(60);
       
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const fullPhone = `${countryCode} ${phone.trim()}`;
+      const resData = await apiSendOtp('sms', fullPhone, code);
       
       setOtpStep('verify');
       setNotificationType('sms');
       setShowNotification(true);
-      toast.success(`EVIA OTP dispatched successfully to ${countryCode} ${phone}`);
+      
+      if (resData.status === 'simulated') {
+        toast.success(`[Sandbox Mode] Enter test mobile passcode to proceed: ${code}`, { duration: 9000, icon: '📲' });
+      } else {
+        toast.success(`EVIA OTP dispatched successfully to ${fullPhone}`);
+      }
     } catch (err: any) {
-      toast.error('Error dispatching SMS payload via secure gate.');
+      toast.error(err.message || 'Error dispatching SMS payload via secure gate.');
     } finally {
       setLoading(false);
     }
@@ -279,7 +303,8 @@ export default function LoginPage() {
   // Actions for Custom Gmail OTP (when not using Google quick button)
   const handleSendManualGmailOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
+    const targetedEmail = email.toLowerCase().trim();
+    if (!targetedEmail || !targetedEmail.includes('@')) {
       toast.error('Please write an authenticated Gmail inbox address');
       return;
     }
@@ -291,14 +316,19 @@ export default function LoginPage() {
       setGeneratedOtp(code);
       setTimer(60);
       
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const resData = await apiSendOtp('email', targetedEmail, code);
       
       setOtpStep('verify');
       setNotificationType('gmail');
       setShowNotification(true);
-      toast.success(`Encrypted security code delivered to your Gmail at ${email}`);
+      
+      if (resData.status === 'simulated') {
+        toast.success(`[Sandbox Mode] Enter test email passcode to proceed: ${code}`, { duration: 9000, icon: '✉️' });
+      } else {
+        toast.success(`Encrypted security code delivered to your Gmail at ${targetedEmail}`);
+      }
     } catch (err: any) {
-      toast.error('Gmail dispatch failed.');
+      toast.error(err.message || 'Gmail dispatch failed.');
     } finally {
       setLoading(false);
     }
@@ -918,13 +948,23 @@ export default function LoginPage() {
                           ) : (
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={async () => {
                                 const newCode = Math.floor(100000 + Math.random() * 900000).toString();
                                 setGeneratedOtp(newCode);
                                 setTimer(60);
                                 setNotificationType('sms');
                                 setShowNotification(true);
-                                toast.success('New SMS passcode dispatched from gateway.');
+                                try {
+                                  const fullPhone = `${countryCode} ${phone.trim()}`;
+                                  const resData = await apiSendOtp('sms', fullPhone, newCode);
+                                  if (resData.status === 'simulated') {
+                                    toast.success(`[Sandbox Mode] Enter test mobile passcode to proceed: ${newCode}`, { duration: 9000, icon: '📲' });
+                                  } else {
+                                    toast.success(`New SMS passcode dispatched successfully to ${fullPhone}`);
+                                  }
+                                } catch (err: any) {
+                                  toast.error('Failed to trigger SMS OTP dispatch.');
+                                }
                               }}
                               className="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex items-center justify-center gap-1 mx-auto hover:text-amber-700 transition-colors"
                             >
@@ -1070,13 +1110,23 @@ export default function LoginPage() {
                           ) : (
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={async () => {
                                 const newCode = Math.floor(100000 + Math.random() * 900000).toString();
                                 setGeneratedOtp(newCode);
                                 setTimer(60);
                                 setNotificationType('gmail');
                                 setShowNotification(true);
-                                toast.success('New Gmail access code dispatched.');
+                                try {
+                                  const targetedEmail = email.toLowerCase().trim();
+                                  const resData = await apiSendOtp('email', targetedEmail, newCode);
+                                  if (resData.status === 'simulated') {
+                                    toast.success(`[Sandbox Mode] Enter test email passcode to proceed: ${newCode}`, { duration: 9000, icon: '✉️' });
+                                  } else {
+                                    toast.success(`New encrypted access code delivered to your Gmail at ${targetedEmail}`);
+                                  }
+                                } catch (err: any) {
+                                  toast.error('Failed to trigger Gmail OTP dispatch.');
+                                }
                               }}
                               className="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex items-center justify-center gap-1 mx-auto hover:text-amber-700 transition-colors"
                             >

@@ -472,6 +472,96 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Dynamic Future Promotional Offer Banner Section */}
+      {settings?.promoActive && (
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+          <div className="relative overflow-hidden rounded-3xl bg-purple-50/20 border border-purple-150 shadow-[0_12px_40px_-15px_rgba(147,51,234,0.12)]">
+            <div className="grid grid-cols-1 md:grid-cols-12 items-center">
+              
+              {/* Promo Context Panel (Left) */}
+              <div className="p-8 sm:p-12 md:col-span-7 flex flex-col items-center md:items-start text-center md:text-left">
+                {/* Coupon badge and Discount Indicator */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mb-5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9333ea] bg-purple-100 px-3.5 py-1.5 rounded-full border border-purple-200 select-none">
+                    🎯 Limited Deployment Drop
+                  </span>
+                  {settings.promoCoupon && (
+                    <span 
+                      onClick={() => {
+                        navigator.clipboard.writeText(settings.promoCoupon);
+                        toast.success(`Coupon code "${settings.promoCoupon}" copied!`, { icon: '🎟️' });
+                      }}
+                      className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#9333ea] border border-dashed border-[#9333ea] hover:bg-[#9333ea]/10 transition-colors px-3 py-1 rounded bg-[#9333ea]/5 cursor-copy select-all"
+                      title="Click to copy coupon code"
+                    >
+                      CODE: {settings.promoCoupon}
+                    </span>
+                  )}
+                </div>
+
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-stone-900 leading-tight tracking-tight">
+                  {settings.promoTitle || "Special Archive Deployment Offer"}
+                </h2>
+
+                <p className="mt-4 text-stone-550 text-xs sm:text-sm font-light leading-relaxed max-w-lg">
+                  {settings.promoSubtitle || "Acquire select pristine utility items at up to 35% off. Sourced globally, validated for authenticity."}
+                </p>
+
+                {/* Discount highlight badge */}
+                <div className="mt-6 flex items-center gap-3">
+                  <div className="text-4xl sm:text-5xl font-black text-[#9333ea] tracking-tighter">
+                    {settings.promoDiscount || 35}% OFF
+                  </div>
+                  <div className="text-left text-[10px] sm:text-xs font-bold text-stone-400 uppercase tracking-widest leading-none">
+                    Active Catalog<br/>Exclusive Deal
+                  </div>
+                </div>
+
+                {/* Interactive Action Button to claim the offer */}
+                <div className="mt-8 flex flex-wrap gap-3.5 w-full sm:w-auto self-stretch sm:self-auto">
+                  <button 
+                    onClick={() => {
+                      if (settings.promoLink && settings.promoLink.trim() !== "" && settings.promoLink !== "/" && !settings.promoLink.startsWith('#')) {
+                        navigate(settings.promoLink);
+                      } else {
+                        const targetId = settings.promoLink?.startsWith('#') ? settings.promoLink.slice(1) : "catalog";
+                        const el = document.getElementById(targetId);
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }
+                      if (settings.promoCoupon) {
+                        navigator.clipboard.writeText(settings.promoCoupon);
+                        toast.success(`Code "${settings.promoCoupon}" copied! Use it in your order details.`, { icon: '🎟️' });
+                      }
+                    }} 
+                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-full bg-[#9333ea] px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-[#fff] hover:bg-purple-700 transition-all hover:shadow-lg hover:shadow-[#9333ea]/15 active:scale-95 cursor-pointer"
+                    style={{ minHeight: '44px' }}
+                  >
+                    <span>{settings.promoButtonText || "Claim 35% Discount"}</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Big High-Quality Image Presentation Panel (Right) */}
+              <div className="md:col-span-5 self-stretch h-64 md:h-auto min-h-[300px] relative overflow-hidden">
+                <img 
+                  src={settings.promoImage || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200"} 
+                  alt="Special Offer Promotion" 
+                  className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200";
+                  }}
+                />
+                {/* Image overlay shadow gradient for high-quality depth */}
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-stone-900/30 to-transparent"></div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Main Catalog Section */}
       <section id="catalog" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 border-t border-border">
         {/* Title and stats summary */}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Settings, Save, RotateCcw, Image as ImageIcon, Sparkles, Upload, Grid, Type, Check, Eye, X } from 'lucide-react';
+import { Settings, Save, RotateCcw, Image as ImageIcon, Sparkles, Upload, Grid, Type, Check, Eye, X, Server, Smartphone, Key, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AVAILABLE_FONTS = [
@@ -93,6 +93,17 @@ export default function AdminSettings() {
   const [heroDesc, setHeroDesc] = useState('We salvage, catalog, and grade rare menswear utility pieces, tactical gear, and cold-weather clothing built to industrial standards. Sourced globally, curated for life.');
   const [heroImage, setHeroImage] = useState('https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=900');
 
+  // Promotional Banner variables
+  const [promoActive, setPromoActive] = useState(false);
+  const [promoTitle, setPromoTitle] = useState('Special Archive Deployment Offer');
+  const [promoSubtitle, setPromoSubtitle] = useState('Acquire select pristine utility items at up to 35% off. Sourced globally, validated for authenticity.');
+  const [promoDiscount, setPromoDiscount] = useState(35);
+  const [promoCoupon, setPromoCoupon] = useState('ARCHIVE35');
+  const [promoImage, setPromoImage] = useState('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200');
+  const [promoLink, setPromoLink] = useState('');
+  const [promoButtonText, setPromoButtonText] = useState('Claim 35% Discount');
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+
   const [siteBgColor, setSiteBgColor] = useState('#faf8f5');
   const [heroBgColor, setHeroBgColor] = useState('#f6f3ed');
   const [accentColor, setAccentColor] = useState('#9f3a38');
@@ -102,6 +113,16 @@ export default function AdminSettings() {
   const [headerTracking, setHeaderTracking] = useState('-0.02em');
   const [headerUppercase, setHeaderUppercase] = useState(false);
   const [buttonRadius, setButtonRadius] = useState('9999px');
+
+  // OTP Channel Gateways
+  const [smtpHost, setSmtpHost] = useState('smtp.gmail.com');
+  const [smtpPort, setSmtpPort] = useState(465);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('"EVIA Authentic" <noreply@gmail.com>');
+  const [twilioSid, setTwilioSid] = useState('');
+  const [twilioToken, setTwilioToken] = useState('');
+  const [twilioFrom, setTwilioFrom] = useState('');
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -126,6 +147,24 @@ export default function AdminSettings() {
           if (data.heroTitle !== undefined) setHeroTitle(data.heroTitle);
           if (data.heroDesc !== undefined) setHeroDesc(data.heroDesc);
           if (data.heroImage !== undefined) setHeroImage(data.heroImage);
+
+          if (data.promoActive !== undefined) setPromoActive(data.promoActive);
+          if (data.promoTitle !== undefined) setPromoTitle(data.promoTitle);
+          if (data.promoSubtitle !== undefined) setPromoSubtitle(data.promoSubtitle);
+          if (data.promoDiscount !== undefined) setPromoDiscount(data.promoDiscount);
+          if (data.promoCoupon !== undefined) setPromoCoupon(data.promoCoupon);
+          if (data.promoImage !== undefined) setPromoImage(data.promoImage);
+          if (data.promoLink !== undefined) setPromoLink(data.promoLink);
+          if (data.promoButtonText !== undefined) setPromoButtonText(data.promoButtonText);
+
+          if (data.smtpHost !== undefined) setSmtpHost(data.smtpHost);
+          if (data.smtpPort !== undefined) setSmtpPort(data.smtpPort);
+          if (data.smtpUser !== undefined) setSmtpUser(data.smtpUser);
+          if (data.smtpPass !== undefined) setSmtpPass(data.smtpPass);
+          if (data.smtpFrom !== undefined) setSmtpFrom(data.smtpFrom);
+          if (data.twilioSid !== undefined) setTwilioSid(data.twilioSid);
+          if (data.twilioToken !== undefined) setTwilioToken(data.twilioToken);
+          if (data.twilioFrom !== undefined) setTwilioFrom(data.twilioFrom);
         }
       } catch (err) {
         console.error('Error reading settings doc:', err);
@@ -172,6 +211,22 @@ export default function AdminSettings() {
         heroTitle: heroTitle.trim(),
         heroDesc: heroDesc.trim(),
         heroImage: heroImage,
+        promoActive,
+        promoTitle: promoTitle.trim(),
+        promoSubtitle: promoSubtitle.trim(),
+        promoDiscount: Number(promoDiscount) || 35,
+        promoCoupon: promoCoupon.trim(),
+        promoImage: promoImage.trim(),
+        promoLink: promoLink.trim(),
+        promoButtonText: promoButtonText.trim(),
+        smtpHost: smtpHost.trim(),
+        smtpPort: Number(smtpPort) || 465,
+        smtpUser: smtpUser.trim(),
+        smtpPass: smtpPass.trim(),
+        smtpFrom: smtpFrom.trim(),
+        twilioSid: twilioSid.trim(),
+        twilioToken: twilioToken.trim(),
+        twilioFrom: twilioFrom.trim(),
         updatedAt: Date.now()
       };
       await setDoc(doc(db, 'settings', 'global'), payload);
@@ -202,7 +257,15 @@ export default function AdminSettings() {
     setHeroTag('Sourced & Authenticated · 2026');
     setHeroTitle('Original vintage military surplus.');
     setHeroDesc('We salvage, catalog, and grade rare menswear utility pieces, tactical gear, and cold-weather clothing built to industrial standards. Sourced globally, curated for life.');
-    setHeroImage('https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=900');
+    setHeroImage('https://images.unsplash.com/photo-1617137968427-85924c805a22?auto=format&fit=crop&q=80&w=900');
+    setPromoActive(false);
+    setPromoTitle('Special Archive Deployment Offer');
+    setPromoSubtitle('Acquire select pristine utility items at up to 35% off. Sourced globally, validated for authenticity.');
+    setPromoDiscount(35);
+    setPromoCoupon('ARCHIVE35');
+    setPromoImage('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200');
+    setPromoLink('');
+    setPromoButtonText('Claim 35% Discount');
 
     setSubmitting(true);
     try {
@@ -222,6 +285,14 @@ export default function AdminSettings() {
         heroTitle: 'Original vintage military surplus.',
         heroDesc: 'We salvage, catalog, and grade rare menswear utility pieces, tactical gear, and cold-weather clothing built to industrial standards. Sourced globally, curated for life.',
         heroImage: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=900',
+        promoActive: false,
+        promoTitle: 'Special Archive Deployment Offer',
+        promoSubtitle: 'Acquire select pristine utility items at up to 35% off. Sourced globally, validated for authenticity.',
+        promoDiscount: 35,
+        promoCoupon: 'ARCHIVE35',
+        promoImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200',
+        promoLink: '',
+        promoButtonText: 'Claim 35% Discount',
         updatedAt: Date.now()
       });
       toast.success('Restored Evia 2026 surplus originals!');
@@ -453,6 +524,181 @@ export default function AdminSettings() {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Promotional Banner Configurations Section */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="text-indigo-600 animate-pulse" size={16} />
+                  <h2 className="text-sm font-extrabold uppercase tracking-widest text-[#9333ea]">Promotional Offer Banner</h2>
+                </div>
+                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md ${promoActive ? "bg-purple-100 text-[#9333ea]" : "bg-stone-100 text-stone-500"}`}>
+                  {promoActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Add an eye-catching big promotional offer banner (like up to 35% offers) above the main catalog. Complete with configurable big banner images, customized titles, and coupon codes.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-stone-50 rounded-xl border border-stone-100">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-stone-700">Display Promo Banner on storefront?</span>
+                  <span className="text-[11px] text-stone-400 mt-0.5 font-medium">Turns on/off the promotional advertising area.</span>
+                </div>
+                
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={promoActive} 
+                    onChange={e => setPromoActive(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#9333ea]"></div>
+                </label>
+              </div>
+
+              {/* Edit Banner Button (Launches beautiful custom builder Modal) */}
+              <button
+                type="button"
+                onClick={() => setIsPromoModalOpen(true)}
+                className="w-full py-3 bg-stone-900 border border-stone-950 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer hover:bg-stone-850 shadow-sm active:scale-95"
+              >
+                <ImageIcon size={14} />
+                Configure Banner Section (with Upload Space)
+              </button>
+            </div>
+
+            {/* Official SMTP & SMS OTP Gateways Card */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Server className="text-amber-500" size={16} />
+                  <h2 className="text-sm font-extrabold uppercase tracking-widest text-[#9f3a38]">Official OTP Authentication Gateways</h2>
+                </div>
+                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md ${(smtpUser && smtpPass) ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                  {(smtpUser && smtpPass) ? "SMTP Configured" : "SMTP Client Fallback"}
+                </span>
+              </div>
+
+              <p className="text-xs text-stone-550 leading-relaxed font-light">
+                Configure standard SMTP credentials and Twilio SMS gateways to trigger real, official OTP dispatches to user inboxes and mobile devices. Without credentials, a secure simulated code is displayed.
+              </p>
+
+              {/* SMTP Settings Block */}
+              <div className="p-4 bg-stone-50/70 border border-stone-150 rounded-xl space-y-4 text-left">
+                <h3 className="text-xs font-black text-stone-800 uppercase tracking-wider flex items-center gap-2">
+                  <Mail size={13} className="text-stone-500" />
+                  SMTP Mail Gateway settings
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+                  <div className="col-span-1 sm:col-span-8">
+                    <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">SMTP Outgoing Host</label>
+                    <input 
+                      type="text" 
+                      value={smtpHost} 
+                      onChange={e => setSmtpHost(e.target.value)} 
+                      placeholder="e.g. smtp.gmail.com" 
+                      className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                    />
+                  </div>
+                  <div className="col-span-1 sm:col-span-4">
+                    <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">SMTP Port</label>
+                    <input 
+                      type="number" 
+                      value={smtpPort} 
+                      onChange={e => setSmtpPort(Number(e.target.value) || 465)} 
+                      placeholder="e.g. 465 or 587" 
+                      className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">SMTP Username / Email</label>
+                    <input 
+                      type="email" 
+                      value={smtpUser} 
+                      onChange={e => setSmtpUser(e.target.value)} 
+                      placeholder="e.g. secure-evia-ops@gmail.com" 
+                      className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">SMTP Password / App Password</label>
+                    <input 
+                      type="password" 
+                      value={smtpPass} 
+                      onChange={e => setSmtpPass(e.target.value)} 
+                      placeholder="Enter SMTP App Password" 
+                      className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">SMTP Verified From Email Header</label>
+                  <input 
+                    type="text" 
+                    value={smtpFrom} 
+                    onChange={e => setSmtpFrom(e.target.value)} 
+                    placeholder='"EVIA Authentic Items" <noreply@gmail.com>' 
+                    className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                  />
+                  <span className="block text-[9px] text-stone-400 mt-1">If using Gmail SMTP, this must match or encompass your Gmail SMTP Username for official authenticated delivery.</span>
+                </div>
+              </div>
+
+              {/* Twilio SMS Panel */}
+              <div className="p-4 bg-stone-50/70 border border-stone-150 rounded-xl space-y-4 text-left">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black text-stone-800 uppercase tracking-wider flex items-center gap-2">
+                    <Smartphone size={13} className="text-stone-500" />
+                    Twilio SMS API Gateway settings
+                  </h3>
+                  <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-md ${(twilioSid && twilioToken) ? "bg-emerald-100 text-emerald-700" : "bg-stone-100 text-stone-500"}`}>
+                    {(twilioSid && twilioToken) ? "Twilio Configured" : "Simulated Gateway"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">Twilio Account SID</label>
+                    <input 
+                      type="text" 
+                      value={twilioSid} 
+                      onChange={e => setTwilioSid(e.target.value)} 
+                      placeholder="e.g. ACxxxxxxxxxxxxxxxx" 
+                      className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">Twilio Auth Token</label>
+                    <input 
+                      type="password" 
+                      value={twilioToken} 
+                      onChange={e => setTwilioToken(e.target.value)} 
+                      placeholder="Twilio secret token" 
+                      className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-550 uppercase mb-1">Twilio Sender Phone Number Or SID</label>
+                  <input 
+                    type="text" 
+                    value={twilioFrom} 
+                    onChange={e => setTwilioFrom(e.target.value)} 
+                    placeholder="e.g. +18146592233" 
+                    className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs font-semibold focus:border-[#9f3a38] outline-none" 
+                  />
+                  <span className="block text-[9px] text-stone-400 mt-1">Include international plus sign prefix for reliable routing.</span>
                 </div>
               </div>
             </div>
@@ -824,6 +1070,247 @@ export default function AdminSettings() {
         </div>
 
       </div>
+
+      {/* Promotional Banner Builder Custom Modal (Ok That Type) */}
+      {isPromoModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+          {/* Backdrop overlay */}
+          <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-md transition-opacity" onClick={() => setIsPromoModalOpen(false)}></div>
+
+          {/* Modal layout container */}
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-6">
+            <div className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full max-w-4xl border border-stone-200">
+              
+              {/* Header */}
+              <div className="bg-stone-50 border-b border-stone-100 p-5 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full bg-purple-50 p-2 text-[#9333ea]">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#9333ea]">Storefront Promo Banner Builder</h3>
+                    <p className="text-[11px] text-stone-500 font-medium">Build a beautiful dynamic 35% offer banner for top of products catalog</p>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setIsPromoModalOpen(false)}
+                  className="rounded-lg p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer outline-none"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Body block (Dual pane: Left form + Right Live Preview) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12">
+                {/* Form parameters partition */}
+                <div className="lg:col-span-7 p-6 border-b lg:border-b-0 lg:border-r border-stone-100 max-h-[70vh] overflow-y-auto">
+                  <div className="flex flex-col gap-5">
+                    
+                    {/* Action toggler state */}
+                    <div className="flex items-center justify-between p-3.5 bg-purple-50/50 rounded-xl border border-purple-100">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-[#9333ea]">Activate Section On Storefront</span>
+                        <span className="text-[10px] text-purple-600 mt-0.5">Toggle live status instantly</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={promoActive} 
+                          onChange={e => setPromoActive(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#9333ea]"></div>
+                      </label>
+                    </div>
+
+                    {/* Promo Section Title */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Promotion Section Header</label>
+                      <input 
+                        type="text" 
+                        value={promoTitle} 
+                        onChange={e => setPromoTitle(e.target.value)} 
+                        placeholder="E.g., Special Archive Deployment Offer"
+                        className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold text-stone-800 focus:border-purple-500 outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* Subtitle */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Description & details</label>
+                      <textarea 
+                        value={promoSubtitle} 
+                        onChange={e => setPromoSubtitle(e.target.value)} 
+                        rows={2}
+                        placeholder="Explain the offer, highlight vintage gear, or give terms..."
+                        className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-700 focus:border-purple-500 outline-none transition-colors resize-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Percent Slider */}
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider">Discount Percent</label>
+                          <span className="text-xs font-black text-[#9333ea]">{promoDiscount}% OFF</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="5" 
+                          max="95" 
+                          step="5"
+                          value={promoDiscount} 
+                          onChange={e => setPromoDiscount(Number(e.target.value))} 
+                          className="w-full h-1.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-[#9333ea]"
+                        />
+                      </div>
+
+                      {/* Coupon Code input */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Coupon Promo Code</label>
+                        <input 
+                          type="text" 
+                          value={promoCoupon} 
+                          onChange={e => setPromoCoupon(e.target.value.toUpperCase().replace(/\s/g, ''))} 
+                          placeholder="E.g., ARCHIVE35"
+                          className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono font-bold text-stone-800 tracking-wider focus:border-purple-500 outline-none uppercase"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Trigger button label */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Action Button text</label>
+                        <input 
+                          type="text" 
+                          value={promoButtonText} 
+                          onChange={e => setPromoButtonText(e.target.value)} 
+                          placeholder="Claim Discount"
+                          className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-800 focus:border-purple-500 outline-none transition-colors"
+                        />
+                      </div>
+
+                      {/* Target hyper-link */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Button Link Destination</label>
+                        <input 
+                          type="text" 
+                          value={promoLink} 
+                          onChange={e => setPromoLink(e.target.value)} 
+                          placeholder="Default is #catalog to scroll down"
+                          className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-700 focus:border-purple-500 outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Big Promotional Banner Image input place */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1">Banner image asset URL / Upload path</label>
+                      <input 
+                        type="url" 
+                        value={promoImage} 
+                        onChange={e => setPromoImage(e.target.value)} 
+                        placeholder="E.g., https://images.unsplash.com/photo-..." 
+                        className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium outline-none focus:border-purple-500 transition-colors"
+                      />
+                      <p className="text-[10px] text-stone-400 mt-1 leading-normal">
+                        Input any custom image URL above or click to select from our professional curated layouts below:
+                      </p>
+
+                      {/* Professional Unsplash presets to offer instant high-fidelity banners */}
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        {[
+                          { name: 'Oatmeal Shop', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200' },
+                          { name: 'Depot Warehouse', url: 'https://images.unsplash.com/photo-1558441719-ff34b0524a24?auto=format&fit=crop&q=80&w=1200' },
+                          { name: 'Vintage Suits', url: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200' }
+                        ].map((item) => (
+                          <button
+                            key={item.name}
+                            type="button"
+                            onClick={() => {
+                              setPromoImage(item.url);
+                              toast.success(`Preset image "${item.name}" set!`);
+                            }}
+                            className={`p-1 rounded-xl border relative text-left overflow-hidden transition-all group hover:scale-98 cursor-pointer ${promoImage === item.url ? 'border-[#9333ea] ring-2 ring-purple-100' : 'border-stone-200'}`}
+                          >
+                            <div className="aspect-[16/9] w-full rounded-md overflow-hidden bg-stone-100">
+                              <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
+                            </div>
+                            <span className="block text-[9px] mt-1 font-bold text-stone-600 px-0.5 truncate">{item.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Right Live Preview Column */}
+                <div className="lg:col-span-5 p-6 bg-stone-50/50 flex flex-col justify-between max-h-[70vh] overflow-y-auto">
+                  <div>
+                    <h4 className="text-[11px] font-black uppercase tracking-wider text-stone-400 mb-4 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                      Real-time Banner Preview
+                    </h4>
+
+                    {/* Standard banner rendering */}
+                    <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-md flex flex-col">
+                      <div className="aspect-[16/10] bg-stone-100 relative overflow-hidden flex items-center justify-center">
+                        <img 
+                          src={promoImage || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200"} 
+                          alt="Banner Preview" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200";
+                          }}
+                        />
+                        {/* Elegant overlay badge */}
+                        <div className="absolute top-3 left-3 bg-[#9333ea] text-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-md">
+                          {promoDiscount}% OFF
+                        </div>
+                      </div>
+
+                      {/* Text Section */}
+                      <div className="p-4 text-left">
+                        <span className="text-[8px] font-bold text-purple-600 uppercase tracking-widest block mb-1">Coupon code: {promoCoupon || 'NONE'}</span>
+                        <h4 className="text-sm font-bold text-stone-900 leading-tight line-clamp-1">{promoTitle || "No Title Specified"}</h4>
+                        <p className="text-[10px] text-stone-500 font-medium leading-relaxed mt-1 line-clamp-2">{promoSubtitle || "Include customized details about your active sales campaign."}</p>
+                        
+                        <button 
+                          disabled
+                          className="mt-3.5 w-full py-2 bg-stone-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest cursor-not-allowed"
+                        >
+                          {promoButtonText || "Shop Promo"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-stone-150 flex flex-col gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPromoModalOpen(false);
+                        toast.success('Configuration captured locally! Click "Synchronize Settings" below to publish live.');
+                      }}
+                      className="w-full py-3 bg-[#9333ea] hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                    >
+                      <Check size={14} />
+                      Save Parameters
+                    </button>
+                    <p className="text-[10px] text-stone-400 font-medium text-center leading-normal px-2">
+                       Make sure to click the green <span className="font-bold text-stone-600">"Synchronize Settings"</span> button afterwards to commit your finalized configuration to the persistent ledger.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

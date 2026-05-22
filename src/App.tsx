@@ -28,7 +28,7 @@ const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
-  const { cart } = useAppContext();
+  const { cart, user } = useAppContext();
   const location = useLocation();
 
   useEffect(() => {
@@ -91,32 +91,48 @@ const UserLayout = () => {
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <Link 
               to="/" 
               aria-label="Search" 
-              className="rounded-full p-2 transition-colors hover:bg-secondary text-foreground"
+              className="rounded-full p-2 transition-colors hover:bg-secondary text-foreground flex items-center justify-center"
             >
               <Search className="h-[18px] w-[18px]" />
             </Link>
             
-            <Link 
-              to="/profile" 
-              aria-label="Account" 
-              className="rounded-full p-2 transition-colors hover:bg-secondary text-foreground"
-            >
-              <UserIcon className="h-[18px] w-[18px]" />
-            </Link>
+            {user ? (
+              <Link 
+                to="/profile" 
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-background/50 hover:border-foreground/40"
+              >
+                <UserIcon className="h-4 w-4 text-accent" />
+                <span className="truncate max-w-[70px] sm:max-w-[120px]">
+                  {user.name ? `${user.name.split(' ')[0]}` : 'Profile'}
+                </span>
+              </Link>
+            ) : (
+              <Link 
+                to="/login" 
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-background/50 hover:border-foreground/40"
+              >
+                <UserIcon className="h-4 w-4" />
+                <span>Login</span>
+              </Link>
+            )}
             
             <Link 
               to="/cart" 
-              aria-label="Cart" 
-              className="relative rounded-full p-2 transition-colors hover:bg-secondary text-foreground decoration-transparent"
+              className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-accent/5 hover:border-foreground/40"
             >
-              <ShoppingBag className="h-[18px] w-[18px]" />
-              {cart.length > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-black text-accent-foreground leading-none">
+              <ShoppingBag className="h-4 w-4 text-accent" />
+              <span>Cart</span>
+              {cart.length > 0 ? (
+                <span className="grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[9px] font-black text-accent-foreground leading-none animate-bounce">
                   {cart.length}
+                </span>
+              ) : (
+                <span className="grid h-4 min-w-4 place-items-center rounded-full bg-muted/20 px-1 text-[9px] font-black text-muted-foreground leading-none">
+                  0
                 </span>
               )}
             </Link>
