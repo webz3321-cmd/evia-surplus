@@ -31,86 +31,193 @@ const UserLayout = () => {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'categories'), (snap) => {
-      setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
     return () => unsub();
   }, []);
 
-  const hideNav = useMemo(() => {
-    const pathsToHide = ['/cart', '/checkout', '/product/'];
-    return pathsToHide.some(path => location.pathname.startsWith(path));
-  }, [location.pathname]);
-  
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden md:max-w-md md:mx-auto md:border-x md:border-gray-200 md:shadow-xl md:relative relative">
-      {/* Header */}
-      <header className="bg-white px-4 py-3 sticky top-0 z-30 shadow-sm flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="p-1"><Menu size={24} /></button>
-            <h1 className="text-xl font-black tracking-tighter text-indigo-600">EVIA</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <Search size={20} className="text-gray-600" />
-          </div>
-        </div>
-
-        {/* Global Navigation in Header */}
-        {!hideNav && (
-          <nav className="flex justify-around py-1 border-t border-gray-50">
-            <NavLink to="/" className={({isActive}) => `flex justify-center flex-col items-center gap-0.5 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
-              <Home size={18} />
-              <span className="text-[9px] font-bold uppercase tracking-wider">Home</span>
-            </NavLink>
-            <NavLink to="/cart" className={({isActive}) => `flex justify-center flex-col items-center gap-0.5 transition-colors relative ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
-              <div className="relative">
-                <ShoppingCart size={18} />
-                {cart.length > 0 && <div className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[8px] font-black">{cart.length}</div>}
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-wider">Cart</span>
-            </NavLink>
-            <NavLink to="/profile" className={({isActive}) => `flex justify-center flex-col items-center gap-0.5 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}>
-              <UserIcon size={18} />
-              <span className="text-[9px] font-bold uppercase tracking-wider">Profile</span>
-            </NavLink>
-          </nav>
-        )}
-      </header>
-
-      {/* Sidebar */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)}></div>
-          <div className="relative w-64 bg-white h-full shadow-lg flex flex-col">
-            <div className="p-4 bg-gray-50 flex items-center justify-between border-b">
-              <h2 className="font-bold text-lg">Menu</h2>
-              <button onClick={() => setSidebarOpen(false)}><X size={24} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 text-gray-700">
-              <Link to="/" className="font-medium hover:text-indigo-600" onClick={() => setSidebarOpen(false)}>Home</Link>
-              <Link to="/order" className="font-medium hover:text-indigo-600" onClick={() => setSidebarOpen(false)}>My Orders</Link>
-              <Link to="/profile" className="font-medium hover:text-indigo-600" onClick={() => setSidebarOpen(false)}>My Account</Link>
-              <hr />
-              <div className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Categories</div>
-              {categories.map((cat: any) => (
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      {/* Editorial Header */}
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+          <div className="flex items-center gap-4 md:gap-10">
+            {/* Mobile Menu trigger */}
+            <button 
+              onClick={() => setSidebarOpen(true)} 
+              className="md:hidden rounded-full p-2 hover:bg-secondary transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+            
+            <Link to="/" className="font-display text-2xl tracking-tight text-foreground hover:opacity-90 transition-opacity">
+              evia<span className="text-accent">.</span>
+            </Link>
+            
+            {/* Desktop Navigation */}
+            <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
+              <Link to="/" className="transition-colors hover:text-foreground">Shop all</Link>
+              {categories.slice(0, 4).map((cat) => (
                 <Link 
                   key={cat.id} 
-                  to={`/?cat=${cat.name.toLowerCase()}`} 
-                  className="hover:text-indigo-500 font-bold text-sm uppercase tracking-tight" 
-                  onClick={() => setSidebarOpen(false)}
+                  to={`/?cat=${cat.name}`} 
+                  className="transition-colors hover:text-foreground uppercase tracking-wider text-[11px]"
                 >
                   {cat.name}
                 </Link>
               ))}
+            </nav>
+          </div>
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-1">
+            <Link 
+              to="/" 
+              aria-label="Search" 
+              className="rounded-full p-2 transition-colors hover:bg-secondary text-foreground"
+            >
+              <Search className="h-[18px] w-[18px]" />
+            </Link>
+            
+            <Link 
+              to="/profile" 
+              aria-label="Account" 
+              className="rounded-full p-2 transition-colors hover:bg-secondary text-foreground"
+            >
+              <UserIcon className="h-[18px] w-[18px]" />
+            </Link>
+            
+            <Link 
+              to="/cart" 
+              aria-label="Cart" 
+              className="relative rounded-full p-2 transition-colors hover:bg-secondary text-foreground decoration-transparent"
+            >
+              <ShoppingBag className="h-[18px] w-[18px]" />
+              {cart.length > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-black text-accent-foreground leading-none">
+                  {cart.length}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Styled Side Drawer Card */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-all" 
+            onClick={() => setSidebarOpen(false)}
+          ></div>
+          <div className="relative w-80 bg-background h-full shadow-2xl flex flex-col border-r border-border animate-in slide-in-from-left duration-300">
+            <div className="p-5 border-b border-border flex items-center justify-between">
+              <Link to="/" className="font-display text-2xl tracking-tight" onClick={() => setSidebarOpen(false)}>
+                evia<span className="text-accent">.</span>
+              </Link>
+              <button 
+                onClick={() => setSidebarOpen(false)}
+                className="rounded-full p-1.5 hover:bg-secondary text-foreground transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 text-foreground">
+              <div className="flex flex-col gap-3">
+                <Link to="/" className="font-display text-xl text-foreground hover:text-accent transition-colors" onClick={() => setSidebarOpen(false)}>Home / Shop All</Link>
+                <Link to="/order" className="font-display text-xl text-foreground hover:text-accent transition-colors" onClick={() => setSidebarOpen(false)}>My Orders</Link>
+                <Link to="/profile" className="font-display text-xl text-foreground hover:text-accent transition-colors" onClick={() => setSidebarOpen(false)}>My Account</Link>
+              </div>
+              
+              <div className="h-[1px] bg-border my-2"></div>
+              
+              <div className="flex flex-col gap-4">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.22em]">Explore Categories</span>
+                <div className="flex flex-col gap-3">
+                  {categories.map((cat: any) => (
+                    <Link 
+                      key={cat.id} 
+                      to={`/?cat=${cat.name}`} 
+                      className="text-sm font-medium text-foreground hover:text-accent transition-colors capitalize" 
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      {cat.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Widescreen Content Area */}
       <main className="flex-1">
         <Outlet />
       </main>
+
+      {/* Premium Site Footer */}
+      <footer className="border-t border-border bg-surface mt-auto">
+        <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-4">
+          <div>
+            <Link to="/" className="font-display text-2xl tracking-tight text-foreground">
+              evia<span className="text-accent">.</span>
+            </Link>
+            <p className="mt-3 max-w-xs text-sm text-muted-foreground leading-relaxed">
+              Considered essentials, made in small batches with materials chosen to last.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">Explore Store</h4>
+            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/" className="transition-colors hover:text-foreground">Shop All</Link></li>
+              {categories.slice(0, 3).map((cat) => (
+                <li key={cat.id}>
+                  <Link to={`/?cat=${cat.name}`} className="transition-colors hover:text-foreground capitalize">{cat.name}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">Support</h4>
+            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li><a href="#" className="transition-colors hover:text-foreground">Carbon Neutral Shipping</a></li>
+              <li><a href="#" className="transition-colors hover:text-foreground">30-day Free Returns</a></li>
+              <li><a href="#" className="transition-colors hover:text-foreground">Lifetime Support & Repair</a></li>
+              <li><a href="#" className="transition-colors hover:text-foreground">Contact Team</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">Letters from the studio</h4>
+            <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+              New releases, restocks, and studio stories. No spam or noise.
+            </p>
+            <form className="mt-4 flex max-w-md gap-2" onSubmit={(e) => { e.preventDefault(); alert("Subscribed!"); }}>
+              <input 
+                type="email" 
+                required 
+                placeholder="you@example.com"
+                className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-xs outline-none focus:border-foreground transition-all" 
+              />
+              <button className="rounded-full bg-primary px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-primary-foreground transition-opacity hover:opacity-90">
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <div className="border-t border-border">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-[10px] uppercase tracking-wider text-muted-foreground md:flex-row">
+            <p>© {new Date().getFullYear()} Evia Studio. All rights reserved.</p>
+            <p>Carbon-neutral delivery worldwide · easy returns</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
