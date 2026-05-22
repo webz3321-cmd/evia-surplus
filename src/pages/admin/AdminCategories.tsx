@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Image as ImageIcon, X } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
@@ -12,7 +12,8 @@ export default function AdminCategories() {
   const [editId, setEditId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [image, setImage] = useState('');
-  
+  const [isMoving, setIsMoving] = useState(false);
+
   useEffect(() => {
     setLoading(true);
     const unsub = onSnapshot(collection(db, 'categories'), (snap) => {
@@ -31,6 +32,7 @@ export default function AdminCategories() {
     setEditId(null);
     setName('');
     setImage('');
+    setIsMoving(false);
     setShowModal(true);
   };
 
@@ -38,6 +40,7 @@ export default function AdminCategories() {
     setEditId(cat.id);
     setName(cat.name);
     setImage(cat.image);
+    setIsMoving(cat.isMoving || false);
     setShowModal(true);
   };
 
@@ -61,6 +64,7 @@ export default function AdminCategories() {
       const categoryData = { 
         name: name.trim(), 
         image: image.trim(),
+        isMoving: isMoving,
         updatedAt: Date.now()
       };
 
@@ -111,7 +115,16 @@ export default function AdminCategories() {
                       <img src={cat.image} className="w-full h-full object-cover" alt="cat" />
                     </div>
                   </td>
-                  <td className="p-4 font-bold text-gray-800">{cat.name}</td>
+                  <td className="p-4 font-bold text-gray-800">
+                    <div className="flex flex-col gap-1">
+                      <span className="capitalize">{cat.name}</span>
+                      {cat.isMoving && (
+                        <span className="inline-flex self-start text-[9px] bg-purple-100 text-purple-700 font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                          ✨ Moving Campaign
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-4 text-right">
                     <button onClick={() => openEditModal(cat)} className="p-2 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors"><Edit2 size={18} /></button>
                     <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-red-600 rounded-lg transition-colors"><Trash2 size={18} /></button>
@@ -133,8 +146,49 @@ export default function AdminCategories() {
                 <input required value={name} onChange={e=>setName(e.target.value)} type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Image URL</label>
-                <input required value={image} onChange={e=>setImage(e.target.value)} type="url" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" />
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category Image URL</label>
+                <div className="flex flex-col gap-3">
+                  <input 
+                    required 
+                    value={image} 
+                    onChange={e=>setImage(e.target.value)} 
+                    type="url" 
+                    placeholder="E.g. https://images.unsplash.com/photo-..." 
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors text-sm" 
+                  />
+                  <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                    Please use an external secure image URL (e.g. from Unsplash or Pexels) to optimize Firestore database performance.
+                  </p>
+                  {image && (
+                    <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm mt-1 group shrink-0">
+                      <img src={image} alt="preview" className="w-full h-full object-cover" onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=300";
+                      }} />
+                      <button 
+                        type="button" 
+                        onClick={() => setImage('')} 
+                        className="absolute top-1.5 right-1.5 p-1 bg-black/70 hover:bg-black/90 text-white rounded-full transition-colors"
+                        title="Remove image"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-purple-50/60 rounded-xl border border-purple-100 mt-2 select-none">
+                <input 
+                  id="category-isMoving"
+                  type="checkbox" 
+                  checked={isMoving} 
+                  onChange={e => setIsMoving(e.target.checked)} 
+                  className="w-4.5 h-4.5 mt-0.5 text-purple-600 border-purple-300 rounded focus:ring-purple-500 accent-[#9333ea] cursor-pointer"
+                />
+                <label htmlFor="category-isMoving" className="flex flex-col cursor-pointer">
+                  <span className="text-xs font-bold text-stone-800">Show in Moving Marquee Campaign</span>
+                  <span className="text-[10px] text-stone-500 font-medium mt-0.5">If enabled, this category will slide in the Meesho-style infinite moving banner on the Home Page.</span>
+                </label>
               </div>
               <div className="flex gap-3 mt-4">
                 <button type="button" disabled={submitting} onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50">Cancel</button>

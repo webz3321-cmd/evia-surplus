@@ -190,12 +190,17 @@ export default function ProductPage() {
               {product.productType === 'rent' ? 'Seasonal rental edition · hand-washed and ironed carefully before shipping.' : 'Considered essential apparel · crafted with organic, long-lasting fabrics.'}
             </p>
 
-            <div className="mt-6 flex items-baseline gap-3 border-b border-border pb-6">
-              <span className="text-2xl font-semibold text-foreground">₹{product.price.toLocaleString()}</span>
+            <div className="mt-6 flex items-center gap-3 border-b border-border pb-6 flex-wrap">
+              <span className="text-3xl font-extrabold text-stone-950">₹{product.price.toLocaleString()}</span>
               {product.price > 100 && (
-                <span className="text-sm text-muted-foreground line-through">
-                  ₹{(product.price * 1.3).toLocaleString()}
-                </span>
+                <>
+                  <span className="text-base text-stone-400 line-through">
+                    ₹{Math.round(product.price * 1.35).toLocaleString()}
+                  </span>
+                  <span className="bg-emerald-50 text-emerald-700 font-extrabold text-xs px-2.5 py-1 rounded-full whitespace-nowrap">
+                    25% Off
+                  </span>
+                </>
               )}
             </div>
 

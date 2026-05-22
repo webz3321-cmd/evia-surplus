@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket, Sparkles } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { db } from './lib/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc } from 'firebase/firestore';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -21,19 +21,31 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminOffers from './pages/admin/AdminOffers';
+import AdminSettings, { AVAILABLE_FONTS } from './pages/admin/AdminSettings';
 
 // Layout for general users
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const { cart } = useAppContext();
   const location = useLocation();
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'categories'), (snap) => {
+    const unsubCats = onSnapshot(collection(db, 'categories'), (snap) => {
       setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
-    return () => unsub();
+    
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
+      if (snap.exists()) {
+        setSettings(snap.data());
+      }
+    });
+
+    return () => {
+      unsubCats();
+      unsubSettings();
+    };
   }, []);
 
   return (
@@ -51,8 +63,16 @@ const UserLayout = () => {
               <Menu size={20} />
             </button>
             
-            <Link to="/" className="font-display text-2xl tracking-tight text-foreground hover:opacity-90 transition-opacity">
-              evia<span className="text-accent">.</span>
+            <Link to="/" className="font-display text-2xl tracking-tight text-foreground hover:opacity-90 transition-opacity flex items-center gap-3">
+              {settings?.logoImage ? (
+                <img src={settings.logoImage} alt="logo" className="h-12 w-12 rounded-full object-cover shrink-0 border border-border shadow-xs" />
+              ) : null}
+              {(!settings?.logoImage || settings?.showTextWithImage) && (
+                <span>
+                  {settings?.logoText || 'evia surplus'}
+                  <span className="text-accent">/</span>
+                </span>
+              )}
             </Link>
             
             {/* Desktop Navigation */}
@@ -113,8 +133,16 @@ const UserLayout = () => {
           ></div>
           <div className="relative w-80 bg-background h-full shadow-2xl flex flex-col border-r border-border animate-in slide-in-from-left duration-300">
             <div className="p-5 border-b border-border flex items-center justify-between">
-              <Link to="/" className="font-display text-2xl tracking-tight" onClick={() => setSidebarOpen(false)}>
-                evia<span className="text-accent">.</span>
+              <Link to="/" className="font-display text-2xl tracking-tight flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
+                {settings?.logoImage ? (
+                  <img src={settings.logoImage} alt="logo" className="h-12 w-12 rounded-full object-cover shrink-0 border border-border shadow-xs" />
+                ) : null}
+                {(!settings?.logoImage || settings?.showTextWithImage) && (
+                  <span>
+                    {settings?.logoText || 'evia surplus'}
+                    <span className="text-accent">/</span>
+                  </span>
+                )}
               </Link>
               <button 
                 onClick={() => setSidebarOpen(false)}
@@ -162,11 +190,19 @@ const UserLayout = () => {
       <footer className="border-t border-border bg-surface mt-auto">
         <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-4">
           <div>
-            <Link to="/" className="font-display text-2xl tracking-tight text-foreground">
-              evia<span className="text-accent">.</span>
+            <Link to="/" className="font-display text-2xl tracking-tight text-foreground flex items-center gap-3">
+              {settings?.logoImage ? (
+                <img src={settings.logoImage} alt="logo" className="h-12 w-12 rounded-full object-cover shrink-0 border border-border shadow-xs" />
+              ) : null}
+              {(!settings?.logoImage || settings?.showTextWithImage) && (
+                <span>
+                  {settings?.logoText || 'evia surplus'}
+                  <span className="text-accent">/</span>
+                </span>
+              )}
             </Link>
             <p className="mt-3 max-w-xs text-sm text-muted-foreground leading-relaxed">
-              Considered essentials, made in small batches with materials chosen to last.
+              Genuine vintage military issue, heavy-duty utility workwear, and salvage-grade surplus apparel.
             </p>
           </div>
           
@@ -213,7 +249,7 @@ const UserLayout = () => {
         
         <div className="border-t border-border">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-[10px] uppercase tracking-wider text-muted-foreground md:flex-row">
-            <p>© {new Date().getFullYear()} Evia Studio. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Evia Surplus & Co. All rights reserved.</p>
             <p>Carbon-neutral delivery worldwide · easy returns</p>
           </div>
         </div>
@@ -266,6 +302,7 @@ const AdminLayout = () => {
           <NavLink to="/admin/user" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Users size={20} /> Users</NavLink>
           <NavLink to="/admin/coupons" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Ticket size={20} /> Coupons</NavLink>
           <NavLink to="/admin/offers" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Sparkles size={20} /> Offers</NavLink>
+          <NavLink to="/admin/settings" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Settings size={20} /> Brand Settings</NavLink>
           
           <div className="mt-auto pt-4 flex flex-col gap-1">
             <div className={`mx-2 p-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${isOnline ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
@@ -293,6 +330,84 @@ const AdminLayout = () => {
 import AdminCoupons from './pages/admin/AdminCoupons';
 
 const AppContent = () => {
+  const [settings, setSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setSettings(data);
+        
+        // Dynamic styling injection
+        const fontObj = AVAILABLE_FONTS.find(f => f.name === data.headerFont);
+        const fontId = 'dynamic-google-font';
+        let fontLink = document.getElementById(fontId) as HTMLLinkElement;
+        if (fontObj) {
+          if (!fontLink) {
+            fontLink = document.createElement('link');
+            fontLink.id = fontId;
+            fontLink.rel = 'stylesheet';
+            document.head.appendChild(fontLink);
+          }
+          fontLink.href = `https://fonts.googleapis.com/css2?${fontObj.import}&display=swap`;
+        }
+
+        const styleId = 'dynamic-theme-styles';
+        let styleTag = document.getElementById(styleId) as HTMLStyleElement;
+        if (!styleTag) {
+          styleTag = document.createElement('style');
+          styleTag.id = styleId;
+          document.head.appendChild(styleTag);
+        }
+
+        const fontFamily = fontObj ? fontObj.css : '"Instrument Serif", serif';
+        const siteBg = data.siteBgColor || '#faf8f5';
+        const heroBg = data.heroBgColor || '#f6f3ed';
+        const accent = data.accentColor || '#9f3a38';
+        const textColor = data.textColor || '#1c1c1c';
+        const btnRadius = data.buttonRadius || '9999px';
+
+        styleTag.innerHTML = `
+          :root {
+            --font-display: ${fontFamily} !important;
+            --color-background: ${siteBg} !important;
+            --color-surface: ${heroBg} !important;
+            --color-accent: ${accent} !important;
+            --color-ring: ${accent} !important;
+            --color-foreground: ${textColor} !important;
+          }
+          html, body {
+            background-color: ${siteBg} !important;
+            color: ${textColor} !important;
+          }
+          h1, h2, h3, h4, .font-display, [class*="font-display"] {
+            font-family: ${fontFamily} !important;
+            letter-spacing: ${data.headerTracking || '-0.02em'} !important;
+            text-transform: ${data.headerUppercase ? 'uppercase' : 'none'} !important;
+          }
+          /* Dynamic button corner rounded control */
+          button:not([disabled]), .btn-rounded {
+            border-radius: ${btnRadius} !important;
+          }
+          .custom-hero-bg, .bg-surface {
+            background-color: ${heroBg} !important;
+          }
+          .custom-site-bg, .bg-background {
+            background-color: ${siteBg} !important;
+          }
+          .text-accent {
+            color: ${accent} !important;
+          }
+          .bg-accent {
+            background-color: ${accent} !important;
+          }
+        `;
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
   useEffect(() => {
     // Disable right click, text selection, zoom
     const disableRightClick = (e: MouseEvent) => e.preventDefault();
@@ -340,6 +455,7 @@ const AppContent = () => {
           <Route path="user" element={<AdminUsers />} />
           <Route path="coupons" element={<AdminCoupons />} />
           <Route path="offers" element={<AdminOffers />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
       </Routes>
     </BrowserRouter>

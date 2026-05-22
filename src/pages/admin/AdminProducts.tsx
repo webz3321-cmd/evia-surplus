@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, Image as ImageIcon, FileText, X } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../../lib/firestoreUtils';
@@ -26,6 +26,21 @@ export default function AdminProducts() {
   const [secondaryImages, setSecondaryImages] = useState(''); // comma separated
   const [sizes, setSizes] = useState(''); // comma separated
   const [productType, setProductType] = useState<'buy' | 'rent'>('buy');
+
+  // Drag over states
+  const [dragOverDesc, setDragOverDesc] = useState(false);
+
+  // File loading utility functions
+  const handleDescFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setDesc(e.target.result as string);
+        toast.success('Description file loaded successfully');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -294,11 +309,72 @@ export default function AdminProducts() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Main Image URL</label>
-                <input required value={image} onChange={e=>setImage(e.target.value)} type="url" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" />
+                <div className="flex flex-col gap-3">
+                  <input 
+                    required 
+                    value={image} 
+                    onChange={e=>setImage(e.target.value)} 
+                    type="url" 
+                    placeholder="E.g. https://images.unsplash.com/photo-..." 
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors text-sm" 
+                  />
+                  <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                    Please use an external secure image URL (e.g. from Unsplash or Pexels) to optimize Firestore database limits.
+                  </p>
+                  {image && (
+                    <div className="relative w-28 h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm mt-1 group shrink-0">
+                      <img src={image} alt="preview" className="w-full h-full object-cover" onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=300";
+                      }} />
+                      <button 
+                        type="button" 
+                        onClick={() => setImage('')} 
+                        className="absolute top-1.5 right-1.5 p-1 bg-black/70 hover:bg-black/90 text-white rounded-full transition-colors"
+                        title="Remove image"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Secondary Image URLs (Comma Separated)</label>
-                <textarea value={secondaryImages} onChange={e=>setSecondaryImages(e.target.value)} rows={2} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" placeholder="url1, url2, ..."></textarea>
+                <div className="flex flex-col gap-3">
+                  <textarea 
+                    value={secondaryImages} 
+                    onChange={e=>setSecondaryImages(e.target.value)} 
+                    rows={2} 
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors font-mono text-xs" 
+                    placeholder="https://images.unsplash.com/photo-1, https://images.unsplash.com/photo-2"
+                  />
+                  <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                    Provide comma-separated image URLs for additional product views. Double-check your links before saving!
+                  </p>
+
+                  {secondaryImages.split(',').map(s=>s.trim()).filter(Boolean).length > 0 && (
+                    <div className="flex flex-wrap gap-2 p-2 bg-gray-50/50 rounded-xl border border-gray-100">
+                      {secondaryImages.split(',').map(s=>s.trim()).filter(Boolean).map((imgUrl, i) => (
+                        <div key={i} className="relative w-12 h-12 rounded border border-stone-200 overflow-hidden shadow-sm bg-white">
+                          <img src={imgUrl} alt="sec" className="w-full h-full object-cover" onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=300";
+                          }} />
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              const list = secondaryImages.split(',').map(s=>s.trim()).filter(Boolean);
+                              list.splice(i, 1);
+                              setSecondaryImages(list.join(', '));
+                            }} 
+                            className="absolute top-0.5 right-0.5 p-0.5 bg-black/65 hover:bg-black/80 text-white rounded-full transition-colors"
+                          >
+                            <X size={8} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Available Sizes (Comma Separated)</label>
@@ -325,7 +401,43 @@ export default function AdminProducts() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
-                <textarea required value={desc} onChange={e=>setDesc(e.target.value)} rows={3} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors"></textarea>
+                <div 
+                  className={`border-2 border-dashed rounded-xl p-3 flex flex-col transition-all ${
+                    dragOverDesc ? 'border-indigo-600 bg-indigo-50/40' : 'border-stone-200 bg-stone-50/50 hover:border-indigo-400'
+                  }`}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverDesc(true); }}
+                  onDragLeave={() => setDragOverDesc(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverDesc(false);
+                    if (e.dataTransfer.files?.[0]) handleDescFile(e.dataTransfer.files[0]);
+                  }}
+                >
+                  <textarea 
+                    required 
+                    value={desc} 
+                    onChange={e=>setDesc(e.target.value)} 
+                    rows={4} 
+                    placeholder="Write unique details of rare items here, or drop a text/markdown file to automatically register..." 
+                    className="w-full p-2.5 text-sm bg-white border border-stone-200 rounded-lg outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  
+                  <div className="mt-2 text-stone-500 flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-stone-400">Characters: {desc.length}</span>
+                    <label className="cursor-pointer group flex items-center gap-1.5 text-[10px] px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded font-bold transition-all border border-stone-200 shadow-sm">
+                      <FileText size={12} className="text-stone-500" />
+                      <span>Upload Description File</span>
+                      <input 
+                        type="file" 
+                        accept=".txt,.md,.json" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) handleDescFile(e.target.files[0]);
+                        }} 
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
               
               <div className="flex gap-3 mt-4">

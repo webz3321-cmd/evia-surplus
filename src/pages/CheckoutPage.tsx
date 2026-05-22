@@ -202,18 +202,18 @@ export default function CheckoutPage() {
           {/* Main Column */}
           <div className="w-full lg:w-[65%] flex flex-col gap-6">
             {/* Shipping Section */}
-            <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 md:p-8">
+            <div className="bg-white rounded-2xl shadow-xs border border-stone-200/80 p-6 md:p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
-                    <MapPin size={20} />
+                  <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-stone-900 shrink-0 border border-stone-200/40">
+                    <MapPin size={18} />
                   </div>
-                  <h3 className="font-extrabold text-xl text-gray-900 tracking-tight">Shipping Information</h3>
+                  <h3 className="font-serif font-bold text-xl text-stone-900 tracking-wide">Shipping Parameters</h3>
                 </div>
                 <button 
                   type="button" 
                   onClick={() => setIsEditingAddress(!isEditingAddress)} 
-                  className="text-[10px] font-black text-indigo-600 px-4 py-2 bg-indigo-50 rounded-full hover:bg-indigo-100 transition-all uppercase tracking-widest whitespace-nowrap self-start sm:self-auto"
+                  className="text-[9.5px] font-bold text-stone-800 px-4 py-2 bg-stone-50 hover:bg-stone-100 border border-stone-200/80 rounded-lg transition-all uppercase tracking-widest whitespace-nowrap self-start sm:self-auto cursor-pointer"
                 >
                   {isEditingAddress ? 'Cancel Edit' : 'Change Address'}
                 </button>
@@ -223,77 +223,77 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                      <label className="text-[9.5px] font-bold text-stone-400 uppercase tracking-widest ml-1">Full Name</label>
                       <input 
                         placeholder="John Doe" 
                         value={shippingForm.fullName} 
                         onChange={e => setShippingForm({...shippingForm, fullName: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 bg-stone-55 border border-stone-200 text-stone-900 rounded-xl text-xs font-medium outline-none focus:border-stone-950 focus:bg-white transition-all"
                         required
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mobile Number</label>
+                      <label className="text-[9.5px] font-bold text-stone-400 uppercase tracking-widest ml-1">Mobile Number</label>
                       <input 
                         placeholder="10-digit number" 
                         value={shippingForm.phone} 
                         onChange={e => setShippingForm({...shippingForm, phone: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 bg-stone-55 border border-stone-200 text-stone-900 rounded-xl text-xs font-medium outline-none focus:border-stone-950 focus:bg-white transition-all"
                         required
                       />
                     </div>
                   </div>
                   
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full House Address</label>
+                    <label className="text-[9.5px] font-bold text-stone-400 uppercase tracking-widest ml-1">Full House Address</label>
                     <textarea 
                       placeholder="House No, Street, Area" 
                       value={shippingForm.addressLine} 
                       onChange={e => setShippingForm({...shippingForm, addressLine: e.target.value})}
                       rows={2}
-                      className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none"
+                      className="w-full px-5 py-3 bg-stone-55 border border-stone-200 text-stone-900 rounded-xl text-xs font-medium outline-none focus:border-stone-950 focus:bg-white transition-all resize-none"
                       required
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Landmark</label>
+                      <label className="text-[9.5px] font-bold text-stone-400 uppercase tracking-widest ml-1">Landmark</label>
                       <input 
                         placeholder="Near Temple / Mall" 
                         value={shippingForm.landmark} 
                         onChange={e => setShippingForm({...shippingForm, landmark: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 bg-stone-55 border border-stone-200 text-stone-900 rounded-xl text-xs font-medium outline-none focus:border-stone-950 focus:bg-white transition-all"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Taluq / City</label>
+                      <label className="text-[9.5px] font-bold text-stone-400 uppercase tracking-widest ml-1">Taluq / City</label>
                       <input 
                         placeholder="City name" 
                         value={shippingForm.taluq} 
                         onChange={e => setShippingForm({...shippingForm, taluq: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 bg-stone-55 border border-stone-200 text-stone-900 rounded-xl text-xs font-medium outline-none focus:border-stone-950 focus:bg-white transition-all"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">State</label>
+                      <label className="text-[9.5px] font-bold text-stone-400 uppercase tracking-widest ml-1">State</label>
                       <input 
                         placeholder="State name" 
                         value={shippingForm.state} 
                         onChange={e => setShippingForm({...shippingForm, state: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 bg-stone-55 border border-stone-200 text-stone-900 rounded-xl text-xs font-medium outline-none focus:border-stone-950 focus:bg-white transition-all"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pincode</label>
+                      <label className="text-[9.5px] font-bold text-stone-400 uppercase tracking-widest ml-1">Pincode</label>
                       <input 
                         placeholder="6-digit PIN" 
                         value={shippingForm.pincode} 
                         onChange={e => setShippingForm({...shippingForm, pincode: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        className="w-full px-5 py-3 bg-stone-55 border border-stone-200 text-stone-900 rounded-xl text-xs font-medium outline-none focus:border-stone-950 focus:bg-white transition-all"
                         required
                       />
                     </div>
@@ -301,17 +301,17 @@ export default function CheckoutPage() {
                 </div>
               ) : (
                 currentUserData?.fullName ? (
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gray-50 rounded-3xl border border-gray-100">
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-indigo-500 shadow-sm border border-gray-100 shrink-0">
-                      <MapPin size={28} />
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-stone-50 rounded-2xl border border-stone-200/60 text-left">
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-stone-800 shadow-xs border border-stone-200/65 shrink-0">
+                      <MapPin size={22} className="text-amber-500" />
                     </div>
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-3 mb-2">
-                        <p className="text-xl font-black text-gray-900 leading-none">{currentUserData.fullName}</p>
-                        <span className="px-3 py-1 bg-indigo-100 text-indigo-600 text-[10px] font-black rounded-full uppercase tracking-tighter">Default Address</span>
+                        <p className="text-lg font-serif font-bold text-stone-900 leading-none">{currentUserData.fullName}</p>
+                        <span className="px-2.5 py-0.5 bg-stone-200 text-stone-800 text-[8.5px] font-bold rounded-lg uppercase tracking-wider border border-stone-300/40">Default Location</span>
                       </div>
-                      <p className="text-sm text-gray-600 font-bold mb-3">{currentUserData.phone}</p>
-                      <p className="text-sm text-gray-500 leading-relaxed font-medium italic italic-indigo-200">
+                      <p className="text-xs text-stone-500 font-mono mb-3">{currentUserData.phone}</p>
+                      <p className="text-xs text-stone-600 leading-relaxed font-serif italic p-3 bg-white border border-stone-150 rounded-lg shadow-2xs">
                         {currentUserData.address}
                       </p>
                     </div>
@@ -327,29 +327,29 @@ export default function CheckoutPage() {
             </div>
 
             {/* Payment Section */}
-            <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 md:p-8">
+            <div className="bg-white rounded-2xl shadow-xs border border-stone-200/80 p-6 md:p-8">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
-                  <CreditCard size={20} />
+                <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-stone-900 shrink-0 border border-stone-200/40">
+                  <CreditCard size={18} />
                 </div>
-                <h3 className="font-extrabold text-xl text-gray-900 tracking-tight">Payment Method</h3>
+                <h3 className="font-serif font-bold text-xl text-stone-900 tracking-wide">Method of Exchange</h3>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-6 border-2 border-indigo-600 bg-indigo-50 rounded-3xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 bg-indigo-600 text-white rounded-bl-3xl">
-                    <CheckCircle2 size={20} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                <div className="p-6 border-2 border-stone-950 bg-stone-950 text-white rounded-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-3 bg-amber-500 text-stone-950 rounded-bl-xl">
+                    <CheckCircle2 size={16} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-black text-indigo-900 text-lg tracking-tight uppercase">Cash on Delivery</span>
-                    <span className="text-xs text-indigo-600 font-bold uppercase mt-1 tracking-widest opacity-70">Pay when order arrives</span>
+                    <span className="font-bold text-sm tracking-widest uppercase text-amber-500">Cash on Delivery</span>
+                    <span className="text-[10px] text-stone-300 font-medium uppercase mt-1.5 tracking-wider opacity-90">Pay on physical delivery</span>
                   </div>
                 </div>
                 
-                <div className="p-6 border-2 border-gray-100 bg-gray-50/50 rounded-3xl relative overflow-hidden opacity-40 cursor-not-allowed">
+                <div className="p-6 border border-stone-100 bg-stone-50/40 rounded-xl relative overflow-hidden opacity-40 cursor-not-allowed">
                   <div className="flex flex-col">
-                    <span className="font-black text-gray-400 text-lg tracking-tight uppercase">Online Payment</span>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">Coming Soon</span>
+                    <span className="font-bold text-sm tracking-widest uppercase text-stone-400">Online payment gate</span>
+                    <span className="text-[9px] text-stone-400 font-bold uppercase mt-1.5 tracking-widest">Unavailable in Beta</span>
                   </div>
                 </div>
               </div>
@@ -374,13 +374,13 @@ export default function CheckoutPage() {
                     <div className="flex-1 flex flex-col justify-center min-w-0">
                       <span className="text-xs font-black text-gray-900 truncate leading-tight mb-1 uppercase tracking-tight">{item.product.name}</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-indigo-600">x{item.quantity}</span>
+                        <span className="text-[10px] font-bold text-stone-900">x{item.quantity}</span>
                         {item.size && (
-                          <span className="text-[9px] bg-indigo-50 text-indigo-700 font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest border border-indigo-100">
+                          <span className="text-[8.5px] bg-stone-100 text-stone-800 font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider border border-stone-200">
                             {item.size}
                           </span>
                         )}
-                        <span className="text-[10px] font-bold text-gray-400">₹{item.product.price.toLocaleString()}</span>
+                        <span className="text-[10px] font-bold text-stone-400">₹{item.product.price.toLocaleString()}</span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end justify-center">
@@ -416,7 +416,7 @@ export default function CheckoutPage() {
                       value={couponCode}
                       onChange={e => setCouponCode(e.target.value)}
                       placeholder="ENTER CODE" 
-                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black outline-none focus:border-indigo-500 focus:bg-white uppercase tracking-widest placeholder:normal-case transition-all"
+                      className="flex-1 px-4 py-3 bg-stone-55 border border-stone-200 rounded-xl text-[10px] font-bold outline-none focus:border-stone-900 focus:bg-white uppercase tracking-widest placeholder:normal-case transition-all"
                     />
                     <button 
                       type="button"

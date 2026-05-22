@@ -59,88 +59,117 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fcfcfc] pb-32">
-      {/* Visual Header Background */}
-      <div className="h-48 bg-indigo-600 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-24 translate-x-24"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-3xl translate-y-24 -translate-x-24"></div>
-        <button onClick={() => navigate(-1)} className="absolute top-6 left-6 w-10 h-10 bg-white/20 backdrop-blur-lg rounded-full flex items-center justify-center text-white border border-white/20 transition-all active:scale-90 z-20">
-          <ArrowLeft size={20} />
+    <div className="flex flex-col min-h-screen bg-neutral-50/50 pb-32">
+      {/* Visual Workspace Banner Background with luxury editorial touch */}
+      <div className="h-60 bg-gradient-to-br from-stone-905 via-stone-900 to-neutral-950 relative overflow-hidden flex items-end p-8 border-b border-stone-800">
+        <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-stone-950 to-transparent opacity-85 pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+        {/* Ambient radial accent */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none" />
+        
+        <button 
+          onClick={() => navigate(-1)} 
+          className="absolute top-6 left-6 h-10 px-4 bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-full flex items-center gap-2 text-stone-300 border border-white/10 transition-all hover:text-white hover:border-white/20 active:scale-95 z-20 cursor-pointer text-xs uppercase tracking-widest font-bold"
+        >
+          <ArrowLeft size={14} />
+          <span>Return</span>
         </button>
+
+        <div className="relative z-10 w-full max-w-xl mx-auto flex items-end justify-between">
+          <div className="text-left">
+            <span className="text-[10px] uppercase tracking-[0.25em] font-semibold text-amber-500/90 block mb-1">Authenticated Account</span>
+            <h1 className="font-serif text-3xl font-bold text-white tracking-wide">Registry Workspace</h1>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 bg-stone-900/80 border border-stone-800 px-3 py-1.5 rounded-full backdrop-blur-md">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[9.5px] tracking-widest uppercase font-bold text-stone-400">Vault Access Enabled</span>
+          </div>
+        </div>
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="px-6 -mt-16 relative z-10 max-w-xl mx-auto w-full"
+        className="px-6 -mt-10 relative z-10 max-w-xl mx-auto w-full"
       >
-        {/* User Card */}
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-indigo-100/50 border border-gray-100 flex flex-col items-center text-center">
-          <div className="w-28 h-28 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-indigo-600 mb-6 border-8 border-white shadow-lg relative">
-             <UserIcon size={44} />
-             <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center text-white">
-                <ShieldCheck size={14} />
+        {/* Core Profile Identity Bento Grid Box */}
+        <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-stone-200/40 border border-stone-200/80 flex flex-col items-center text-center">
+          
+          {/* Avatar Container resembling high-fidelity Chrome profile linking */}
+          <div className="w-24 h-24 bg-stone-50 rounded-2xl flex items-center justify-center text-stone-900 mb-5 border border-stone-150 shadow-xs relative group-hover:border-amber-500/40 transition-all">
+             <UserIcon size={36} className="text-stone-700" />
+             <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center text-white" title="Verified Presence">
+                <ShieldCheck size={12} />
              </div>
           </div>
-          <h2 className="font-black text-2xl text-gray-900 tracking-tight uppercase leading-none">{user.name}</h2>
-          <p className="text-gray-400 text-[10px] font-bold mt-2 uppercase tracking-[0.2em]">{user.email}</p>
+
+          <h2 className="font-serif text-2xl text-stone-950 tracking-normal font-bold leading-none">{fullName || user.name || 'Collector'}</h2>
+          <p className="text-stone-450 font-mono text-xs uppercase tracking-[0.18em] mt-2.5 font-medium">{user.email?.toUpperCase()}</p>
           
-          <div className="flex gap-2 mt-6">
+          <div className="flex flex-wrap gap-3 mt-6 justify-center">
             {user.role === 'admin' && (
-              <Link to="/admin" className="bg-indigo-600 text-white font-black px-6 py-2.5 rounded-2xl text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-indigo-100 hover:scale-105 transition-all active:scale-95">
-                <Settings size={14} />
-                Admin Panel
+              <Link to="/admin" className="bg-stone-900 hover:bg-stone-850 text-white font-bold px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer">
+                <Settings size={13} className="text-amber-500" />
+                <span>Admin Central</span>
               </Link>
             )}
-            <button onClick={() => { logout(); navigate('/login'); }} className="bg-white text-red-500 border border-red-100 font-black px-6 py-2.5 rounded-2xl text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-sm hover:bg-red-50 transition-all active:scale-95">
-              <LogOut size={14} />
-              Logout
+            <button 
+              onClick={() => { logout(); navigate('/login'); }} 
+              className="bg-white hover:bg-red-50 text-red-650 border border-stone-200 hover:border-red-200 font-bold px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <LogOut size={13} className="text-red-500" />
+              <span>Logout Session</span>
             </button>
           </div>
         </div>
 
-        {/* Action Grid */}
-        <div className="grid grid-cols-1 gap-4 mt-8">
-           <Link to="/order" className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 group hover:border-indigo-200 transition-all">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                <Package size={22} />
+        {/* Action Blocks */}
+        <div className="grid grid-cols-1 gap-4 mt-6">
+           <Link to="/order" className="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-xs flex items-center gap-5 group hover:border-stone-400 transition-all">
+              <div className="w-11 h-11 bg-stone-50 text-stone-900 rounded-xl flex items-center justify-center group-hover:bg-stone-950 group-hover:text-amber-400 border border-stone-200/60 transition-all">
+                <Package size={20} />
               </div>
-              <div className="flex-1">
-                <h3 className="font-black text-sm text-gray-900 uppercase tracking-tight">Purchase History</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Active & past orders</p>
+              <div className="flex-1 text-left">
+                <h3 className="font-serif text-[13.5px] font-bold text-stone-950 tracking-wide uppercase">Acquisitions Portfolio</h3>
+                <p className="text-[9px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">Physical curation tracking & archive</p>
               </div>
-              <ChevronRight size={18} className="text-gray-300" />
+              <ChevronRight size={16} className="text-stone-300 group-hover:text-stone-950 transition-colors" />
            </Link>
         </div>
 
-        {/* Contact info card */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm mt-8 space-y-6">
-           <h3 className="font-black text-lg text-gray-900 uppercase tracking-tight">Contact Information</h3>
+        {/* Contact info element card */}
+        <div className="bg-white rounded-2xl p-7 border border-stone-200/80 shadow-xs mt-6 space-y-5 text-left">
+           <div className="border-b border-stone-100 pb-3">
+             <h3 className="font-serif text-sm text-stone-950 font-bold uppercase tracking-wider">Contact Credentials</h3>
+           </div>
            
            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400"><Mail size={18} /></div>
+              <div className="w-9 h-9 bg-stone-50 rounded-lg flex items-center justify-center text-stone-450 border border-stone-200/50"><Mail size={16} /></div>
               <div className="flex flex-col">
-                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Registered Email</span>
-                 <span className="text-sm font-bold text-gray-800 mt-1">{user.email}</span>
+                 <span className="text-[8.5px] font-bold text-stone-400 uppercase tracking-widest leading-none">Registered Email Delivery</span>
+                 <span className="text-xs font-semibold text-stone-850 font-mono mt-1.5">{user.email}</span>
               </div>
            </div>
 
            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400"><Phone size={18} /></div>
+              <div className="w-9 h-9 bg-stone-50 rounded-lg flex items-center justify-center text-stone-450 border border-stone-200/50"><Phone size={16} /></div>
               <div className="flex flex-col">
-                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Phone Number</span>
-                 <span className="text-sm font-bold text-gray-800 mt-1">{user.phone || 'Not linked'}</span>
+                 <span className="text-[8.5px] font-bold text-stone-400 uppercase tracking-widest leading-none">Mobile Communication</span>
+                 <span className="text-xs font-semibold text-stone-850 mt-1.5">{user.phone || 'Registry unlinked'}</span>
               </div>
            </div>
         </div>
 
-        {/* Shipping Address */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm mt-8">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-black text-lg text-gray-900 uppercase tracking-tight">Personal & Shipping Address</h3>
+        {/* Shipping Address container */}
+        <div className="bg-white rounded-2xl p-7 border border-stone-200/80 shadow-xs mt-6 text-left">
+          <div className="flex justify-between items-center mb-5 pb-3 border-b border-stone-100">
+            <h3 className="font-serif text-sm text-stone-950 font-bold uppercase tracking-wider">Curation Delivery Profile</h3>
             {!isEditingAddress && (
-              <button onClick={() => setIsEditingAddress(true)} className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
-                Edit
+              <button 
+                onClick={() => setIsEditingAddress(true)} 
+                className="text-[9.5px] font-bold text-stone-800 hover:text-amber-600 uppercase tracking-widest bg-stone-50 hover:bg-stone-100 px-3 py-1.5 rounded-md border border-stone-200/80 transition-all cursor-pointer"
+              >
+                Modify Address
               </button>
             )}
           </div>
@@ -149,55 +178,55 @@ export default function ProfilePage() {
             {isEditingAddress ? (
               <div className="space-y-4">
                 <div>
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
-                  <input value={fullName} onChange={e=>setFullName(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm" placeholder="Contact Name" />
+                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Full Delivery Name</label>
+                  <input value={fullName} onChange={e=>setFullName(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="Registry Contact Name" />
                 </div>
                 <div>
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Mobile Number</label>
-                  <input value={phone} onChange={e=>setPhone(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm" placeholder="10-digit number" />
+                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Mobile Contact Phone</label>
+                  <input value={phone} onChange={e=>setPhone(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="e.g. +91 98765 43210" />
                 </div>
                 <div>
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Address (House, Building, Area)</label>
-                  <textarea value={addressLine} onChange={e=>setAddressLine(e.target.value)} rows={2} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm resize-none" placeholder="Door No, Street Name..." />
+                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Physical Address (Private Residence/Appt)</label>
+                  <textarea value={addressLine} onChange={e=>setAddressLine(e.target.value)} rows={2} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all resize-none mt-1" placeholder="Suite, Penthouse, Landmark, Street" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Near / Landmark</label>
-                    <input value={landmark} onChange={e=>setLandmark(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm" placeholder="Railway Station..." />
+                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Landmark</label>
+                    <input value={landmark} onChange={e=>setLandmark(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="Near Ritz Carlton..." />
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Taluq</label>
-                    <input value={taluq} onChange={e=>setTaluq(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm" placeholder="Taluq name" />
+                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Taluq / Landmark-District</label>
+                    <input value={taluq} onChange={e=>setTaluq(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="District Area" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">State</label>
-                    <input value={state} onChange={e=>setState(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm" placeholder="Karnataka" />
+                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">State / Region</label>
+                    <input value={state} onChange={e=>setState(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="e.g. Delhi" />
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Pincode</label>
-                    <input value={pincode} onChange={e=>setPincode(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-sm" placeholder="6-digit code" />
+                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Pincode / Postal Zip Code</label>
+                    <input value={pincode} onChange={e=>setPincode(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1 font-mono tracking-wider animate-none" placeholder="6-digit ZIP code" />
                   </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                 <div className="space-y-1.5 p-4 bg-gray-50/50 rounded-2xl border border-gray-50">
+                 <div className="space-y-1.5 p-4.5 bg-stone-50 rounded-xl border border-stone-200/50">
                     <div className="flex items-center gap-2 mb-2">
-                       <MapPin size={16} className="text-indigo-600" />
-                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Shipping Profile</span>
+                       <MapPin size={15} className="text-amber-500" />
+                       <span className="text-[9.5px] font-bold text-stone-450 uppercase tracking-widest">Active Dispatch Destination</span>
                     </div>
                     {fullName ? (
                       <div className="space-y-1">
-                        <p className="text-sm font-black text-gray-900 uppercase tracking-tight">{fullName}</p>
-                        <p className="text-xs text-gray-600 font-bold">{phone}</p>
-                        <p className="text-xs text-gray-500 leading-relaxed mt-2 italic">
-                          {addressLine}, {landmark && `Near ${landmark}, `}{taluq}, {state} - {pincode}
+                        <p className="text-xs font-bold text-stone-900 uppercase tracking-wide">{fullName}</p>
+                        <p className="text-[11px] text-stone-500 font-medium font-mono">{phone}</p>
+                        <p className="text-xs text-stone-600 leading-relaxed mt-2 p-3 bg-white border border-stone-200/60 rounded-lg shadow-2xs italic font-serif">
+                          {addressLine}, {landmark && `${landmark}, `}{taluq}, {state} - {pincode}
                         </p>
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest py-2 italic text-center">Incomplete profile. Please update details.</p>
+                      <p className="text-xs text-stone-400 font-bold uppercase tracking-widest py-3 italic text-center leading-relaxed">Delivery parameters not declared yet.<br />Please supply them to order physical curations.</p>
                     )}
                  </div>
               </div>
@@ -206,13 +235,13 @@ export default function ProfilePage() {
 
           {isEditingAddress && (
             <div className="flex gap-3 mt-6">
-              <button type="button" onClick={() => setIsEditingAddress(false)} className="flex-1 py-4 bg-gray-50 text-gray-500 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all hover:bg-gray-100 active:scale-95">Cancel</button>
+              <button type="button" onClick={() => setIsEditingAddress(false)} className="flex-1 py-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-[10px] uppercase tracking-widest transition-all active:scale-95 cursor-pointer">Cancel</button>
               <button 
                 onClick={handleUpdate} 
                 disabled={saving} 
-                className="flex-[2] py-4 bg-indigo-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                className="flex-[2] py-3.5 bg-stone-900 hover:bg-stone-850 text-white font-bold rounded-xl text-[10px] uppercase tracking-widest shadow-md shadow-stone-200 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
               >
-                {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Save size={14} /> Save Profile</>}
+                {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Save size={13} /> Save Private Record</>}
               </button>
             </div>
           )}

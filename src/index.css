@@ -24,6 +24,14 @@
   --color-border: oklch(0.9 0.012 75);
   --color-input: oklch(0.9 0.012 75);
   --color-ring: oklch(0.62 0.165 42);
+
+  --animate-marquee: marquee 25s linear infinite;
+  --animate-marquee-fast: marquee 15s linear infinite;
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 }
 
 @layer base {
@@ -42,6 +50,16 @@
     font-family: var(--font-display);
     font-weight: 400;
     letter-spacing: -0.02em;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-none {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
 }
 
