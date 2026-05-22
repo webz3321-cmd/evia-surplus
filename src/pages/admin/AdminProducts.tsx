@@ -26,6 +26,8 @@ export default function AdminProducts() {
   const [secondaryImages, setSecondaryImages] = useState(''); // comma separated
   const [sizes, setSizes] = useState(''); // comma separated
   const [productType, setProductType] = useState<'buy' | 'rent'>('buy');
+  const [cgstRate, setCgstRate] = useState('9');
+  const [sgstRate, setSgstRate] = useState('9');
 
   // Drag over states
   const [dragOverDesc, setDragOverDesc] = useState(false);
@@ -92,6 +94,8 @@ export default function AdminProducts() {
     setSecondaryImages('');
     setSizes('');
     setProductType('buy');
+    setCgstRate('9');
+    setSgstRate('9');
     if (categories.length > 0) setCatId(categories[0].id);
     else setCatId('new');
     setShowModal(true);
@@ -110,6 +114,8 @@ export default function AdminProducts() {
     setSecondaryImages(prod.secondaryImages?.join(', ') || '');
     setSizes(prod.sizes?.join(', ') || '');
     setProductType(prod.productType || 'buy');
+    setCgstRate(typeof prod.cgstRate === 'number' ? prod.cgstRate.toString() : '9');
+    setSgstRate(typeof prod.sgstRate === 'number' ? prod.sgstRate.toString() : '9');
     setCatId(prod.catId);
     setShowModal(true);
   };
@@ -159,6 +165,8 @@ export default function AdminProducts() {
         secondaryImages: sImages,
         sizes: sSizes,
         productType,
+        cgstRate: Number(cgstRate) || 0,
+        sgstRate: Number(sgstRate) || 0,
         updatedAt: Date.now()
       };
 
@@ -305,6 +313,16 @@ export default function AdminProducts() {
                  <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Stock Qty</label>
                   <input required value={stock} onChange={e=>setStock(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">CGST Rate (%)</label>
+                  <input required min="0" max="100" step="any" value={cgstRate} onChange={e=>setCgstRate(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors text-sm font-medium" />
+                </div>
+                 <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">SGST Rate (%)</label>
+                  <input required min="0" max="100" step="any" value={sgstRate} onChange={e=>setSgstRate(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors text-sm font-medium" />
                 </div>
               </div>
               <div>

@@ -190,7 +190,7 @@ export default function ProductPage() {
               {product.productType === 'rent' ? 'Seasonal rental edition · hand-washed and ironed carefully before shipping.' : 'Considered essential apparel · crafted with organic, long-lasting fabrics.'}
             </p>
 
-            <div className="mt-6 flex items-center gap-3 border-b border-border pb-6 flex-wrap">
+            <div className="mt-6 flex items-center gap-3 border-b border-border pb-1 flex-wrap">
               <span className="text-3xl font-extrabold text-stone-950">₹{product.price.toLocaleString()}</span>
               {product.price > 100 && (
                 <>
@@ -203,6 +203,24 @@ export default function ProductPage() {
                 </>
               )}
             </div>
+            
+            {/* Dynamic GST spec breakdown badge */}
+            {(() => {
+              const cgstPercent = typeof product.cgstRate === 'number' ? product.cgstRate : 9;
+              const sgstPercent = typeof product.sgstRate === 'number' ? product.sgstRate : 9;
+              const totalTaxPercent = cgstPercent + sgstPercent;
+              return (
+                <div className="mt-2 text-[10.5px] text-gray-500 font-mono flex items-center gap-1.5 flex-wrap border-b border-border pb-6 select-none">
+                  <span className="bg-emerald-50 text-emerald-700 font-black px-2 py-0.5 rounded text-[9.5px] uppercase tracking-wider">Inclusive of GST</span>
+                  <span>•</span>
+                  <span>CGST: {cgstPercent}%</span>
+                  <span>•</span>
+                  <span>SGST: {sgstPercent}%</span>
+                  <span>•</span>
+                  <span className="font-semibold text-gray-700">Total Tax: {totalTaxPercent}%</span>
+                </div>
+              );
+            })()}
 
             {/* Product Purchase options states */}
             <div className="mt-6 space-y-6">

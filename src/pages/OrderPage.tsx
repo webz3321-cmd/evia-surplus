@@ -71,7 +71,7 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
       >
         <div className="flex justify-between items-start mb-3 pr-12 text-left">
           <div>
-            <div className="text-[9px] text-stone-400 font-mono uppercase tracking-widest mb-1.5">Collection Sequence #{order.id.slice(-6).toUpperCase()}</div>
+            <div className="text-[9px] text-stone-400 font-mono uppercase tracking-widest mb-1.5">Order Number #{order.id.slice(-6).toUpperCase()}</div>
             <div className="text-xl font-bold font-serif text-stone-900">₹{order.totalAmount?.toLocaleString()}</div>
           </div>
           <div className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-md border ${
@@ -95,7 +95,7 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
             }}></div>
 
             <div className="relative flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${['Placed', 'Dispatched', 'Delivered'].includes(order.status) ? 'bg-stone-900 shadow-sm' : (order.status === 'Cancelled' ? 'bg-red-550 shadow-sm' : 'bg-stone-100 text-stone-400')}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${['Placed', 'Dispatched', 'Delivered'].includes(order.status) ? 'bg-stone-900 shadow-sm' : (order.status === 'Cancelled' ? 'bg-red-600 shadow-sm' : 'bg-stone-100 text-stone-400')}`}>
                 <Package size={15} />
               </div>
               <p className="text-[9px] font-bold text-stone-800 uppercase tracking-widest mt-2">Placed</p>
@@ -122,7 +122,7 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
             onClick={() => setExpanded(!expanded)}
             className="text-[10px] uppercase tracking-widest text-stone-900 font-bold flex items-center gap-1 hover:text-stone-600 cursor-pointer"
           >
-            {expanded ? 'Hide Details' : 'View Parameters'}
+            {expanded ? 'Hide Details' : 'View Order Details'}
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
 
@@ -217,8 +217,8 @@ export default function OrderPage() {
   return (
     <div className="px-6 py-8 bg-stone-50/50 min-h-screen max-w-2xl mx-auto w-full">
       <div className="mb-6 text-left">
-        <span className="text-[10px] uppercase tracking-[0.25em] font-semibold text-amber-600/90 block mb-1">Acquisition History</span>
-        <h2 className="font-serif text-3xl font-bold text-stone-900 tracking-wide">Curation Portfolio</h2>
+        <span className="text-[10px] uppercase tracking-[0.25em] font-semibold text-amber-600/90 block mb-1">Order Status</span>
+        <h2 className="font-serif text-3xl font-bold text-stone-900 tracking-wide">My Orders</h2>
       </div>
       
       {/* Premium Luxury Segment Tabs */}
@@ -227,13 +227,13 @@ export default function OrderPage() {
           className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-150 cursor-pointer ${tab === 'active' ? 'bg-stone-950 text-white shadow-sm font-medium' : 'text-stone-500 hover:text-stone-850'}`}
           onClick={() => setTab('active')}
         >
-          Active Curations
+          Ongoing Orders
         </button>
         <button 
           className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-150 cursor-pointer ${tab === 'history' ? 'bg-stone-950 text-white shadow-sm font-medium' : 'text-stone-500 hover:text-stone-850'}`}
           onClick={() => setTab('history')}
         >
-          Past Archives
+          Past Orders
         </button>
       </div>
 
@@ -245,8 +245,8 @@ export default function OrderPage() {
         ) : displayOrders.length === 0 ? (
           <div className="bg-white p-10 rounded-2xl border border-stone-200/80 text-center shadow-xs">
             <Package size={36} className="mx-auto text-stone-300 mb-4" />
-            <h3 className="font-serif text-sm font-bold text-stone-900 uppercase tracking-wider">Registry Empty</h3>
-            <p className="text-xs text-stone-450 mt-2 font-serif italic max-w-xs mx-auto leading-relaxed">No orders registered under this configuration. When an acquisition goes live, it will appear in this feed.</p>
+            <h3 className="font-serif text-sm font-bold text-stone-900 uppercase tracking-wider">No Orders Found</h3>
+            <p className="text-xs text-stone-450 mt-2 font-serif italic max-w-xs mx-auto leading-relaxed">You have not placed any orders yet. Once you place an order, it will appear here.</p>
           </div>
         ) : (
           displayOrders.map(order => <OrderItem key={order.id} order={order} onUpdate={fetchOrders} />)

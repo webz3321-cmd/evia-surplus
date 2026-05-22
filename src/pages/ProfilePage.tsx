@@ -78,11 +78,11 @@ export default function ProfilePage() {
         <div className="relative z-10 w-full max-w-xl mx-auto flex items-end justify-between">
           <div className="text-left">
             <span className="text-[10px] uppercase tracking-[0.25em] font-semibold text-amber-500/90 block mb-1">Authenticated Account</span>
-            <h1 className="font-serif text-3xl font-bold text-white tracking-wide">Registry Workspace</h1>
+            <h1 className="font-serif text-3xl font-bold text-white tracking-wide">My Account</h1>
           </div>
           <div className="hidden sm:flex items-center gap-2 bg-stone-900/80 border border-stone-800 px-3 py-1.5 rounded-full backdrop-blur-md">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9.5px] tracking-widest uppercase font-bold text-stone-400">Vault Access Enabled</span>
+            <span className="text-[9.5px] tracking-widest uppercase font-bold text-stone-400">Secure Account</span>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function ProfilePage() {
              </div>
           </div>
 
-          <h2 className="font-serif text-2xl text-stone-950 tracking-normal font-bold leading-none">{fullName || user.name || 'Collector'}</h2>
+          <h2 className="font-serif text-2xl text-stone-950 tracking-normal font-bold leading-none">{fullName || user.name || 'Customer'}</h2>
           <p className="text-stone-450 font-mono text-xs uppercase tracking-[0.18em] mt-2.5 font-medium">{user.email?.toUpperCase()}</p>
           
           <div className="flex flex-wrap gap-3 mt-6 justify-center">
@@ -130,8 +130,8 @@ export default function ProfilePage() {
                 <Package size={20} />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="font-serif text-[13.5px] font-bold text-stone-950 tracking-wide uppercase">Acquisitions Portfolio</h3>
-                <p className="text-[9px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">Physical curation tracking & archive</p>
+                <h3 className="font-serif text-[13.5px] font-bold text-stone-950 tracking-wide uppercase">My Orders</h3>
+                <p className="text-[9px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">Track and view all your orders</p>
               </div>
               <ChevronRight size={16} className="text-stone-300 group-hover:text-stone-950 transition-colors" />
            </Link>
@@ -140,13 +140,13 @@ export default function ProfilePage() {
         {/* Contact info element card */}
         <div className="bg-white rounded-2xl p-7 border border-stone-200/80 shadow-xs mt-6 space-y-5 text-left">
            <div className="border-b border-stone-100 pb-3">
-             <h3 className="font-serif text-sm text-stone-950 font-bold uppercase tracking-wider">Contact Credentials</h3>
+             <h3 className="font-serif text-sm text-stone-950 font-bold uppercase tracking-wider">Contact Details</h3>
            </div>
            
            <div className="flex items-center gap-4">
               <div className="w-9 h-9 bg-stone-50 rounded-lg flex items-center justify-center text-stone-450 border border-stone-200/50"><Mail size={16} /></div>
               <div className="flex flex-col">
-                 <span className="text-[8.5px] font-bold text-stone-400 uppercase tracking-widest leading-none">Registered Email Delivery</span>
+                 <span className="text-[8.5px] font-bold text-stone-400 uppercase tracking-widest leading-none">Registered Email Address</span>
                  <span className="text-xs font-semibold text-stone-850 font-mono mt-1.5">{user.email}</span>
               </div>
            </div>
@@ -154,8 +154,8 @@ export default function ProfilePage() {
            <div className="flex items-center gap-4">
               <div className="w-9 h-9 bg-stone-50 rounded-lg flex items-center justify-center text-stone-450 border border-stone-200/50"><Phone size={16} /></div>
               <div className="flex flex-col">
-                 <span className="text-[8.5px] font-bold text-stone-400 uppercase tracking-widest leading-none">Mobile Communication</span>
-                 <span className="text-xs font-semibold text-stone-850 mt-1.5">{user.phone || 'Registry unlinked'}</span>
+                 <span className="text-[8.5px] font-bold text-stone-400 uppercase tracking-widest leading-none">Mobile Number</span>
+                 <span className="text-xs font-semibold text-stone-850 mt-1.5">{user.phone || 'No phone number provided'}</span>
               </div>
            </div>
         </div>
@@ -163,13 +163,13 @@ export default function ProfilePage() {
         {/* Shipping Address container */}
         <div className="bg-white rounded-2xl p-7 border border-stone-200/80 shadow-xs mt-6 text-left">
           <div className="flex justify-between items-center mb-5 pb-3 border-b border-stone-100">
-            <h3 className="font-serif text-sm text-stone-950 font-bold uppercase tracking-wider">Curation Delivery Profile</h3>
+            <h3 className="font-serif text-sm text-stone-950 font-bold uppercase tracking-wider">Shipping Address</h3>
             {!isEditingAddress && (
               <button 
                 onClick={() => setIsEditingAddress(true)} 
                 className="text-[9.5px] font-bold text-stone-800 hover:text-amber-600 uppercase tracking-widest bg-stone-50 hover:bg-stone-100 px-3 py-1.5 rounded-md border border-stone-200/80 transition-all cursor-pointer"
               >
-                Modify Address
+                Edit Address
               </button>
             )}
           </div>
@@ -178,35 +178,35 @@ export default function ProfilePage() {
             {isEditingAddress ? (
               <div className="space-y-4">
                 <div>
-                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Full Delivery Name</label>
-                  <input value={fullName} onChange={e=>setFullName(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="Registry Contact Name" />
+                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Full Name</label>
+                  <input value={fullName} onChange={e=>setFullName(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="Your Full Name" />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Mobile Contact Phone</label>
-                  <input value={phone} onChange={e=>setPhone(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="e.g. +91 98765 43210" />
+                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Phone Number</label>
+                  <input value={phone} onChange={e=>setPhone(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="e.g. 9876543210" />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Physical Address (Private Residence/Appt)</label>
-                  <textarea value={addressLine} onChange={e=>setAddressLine(e.target.value)} rows={2} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all resize-none mt-1" placeholder="Suite, Penthouse, Landmark, Street" />
+                  <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Address (House No / Building / Street)</label>
+                  <textarea value={addressLine} onChange={e=>setAddressLine(e.target.value)} rows={2} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all resize-none mt-1" placeholder="House No, Apartment name, Street name" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Landmark</label>
-                    <input value={landmark} onChange={e=>setLandmark(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="Near Ritz Carlton..." />
+                    <input value={landmark} onChange={e=>setLandmark(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="e.g. Near Temple / Mall" />
                   </div>
                   <div>
-                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Taluq / Landmark-District</label>
-                    <input value={taluq} onChange={e=>setTaluq(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="District Area" />
+                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">City / Town / District</label>
+                    <input value={taluq} onChange={e=>setTaluq(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="e.g. City name" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">State / Region</label>
+                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">State</label>
                     <input value={state} onChange={e=>setState(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1" placeholder="e.g. Delhi" />
                   </div>
                   <div>
-                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Pincode / Postal Zip Code</label>
-                    <input value={pincode} onChange={e=>setPincode(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1 font-mono tracking-wider animate-none" placeholder="6-digit ZIP code" />
+                    <label className="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-1">Pincode</label>
+                    <input value={pincode} onChange={e=>setPincode(e.target.value)} className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-950 transition-all mt-1 font-mono tracking-wider animate-none" placeholder="6-digit PIN code" />
                   </div>
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function ProfilePage() {
                  <div className="space-y-1.5 p-4.5 bg-stone-50 rounded-xl border border-stone-200/50">
                     <div className="flex items-center gap-2 mb-2">
                        <MapPin size={15} className="text-amber-500" />
-                       <span className="text-[9.5px] font-bold text-stone-450 uppercase tracking-widest">Active Dispatch Destination</span>
+                       <span className="text-[9.5px] font-bold text-stone-450 uppercase tracking-widest">Selected Shipping Address</span>
                     </div>
                     {fullName ? (
                       <div className="space-y-1">
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                         </p>
                       </div>
                     ) : (
-                      <p className="text-xs text-stone-400 font-bold uppercase tracking-widest py-3 italic text-center leading-relaxed">Delivery parameters not declared yet.<br />Please supply them to order physical curations.</p>
+                      <p className="text-xs text-stone-400 font-bold uppercase tracking-widest py-3 italic text-center leading-relaxed">No shipping address provided yet.<br />Please add an address to place your orders.</p>
                     )}
                  </div>
               </div>
@@ -241,7 +241,7 @@ export default function ProfilePage() {
                 disabled={saving} 
                 className="flex-[2] py-3.5 bg-stone-900 hover:bg-stone-850 text-white font-bold rounded-xl text-[10px] uppercase tracking-widest shadow-md shadow-stone-200 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
               >
-                {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Save size={13} /> Save Private Record</>}
+                {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Save size={13} /> Save Address</>}
               </button>
             </div>
           )}

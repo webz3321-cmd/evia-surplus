@@ -131,7 +131,7 @@ const UserLayout = () => {
             className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-all" 
             onClick={() => setSidebarOpen(false)}
           ></div>
-          <div className="relative w-80 bg-background h-full shadow-2xl flex flex-col border-r border-border animate-in slide-in-from-left duration-300">
+          <div className="relative w-[280px] xs:w-80 bg-background h-full shadow-2xl flex flex-col border-r border-border animate-in slide-in-from-left duration-300">
             <div className="p-5 border-b border-border flex items-center justify-between">
               <Link to="/" className="font-display text-2xl tracking-tight flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
                 {settings?.logoImage ? (

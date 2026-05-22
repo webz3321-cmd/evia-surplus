@@ -62,6 +62,7 @@ export default function HomePage() {
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('relevance');
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Handle manual/checkbox toggle for multicategory filter
   const handleCategoryToggle = (id: string) => {
@@ -199,10 +200,10 @@ export default function HomePage() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* Editorial Search Bar Strip */}
+      {/* Responsive Premium Search Bar Strip */}
       <section className="border-b border-border bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md group">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+          <div className="relative flex-1 w-full md:max-w-md group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-foreground transition-colors" size={16} />
             <input 
               type="text" 
@@ -215,12 +216,13 @@ export default function HomePage() {
               }}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 250)}
-              className="w-full bg-surface border border-transparent rounded-full py-2.5 pl-10 pr-10 text-xs font-medium outline-none focus:bg-background focus:border-border transition-all uppercase tracking-wider"
+              className="w-full bg-surface border border-transparent rounded-full py-3.5 pl-11 pr-11 text-xs font-medium outline-none focus:bg-background focus:border-border transition-all uppercase tracking-wider"
+              style={{ minHeight: '44px' }}
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
                 aria-label="Clear search"
               >
                 <X size={14} />
@@ -244,6 +246,7 @@ export default function HomePage() {
                           if (el) el.scrollIntoView({ behavior: 'smooth' });
                         }}
                         className="text-[10px] bg-stone-100 hover:bg-purple-100 hover:text-purple-700 transition-colors px-3 py-1.5 rounded-full font-bold text-stone-600 capitalize cursor-pointer"
+                        style={{ minHeight: '32px' }}
                       >
                         {tag}
                       </button>
@@ -254,7 +257,7 @@ export default function HomePage() {
                 {searchQuery.trim().length > 0 && (
                   <div className="mt-3 pt-3 border-t border-stone-100">
                     <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 select-none">
-                      🛍️ Matching Surplus Products ({filteredProducts.slice(0, 5).length})
+                      🛍&nbsp;Matching Surplus Products ({filteredProducts.slice(0, 5).length})
                     </p>
                     <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
                       {filteredProducts.slice(0, 5).map((p) => (
@@ -264,7 +267,7 @@ export default function HomePage() {
                             setSearchQuery(p.name);
                             navigate(`/product/${p.id}`);
                           }}
-                          className="w-full text-left text-xs text-stone-700 hover:text-purple-700 font-bold py-1 px-2 rounded-lg hover:bg-stone-50 transition-all flex items-center gap-2"
+                          className="w-full text-left text-xs text-stone-700 hover:text-purple-700 font-bold py-1.5 px-2 rounded-lg hover:bg-stone-50 transition-all flex items-center gap-2"
                         >
                           <img src={p.image} className="w-6 h-6 rounded object-cover shrink-0 border border-stone-200" referrerPolicy="no-referrer" />
                           <span className="truncate capitalize">{p.name}</span>
@@ -280,69 +283,80 @@ export default function HomePage() {
             )}
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto">
             {catFilter && (
               <button 
                 onClick={() => navigate('/')}
-                className="text-[10px] font-semibold uppercase tracking-widest text-[#9333ea] bg-purple-50 hover:bg-purple-100 border border-purple-100 px-4 py-2 rounded-full transition-all flex items-center gap-1"
+                className="text-[10.5px] font-semibold uppercase tracking-widest text-[#9333ea] bg-purple-50 hover:bg-purple-100 border border-purple-100 px-4 py-2.5 rounded-full transition-all flex items-center gap-1.5 shrink-0"
+                style={{ minHeight: '40px' }}
               >
-                <X size={11} /> Clear Filter ({catFilter})
+                <X size={12} /> Clear Filter ({catFilter})
               </button>
             )}
-            <button className="flex items-center gap-2 border border-border bg-background px-4 py-2.5 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-surface transition-colors">
-              <SlidersHorizontal size={14} /> Filter
+            <button 
+              onClick={() => {
+                setFiltersExpanded(!filtersExpanded);
+                const el = document.getElementById("catalog-filters");
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="flex-1 md:flex-initial flex items-center justify-center gap-2 border border-border bg-background px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-surface transition-colors"
+              style={{ minHeight: '40px' }}
+            >
+              <SlidersHorizontal size={14} /> {filtersExpanded ? "Hide Filters" : "Filters & Sort"}
             </button>
           </div>
         </div>
       </section>
 
-      {/* Hero Section */}
+      {/* Responsive Mobile-Perfect Hero Section */}
       <section className="relative overflow-hidden bg-surface border-b border-border">
         {/* Main Content Area */}
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:py-16 md:py-24 sm:px-6">
-          <div className="flex flex-row items-center justify-between gap-4 sm:grid sm:grid-cols-12 sm:gap-8 md:gap-12">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:py-16 md:py-24 sm:px-6">
+          <div className="flex flex-col-reverse md:grid md:grid-cols-12 items-center gap-8 md:gap-12">
             
-            {/* Left Content Column */}
-            <div className="flex-1 min-w-0 sm:col-span-7 flex flex-col items-start text-left">
-              <span className="text-[8px] sm:text-[10px] font-extrabold uppercase tracking-[0.16em] sm:tracking-[0.25em] text-[#9333ea] bg-purple-50 px-2 py-0.5 rounded sm:px-0 sm:py-0 sm:bg-transparent">
+            {/* Content Column */}
+            <div className="w-full md:col-span-7 flex flex-col items-center md:items-start text-center md:text-left">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9333ea] bg-purple-50 px-3.5 py-1.5 rounded-full border border-purple-150 select-none">
                 {settings?.heroTag || "Meesho Verified Supplier · 100% Quality"}
               </span>
-              <h1 className="mt-1.5 sm:mt-4 font-display text-sm sm:text-4xl md:text-5xl lg:text-7xl leading-[1.15] sm:leading-[1.1] text-foreground tracking-tight font-bold">
+              <h1 className="mt-4 font-display text-3xl sm:text-4xl md:text-5xl lg:text-7xl leading-[1.15] sm:leading-[1.1] text-stone-900 tracking-tight font-extrabold">
                 {settings?.heroTitle ? (
                   <span>{settings.heroTitle}</span>
                 ) : (
                   <>Vintage military <em className="italic text-[#9333ea]">fashion surplus.</em></>
                 )}
               </h1>
-              <p className="mt-1 sm:mt-6 max-w-md text-[9px] sm:text-sm md:text-base leading-relaxed text-muted-foreground font-light line-clamp-2 sm:line-clamp-none">
+              <p className="mt-3.5 sm:mt-6 max-w-md text-xs sm:text-sm md:text-base leading-relaxed text-stone-500 font-light">
                 {settings?.heroDesc || "Sourced globally, curated for life. We grade and catalog premium menswear garments and cold-weather clothing built to industrial specs."}
               </p>
               
-              <div className="mt-2.5 sm:mt-8 flex flex-wrap items-center gap-1.5 sm:gap-4">
+              <div className="mt-6 sm:mt-8 flex flex-row items-center gap-3 w-full sm:w-auto self-stretch sm:self-auto">
                 <button 
                   onClick={() => {
                     const el = document.getElementById("catalog");
                     el?.scrollIntoView({ behavior: "smooth" });
                   }} 
-                  className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-primary px-3 py-1.5 sm:px-6 sm:py-3.5 text-[8px] sm:text-[11px] font-bold uppercase tracking-widest text-primary-foreground transition-all hover:opacity-95 shadow-sm active:scale-95"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-full bg-[#111] px-6 py-3.5 sm:px-8 sm:py-4 text-xs font-bold uppercase tracking-widest text-[#fff] hover:bg-stone-800 transition-all hover:shadow shadow-sm active:scale-95"
+                  style={{ minHeight: '46px' }}
                 >
-                  Shop <ArrowRight className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
+                  Shop Catalog <ArrowRight className="h-3.5 w-3.5" />
                 </button>
                 <button 
                   onClick={() => alert("Our story: sourcing authentic, indestructible military salvage and vintage workwear with rich historical narratives.")}
-                  className="inline-flex items-center justify-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 sm:px-6 sm:py-3.5 text-[8px] sm:text-[11px] font-bold uppercase tracking-widest text-foreground transition-colors hover:bg-secondary cursor-pointer"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-full border border-stone-250 bg-background px-6 py-3.5 sm:px-8 sm:py-4 text-xs font-bold uppercase tracking-widest text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-colors cursor-pointer"
+                  style={{ minHeight: '46px' }}
                 >
-                  Story
+                  Our Story
                 </button>
               </div>
             </div>
             
-            {/* Right Image Column */}
-            <div className="w-[100px] xs:w-[130px] sm:w-auto sm:col-span-5 shrink-0 relative animate-in fade-in duration-500">
+            {/* High-Fidelity Responsive Image Column */}
+            <div className="w-full md:col-span-5 relative animate-in fade-in duration-500">
               <img 
                 src={settings?.heroImage || "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=900"} 
                 alt="Evia military surplus close-up" 
-                className="aspect-[3/4] w-full rounded-lg sm:rounded-2xl object-cover shadow-[0_8px_20px_-10px_rgba(0,0,0,0.15)] md:shadow-[0_30px_80px_-40px_rgba(0,0,0,0.25)] border border-border" 
+                className="aspect-[3/4] w-full rounded-2xl object-cover object-top shadow-[0_8px_30px_rgba(0,0,0,0.06)] md:shadow-[0_24px_60px_-20px_rgba(0,0,0,0.2)] border border-[#efece6]" 
               />
             </div>
 
@@ -350,20 +364,20 @@ export default function HomePage() {
         </div>
 
         {/* Meesho Genuine Quality Trust badges */}
-        <div className="bg-purple-50/50 border-t border-purple-100 py-2 select-none">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 flex items-center justify-center gap-3 sm:gap-8 text-[8px] sm:text-xs font-semibold text-stone-600 flex-wrap">
-            <div className="flex items-center gap-1">
-              <span className="text-[#9333ea] text-[10px] sm:text-sm">✓</span>
+        <div className="bg-purple-50/40 border-t border-purple-100 py-3.5 select-none">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 flex items-center justify-center gap-4 sm:gap-8 text-[10px] sm:text-xs font-semibold text-stone-600 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#9333ea] text-xs sm:text-sm">✓</span>
               <span>7 Days Easy Returns</span>
             </div>
-            <div className="h-3 w-[1px] bg-purple-200"></div>
-            <div className="flex items-center gap-1">
-              <span className="text-[#9333ea] text-[10px] sm:text-sm">💵</span>
+            <div className="h-3.5 w-[1px] bg-purple-200"></div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#9333ea] text-xs sm:text-sm">💵</span>
               <span>Cash on Delivery</span>
             </div>
-            <div className="h-3 w-[1px] bg-purple-200"></div>
-            <div className="flex items-center gap-1">
-              <span className="text-[#9333ea] text-[10px] sm:text-sm">🏷️</span>
+            <div className="h-3.5 w-[1px] bg-purple-200"></div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#9333ea] text-xs sm:text-sm">🏷️</span>
               <span>Lowest Price Guarantee</span>
             </div>
           </div>
@@ -480,9 +494,9 @@ export default function HomePage() {
         </div>
 
         {/* Meesho Layout: Left Side Sorter & Filters + Right Side Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8" id="catalog-filters">
           {/* Left Column: Sorter & Category Checkboxes */}
-          <div className="md:col-span-1 flex flex-col gap-6">
+          <div className={`md:col-span-1 flex flex-col gap-6 ${filtersExpanded ? 'block' : 'hidden md:flex'}`}>
             
             {/* Sort Box */}
             <div className="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-xs">
