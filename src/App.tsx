@@ -383,6 +383,30 @@ const AppContent = () => {
         const data = snap.data();
         setSettings(data);
         
+        // Dynamic Tab/Google Tab Title Update
+        if (data.logoText) {
+          const capitalizedBrand = data.logoText.toUpperCase().trim();
+          document.title = `${capitalizedBrand} | Curated Premium Curations & Surplus`;
+        } else {
+          document.title = 'EVIA | Premium Lifestyle Shopping Store';
+        }
+
+        // Dynamic Favicon Update to match branding logoImage in google/browser tabs
+        let faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+        if (!faviconLink) {
+          faviconLink = document.createElement('link');
+          faviconLink.rel = 'icon';
+          document.head.appendChild(faviconLink);
+        }
+
+        if (data.logoImage && data.logoImage.trim() !== '') {
+          faviconLink.href = data.logoImage.trim();
+        } else {
+          // Elegant luxury gold monogram favicon badge as fallback
+          const fallbackLogoSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="30" fill="%23121110"/><circle cx="50" cy="50" r="38" stroke="%23A38A5F" stroke-width="2.5"/><text x="50%" y="54%" font-family="serif, Georgia, Times" font-weight="950" font-size="44" fill="%23A38A5F" dominant-baseline="middle" text-anchor="middle">E</text><circle cx="50" cy="22" r="3" fill="%23A38A5F"/><circle cx="50" cy="78" r="3" fill="%23A38A5F"/></svg>`;
+          faviconLink.href = fallbackLogoSvg;
+        }
+        
         // Dynamic styling injection
         const fontObj = AVAILABLE_FONTS.find(f => f.name === data.headerFont);
         const fontId = 'dynamic-google-font';
