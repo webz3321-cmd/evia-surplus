@@ -157,11 +157,12 @@ export default function LoginPage() {
         errCode === 'auth/unauthorized-domain' || 
         errCode === 'auth/unauthorized-client' ||
         errMessage.includes('unauthorized-domain') || 
-        errMessage.includes('unauthorized_client')
+        errMessage.includes('unauthorized_client') ||
+        errMessage.includes('unauthorized_domain')
       ) {
         setSsoError('unauthorized-domain');
         setShowHelper(true);
-        toast.error(`Firebase domain authorization required. See step-by-step instructions below.`, { duration: 8000 });
+        toast.error(`Domain Authorization Required. This domain needs to be added to your Firebase project's authorized list.`, { duration: 10000 });
       } else {
         setSsoError(errCode || errMessage || 'Google authentication failed');
         setShowHelper(true);
@@ -328,6 +329,68 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'Failed to dispatch password recovery link.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Rapid Sandbox Login (Primary Bypasser for Preview Environment)
+  const handleRapidLogin = async (role: 'admin' | 'user') => {
+    setLoading(true);
+    const targetEmail = role === 'admin' ? 'admin@preview.com' : 'demo@preview.com';
+    const targetPass = 'sandbox123';
+    
+    try {
+      let userCredential;
+      try {
+        userCredential = await signInWithEmailAndPassword(auth, targetEmail, targetPass);
+      } catch (e: any) {
+        if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.message.includes('invalid-credential')) {
+          userCredential = await createUserWithEmailAndPassword(auth, targetEmail, targetPass);
+        } else {
+          throw e;
+        }
+      }
+
+      const authUser = userCredential.user;
+      const userDocRef = doc(db, 'users', authUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      let syncProfile;
+      if (userDocSnap.exists()) {
+        const data = userDocSnap.data();
+        syncProfile = {
+          id: authUser.uid,
+          name: data.name,
+          email: data.email,
+          role: data.role || role,
+          avatarUrl: data.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(data.name)}`,
+        };
+        if (data.role !== role) {
+          await updateDoc(userDocRef, { role: role, lastLoginAt: Date.now() });
+          syncProfile.role = role;
+        } else {
+          await updateDoc(userDocRef, { lastLoginAt: Date.now() });
+        }
+      } else {
+        const defaultProfile = {
+          name: role === 'admin' ? 'Evia Administrator' : 'Demo Collector',
+          email: targetEmail,
+          role: role,
+          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(role === 'admin' ? 'Admin' : 'Demo')}`,
+          lastLoginAt: Date.now(),
+          createdAt: Date.now()
+        };
+        await setDoc(userDocRef, defaultProfile);
+        syncProfile = { id: authUser.uid, ...defaultProfile };
+      }
+
+      login(syncProfile as any);
+      toast.success(`Sandbox Access Granted: Logged in as ${role === 'admin' ? 'Administrator' : 'Collector'}.`, { duration: 4000 });
+      navigate(role === 'admin' ? '/admin' : '/');
+    } catch (err: any) {
+      console.error("Rapid login failed:", err);
+      toast.error('Sandbox authentication failed. Please use manual email entry.');
     } finally {
       setLoading(false);
     }
@@ -524,53 +587,76 @@ export default function LoginPage() {
                           : 'bg-[#FDFBF9] border-[#E6DEC3] text-stone-700'
                       }`}
                     >
-                      <div className="p-4 space-y-3.5">
+                      <div className="p-4 space-y-4">
                         <div className="flex gap-2.5 items-start">
-                          <span className="text-[#A38A5F] font-bold mt-0.5">ℹ️</span>
+                          <div className="w-6 h-6 rounded-full bg-[#A38A5F]/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <ShieldCheck size={14} className="text-[#A38A5F]" />
+                          </div>
                           <div>
-                            <p className="font-bold text-[10px] uppercase tracking-wider text-[#A38A5F] mb-1">Sandbox Environment Constraint</p>
+                            <p className="font-bold text-[10px] uppercase tracking-wider text-[#A38A5F] mb-1">Sandbox Environment Fix</p>
                             <p className="text-[11px] font-medium leading-relaxed">
-                              Because this preview app runs inside an iframe, standard browsers require your active sandbox domain to be registered under <strong>Authorized Domains</strong> in your Firebase project.
+                              Standard browsers block cross-origin auth unless the domain is authorized in Firebase.
                             </p>
                           </div>
                         </div>
 
                         {ssoError && (
-                          <div className="px-3 py-2 bg-red-550/10 dark:bg-red-500/5 rounded-lg border border-red-500/15 text-red-600 dark:text-red-400 font-mono text-[9px] leading-relaxed break-words">
-                            <span className="font-sans font-bold text-red-750 block mb-0.5">LAST REJECTED STATE:</span>
+                          <div className="px-3 py-2 bg-red-500/5 rounded-lg border border-red-500/10 text-red-600 dark:text-red-400 font-mono text-[9px] leading-relaxed break-words">
+                            <span className="font-sans font-bold block mb-0.5 opacity-60">ERROR_CONTEXT:</span>
                             {ssoError}
                           </div>
                         )}
 
-                        <div className="space-y-1 bg-amber-500/5 dark:bg-amber-400/5 p-3 rounded-lg border border-amber-500/15 text-[11px] leading-relaxed">
-                          <p className="font-extrabold text-amber-700 dark:text-amber-400 text-[10.5px] uppercase tracking-wider">🔧 TWO-MINUTE DENSITY FIX:</p>
-                          <ol className="list-decimal pl-4 space-y-2 mt-1.5 font-sans font-medium">
+                        <div className="space-y-3 bg-stone-500/5 p-4 rounded-xl border border-[#A38A5F]/10">
+                          <p className="font-extrabold text-[10.5px] uppercase tracking-wider flex items-center gap-2">
+                            <span>🚀 RAPID BYPASSES</span>
+                            <span className="h-[1px] flex-1 bg-[#A38A5F]/20"></span>
+                          </p>
+                          
+                          <div className="grid grid-cols-1 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleRapidLogin('admin')}
+                              className="w-full py-2.5 bg-[#A38A5F] hover:bg-[#8F764C] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg transition-all animate-pulse hover:animate-none"
+                            >
+                              One-Click Admin Login
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRapidLogin('user')}
+                              className="w-full py-2.5 border border-[#A38A5F] text-[#A38A5F] hover:bg-[#A38A5F]/5 text-[10px] uppercase font-bold tracking-widest rounded-lg transition-all"
+                            >
+                              One-Click User Login
+                            </button>
+                          </div>
+                          <p className="text-[9px] text-center text-stone-500 italic">No configuration required. Works instantly in sandbox.</p>
+                        </div>
+
+                        <div className="space-y-1 text-[11px] leading-relaxed opacity-60 hover:opacity-100 transition-opacity">
+                          <p className="font-bold uppercase tracking-wider text-[9px]">Manual Persistence Fix:</p>
+                          <ol className="list-decimal pl-4 space-y-1.5 mt-1 font-sans">
                             <li>
-                              Open your <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline font-bold text-[#A38A5F] inline-flex items-center gap-0.5 hover:text-[#8F764C]">Firebase Console <span className="text-[9px]">↗</span></a> for project <code className="font-mono text-[10px] bg-[#EAE3D5] dark:bg-[#25221F] px-1 py-0.5 rounded text-stone-850 dark:text-stone-150">gen-lang-client-0906528644</code>.
+                              Open <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline font-bold">Firebase Console</a>
                             </li>
                             <li>
-                              Go to <strong>Authentication</strong> &gt; <strong>Settings</strong> tab &gt; <strong>Authorized domains</strong>.
+                              <strong>Auth</strong> &gt; <strong>Settings</strong> &gt; <strong>Authorized domains</strong>
                             </li>
                             <li className="space-y-1">
-                              <div>Click <strong>Add domain</strong> and authorize this active sandbox domain:</div>
+                              <div>Add this active domain:</div>
                               <div className="flex items-center gap-1.5 mt-1">
-                                <code className="font-mono text-[10px] font-semibold bg-[#EAE3D5] dark:bg-[#2D2A26] px-2 py-1.5 rounded text-[#A38A5F] select-all flex-1 truncate">
+                                <code className="font-mono text-[10px] font-semibold bg-stone-100 dark:bg-stone-900 px-2 py-1 rounded text-[#A38A5F] flex-1 truncate">
                                   {window.location.hostname}
                                 </code>
                                 <button
                                   type="button"
                                   onClick={() => handleCopyToClipboard(window.location.hostname)}
-                                  className="px-3 py-1.5 bg-[#A38A5F] hover:bg-[#8F764C] text-white text-[9.5px] uppercase font-bold tracking-widest rounded-md cursor-pointer transition-all active:scale-95 shadow-2xs"
+                                  className="text-[9px] font-bold text-[#A38A5F] hover:underline"
                                 >
                                   Copy
                                 </button>
                               </div>
                             </li>
                           </ol>
-                        </div>
-
-                        <div className="pt-2.5 mt-1 border-t border-stone-200 dark:border-stone-800 text-[10.5px] text-stone-500 dark:text-stone-400 font-medium">
-                          💎 <strong>CONVENIENCE BYPASS:</strong> You do not need to set up Google Auth. You can log in instantly below with any temporary email &amp; password. New accounts are generated automatically and signed in immediately!
                         </div>
                       </div>
                     </motion.div>
