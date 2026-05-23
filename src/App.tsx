@@ -386,26 +386,45 @@ const AppContent = () => {
         // Dynamic Tab/Google Tab Title Update
         if (data.logoText) {
           const capitalizedBrand = data.logoText.toUpperCase().trim();
-          document.title = `${capitalizedBrand} | Curated Premium Curations & Surplus`;
+          document.title = `${capitalizedBrand} | Premium Curations & Surplus`;
         } else {
           document.title = 'EVIA | Premium Lifestyle Shopping Store';
         }
 
-        // Dynamic Favicon Update to match branding logoImage in google/browser tabs
-        let faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-        if (!faviconLink) {
-          faviconLink = document.createElement('link');
-          faviconLink.rel = 'icon';
-          document.head.appendChild(faviconLink);
-        }
+        // Extremely robust Dynamic Favicon Update to match uploaded logoImage in google and browser tabs
+        const currentLogoUrl = data.logoImage && data.logoImage.trim() !== '' 
+          ? data.logoImage.trim() 
+          : `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="30" fill="%23121110"/><circle cx="50" cy="50" r="38" stroke="%23A38A5F" stroke-width="2.5"/><text x="50%" y="54%" font-family="serif, Georgia, Times" font-weight="950" font-size="44" fill="%23A38A5F" dominant-baseline="middle" text-anchor="middle">E</text><circle cx="50" cy="22" r="3" fill="%23A38A5F"/><circle cx="50" cy="78" r="3" fill="%23A38A5F"/></svg>`;
 
-        if (data.logoImage && data.logoImage.trim() !== '') {
-          faviconLink.href = data.logoImage.trim();
-        } else {
-          // Elegant luxury gold monogram favicon badge as fallback
-          const fallbackLogoSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="30" fill="%23121110"/><circle cx="50" cy="50" r="38" stroke="%23A38A5F" stroke-width="2.5"/><text x="50%" y="54%" font-family="serif, Georgia, Times" font-weight="950" font-size="44" fill="%23A38A5F" dominant-baseline="middle" text-anchor="middle">E</text><circle cx="50" cy="22" r="3" fill="%23A38A5F"/><circle cx="50" cy="78" r="3" fill="%23A38A5F"/></svg>`;
-          faviconLink.href = fallbackLogoSvg;
+        // Remove any pre-existing favicon declarations to avoid type conflicts or caching issues
+        const iconSelects = document.querySelectorAll("link[rel*='icon']");
+        iconSelects.forEach(node => node.parentNode?.removeChild(node));
+
+        // Create a new master icon node
+        const newFavicon = document.createElement('link');
+        newFavicon.rel = 'icon';
+        newFavicon.href = currentLogoUrl;
+
+        // Auto-assign matching Mime type if applicable
+        if (currentLogoUrl.startsWith('data:image/svg+xml')) {
+          newFavicon.type = 'image/svg+xml';
+        } else if (currentLogoUrl.endsWith('.png')) {
+          newFavicon.type = 'image/png';
+        } else if (currentLogoUrl.endsWith('.jpg') || currentLogoUrl.endsWith('.jpeg')) {
+          newFavicon.type = 'image/jpeg';
+        } else if (currentLogoUrl.endsWith('.gif')) {
+          newFavicon.type = 'image/gif';
+        } else if (currentLogoUrl.endsWith('.ico')) {
+          newFavicon.type = 'image/x-icon';
         }
+        
+        document.head.appendChild(newFavicon);
+
+        // Append a shortcut icon fallback link for older browser standards
+        const newShortcut = document.createElement('link');
+        newShortcut.rel = 'shortcut icon';
+        newShortcut.href = currentLogoUrl;
+        document.head.appendChild(newShortcut);
         
         // Dynamic styling injection
         const fontObj = AVAILABLE_FONTS.find(f => f.name === data.headerFont);
