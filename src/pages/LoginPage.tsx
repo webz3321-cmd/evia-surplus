@@ -53,6 +53,10 @@ export default function LoginPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // SSO errors and assistant options
+  const [ssoError, setSsoError] = useState<string | null>(null);
+  const [showHelper, setShowHelper] = useState<boolean>(false);
+
   // Set page theme effects
   useEffect(() => {
     const root = window.document.documentElement;
@@ -94,6 +98,7 @@ export default function LoginPage() {
   // Google Single-Sign-On
   const handleGoogleAuth = async () => {
     setLoading(true);
+    setSsoError(null);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     
@@ -105,7 +110,7 @@ export default function LoginPage() {
       const userDocSnap = await getDoc(userDocRef);
       
       const emailVal = authUser.email || '';
-      const nameVal = authUser.displayName || 'Collector Guest';
+      const nameVal = authUser.displayName || 'Collector Member';
       const avatarVal = authUser.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nameVal)}`;
       
       let finalProfile;
@@ -142,10 +147,25 @@ export default function LoginPage() {
       navigate('/');
     } catch (err: any) {
       console.error("SSO authentication error:", err);
-      if (err.code === 'auth/popup-blocked') {
-        toast.error('The pop-up window was blocked by your browser. Please enable pop-ups to continue.');
+      const errCode = err.code || '';
+      const errMessage = err.message || '';
+      
+      if (errCode === 'auth/popup-blocked') {
+        setSsoError('popup-blocked');
+        toast.error('The pop-up window was blocked by your browser. Please allow pop-ups for this site to continue.');
+      } else if (
+        errCode === 'auth/unauthorized-domain' || 
+        errCode === 'auth/unauthorized-client' ||
+        errMessage.includes('unauthorized-domain') || 
+        errMessage.includes('unauthorized_client')
+      ) {
+        setSsoError('unauthorized-domain');
+        setShowHelper(true);
+        toast.error(`Firebase domain authorization required. See step-by-step instructions below.`, { duration: 8000 });
       } else {
-        toast.error(err.message || 'Error occurred during Google Sign-In.');
+        setSsoError(errCode || errMessage || 'Google authentication failed');
+        setShowHelper(true);
+        toast.error(errMessage || 'Error occurred during Google Sign-In.');
       }
     } finally {
       setLoading(false);
@@ -323,6 +343,11 @@ export default function LoginPage() {
     }
   };
 
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Sandbox domain copied to clipboard!', { icon: '📋' });
+  };
+
   return (
     <div className={`min-h-screen flex flex-col justify-center items-center py-16 px-4 md:px-8 transition-colors duration-300 font-sans selection:bg-[#9E845A]/30 relative overflow-hidden ${
       isDark ? 'bg-[#12110F] text-[#FAF8F5]' : 'bg-[#FAF8F5] text-[#201E1A]'
@@ -474,6 +499,83 @@ export default function LoginPage() {
                   <Chrome size={15} className="text-red-500" />
                   <span>Continue with Google</span>
                 </button>
+
+                {/* Sub-threshold troubleshooting toggle link */}
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowHelper(!showHelper)}
+                    className="text-[10px] uppercase tracking-widest text-[#A38A5F] hover:underline transition-all cursor-pointer font-extrabold inline-flex items-center gap-1.5"
+                  >
+                    <span>🛠️ Google Sign-In helper & sandbox guide</span>
+                  </button>
+                </div>
+
+                {/* Troubleshooting Assistant Card */}
+                <AnimatePresence>
+                  {showHelper && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className={`overflow-hidden mt-4 rounded-xl border text-left font-sans leading-relaxed transition-all ${
+                        isDark 
+                          ? 'bg-[#161412] border-[#2E2B27] text-stone-300' 
+                          : 'bg-[#FDFBF9] border-[#E6DEC3] text-stone-700'
+                      }`}
+                    >
+                      <div className="p-4 space-y-3.5">
+                        <div className="flex gap-2.5 items-start">
+                          <span className="text-[#A38A5F] font-bold mt-0.5">ℹ️</span>
+                          <div>
+                            <p className="font-bold text-[10px] uppercase tracking-wider text-[#A38A5F] mb-1">Sandbox Environment Constraint</p>
+                            <p className="text-[11px] font-medium leading-relaxed">
+                              Because this preview app runs inside an iframe, standard browsers require your active sandbox domain to be registered under <strong>Authorized Domains</strong> in your Firebase project.
+                            </p>
+                          </div>
+                        </div>
+
+                        {ssoError && (
+                          <div className="px-3 py-2 bg-red-550/10 dark:bg-red-500/5 rounded-lg border border-red-500/15 text-red-600 dark:text-red-400 font-mono text-[9px] leading-relaxed break-words">
+                            <span className="font-sans font-bold text-red-750 block mb-0.5">LAST REJECTED STATE:</span>
+                            {ssoError}
+                          </div>
+                        )}
+
+                        <div className="space-y-1 bg-amber-500/5 dark:bg-amber-400/5 p-3 rounded-lg border border-amber-500/15 text-[11px] leading-relaxed">
+                          <p className="font-extrabold text-amber-700 dark:text-amber-400 text-[10.5px] uppercase tracking-wider">🔧 TWO-MINUTE DENSITY FIX:</p>
+                          <ol className="list-decimal pl-4 space-y-2 mt-1.5 font-sans font-medium">
+                            <li>
+                              Open your <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline font-bold text-[#A38A5F] inline-flex items-center gap-0.5 hover:text-[#8F764C]">Firebase Console <span className="text-[9px]">↗</span></a> for project <code className="font-mono text-[10px] bg-[#EAE3D5] dark:bg-[#25221F] px-1 py-0.5 rounded text-stone-850 dark:text-stone-150">gen-lang-client-0906528644</code>.
+                            </li>
+                            <li>
+                              Go to <strong>Authentication</strong> &gt; <strong>Settings</strong> tab &gt; <strong>Authorized domains</strong>.
+                            </li>
+                            <li className="space-y-1">
+                              <div>Click <strong>Add domain</strong> and authorize this active sandbox domain:</div>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <code className="font-mono text-[10px] font-semibold bg-[#EAE3D5] dark:bg-[#2D2A26] px-2 py-1.5 rounded text-[#A38A5F] select-all flex-1 truncate">
+                                  {window.location.hostname}
+                                </code>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyToClipboard(window.location.hostname)}
+                                  className="px-3 py-1.5 bg-[#A38A5F] hover:bg-[#8F764C] text-white text-[9.5px] uppercase font-bold tracking-widest rounded-md cursor-pointer transition-all active:scale-95 shadow-2xs"
+                                >
+                                  Copy
+                                </button>
+                              </div>
+                            </li>
+                          </ol>
+                        </div>
+
+                        <div className="pt-2.5 mt-1 border-t border-stone-200 dark:border-stone-800 text-[10.5px] text-stone-500 dark:text-stone-400 font-medium">
+                          💎 <strong>CONVENIENCE BYPASS:</strong> You do not need to set up Google Auth. You can log in instantly below with any temporary email &amp; password. New accounts are generated automatically and signed in immediately!
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="relative flex py-5 items-center">
                   <div className={`flex-grow border-t ${isDark ? 'border-[#2D2A26]' : 'border-[#ECE6D8]'}`}></div>
