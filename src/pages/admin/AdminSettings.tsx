@@ -93,6 +93,15 @@ export default function AdminSettings() {
   const [heroDesc, setHeroDesc] = useState('We salvage, catalog, and grade rare menswear utility pieces, tactical gear, and cold-weather clothing built to industrial standards. Sourced globally, curated for life.');
   const [heroImage, setHeroImage] = useState('https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=900');
 
+  // Brand Story Section (Editorial Spread) variables
+  const [brandStoryTag, setBrandStoryTag] = useState('Sourcing Protocol');
+  const [brandStoryTitle, setBrandStoryTitle] = useState('Indestructible garments, salvaged for the modern collector.');
+  const [brandStoryDesc, setBrandStoryDesc] = useState('Every item in our collection is hand-inspected for physical integrity, original military contract markings, and historical authenticity. We specialize in salvage stock from the 1950s to the 1980s — heavy wools, authentic herringbone denim, and bulletproof military sateen cotton.');
+  const [brandStoryImage1, setBrandStoryImage1] = useState('https://images.unsplash.com/photo-1520639888713-7851133b1ed0?auto=format&fit=crop&q=80&w=400');
+  const [brandStoryImage2, setBrandStoryImage2] = useState('https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=400');
+  const [brandStoryLabel, setBrandStoryLabel] = useState('Verify provenance');
+  const [brandStoryProvenanceText, setBrandStoryProvenanceText] = useState('Salvaged Stock Provenance: US Armed Forces (M-65, OG-107), British Commonwealth (Wool Combat), and French Foreign Legion.');
+
   // Promotional Banner variables
   const [promoActive, setPromoActive] = useState(false);
   const [promoTitle, setPromoTitle] = useState('Special Archive Deployment Offer');
@@ -123,6 +132,7 @@ export default function AdminSettings() {
   const [twilioSid, setTwilioSid] = useState('');
   const [twilioToken, setTwilioToken] = useState('');
   const [twilioFrom, setTwilioFrom] = useState('');
+  const [adminPasscode, setAdminPasscode] = useState('3115');
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -148,6 +158,14 @@ export default function AdminSettings() {
           if (data.heroDesc !== undefined) setHeroDesc(data.heroDesc);
           if (data.heroImage !== undefined) setHeroImage(data.heroImage);
 
+          if (data.brandStoryTag !== undefined) setBrandStoryTag(data.brandStoryTag);
+          if (data.brandStoryTitle !== undefined) setBrandStoryTitle(data.brandStoryTitle);
+          if (data.brandStoryDesc !== undefined) setBrandStoryDesc(data.brandStoryDesc);
+          if (data.brandStoryImage1 !== undefined) setBrandStoryImage1(data.brandStoryImage1);
+          if (data.brandStoryImage2 !== undefined) setBrandStoryImage2(data.brandStoryImage2);
+          if (data.brandStoryLabel !== undefined) setBrandStoryLabel(data.brandStoryLabel);
+          if (data.brandStoryProvenanceText !== undefined) setBrandStoryProvenanceText(data.brandStoryProvenanceText);
+
           if (data.promoActive !== undefined) setPromoActive(data.promoActive);
           if (data.promoTitle !== undefined) setPromoTitle(data.promoTitle);
           if (data.promoSubtitle !== undefined) setPromoSubtitle(data.promoSubtitle);
@@ -165,6 +183,7 @@ export default function AdminSettings() {
           if (data.twilioSid !== undefined) setTwilioSid(data.twilioSid);
           if (data.twilioToken !== undefined) setTwilioToken(data.twilioToken);
           if (data.twilioFrom !== undefined) setTwilioFrom(data.twilioFrom);
+          if (data.adminPasscode !== undefined) setAdminPasscode(data.adminPasscode);
         }
       } catch (err) {
         console.error('Error reading settings doc:', err);
@@ -211,6 +230,13 @@ export default function AdminSettings() {
         heroTitle: heroTitle.trim(),
         heroDesc: heroDesc.trim(),
         heroImage: heroImage,
+        brandStoryTag: brandStoryTag.trim(),
+        brandStoryTitle: brandStoryTitle.trim(),
+        brandStoryDesc: brandStoryDesc.trim(),
+        brandStoryImage1: brandStoryImage1.trim(),
+        brandStoryImage2: brandStoryImage2.trim(),
+        brandStoryLabel: brandStoryLabel.trim(),
+        brandStoryProvenanceText: brandStoryProvenanceText.trim(),
         promoActive,
         promoTitle: promoTitle.trim(),
         promoSubtitle: promoSubtitle.trim(),
@@ -227,6 +253,7 @@ export default function AdminSettings() {
         twilioSid: twilioSid.trim(),
         twilioToken: twilioToken.trim(),
         twilioFrom: twilioFrom.trim(),
+        adminPasscode: adminPasscode.trim(),
         updatedAt: Date.now()
       };
       await setDoc(doc(db, 'settings', 'global'), payload);
@@ -257,7 +284,14 @@ export default function AdminSettings() {
     setHeroTag('Sourced & Authenticated · 2026');
     setHeroTitle('Original vintage military surplus.');
     setHeroDesc('We salvage, catalog, and grade rare menswear utility pieces, tactical gear, and cold-weather clothing built to industrial standards. Sourced globally, curated for life.');
-    setHeroImage('https://images.unsplash.com/photo-1617137968427-85924c805a22?auto=format&fit=crop&q=80&w=900');
+    setHeroImage('https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=900');
+    setBrandStoryTag('Sourcing Protocol');
+    setBrandStoryTitle('Indestructible garments, salvaged for the modern collector.');
+    setBrandStoryDesc('Every item in our collection is hand-inspected for physical integrity, original military contract markings, and historical authenticity. We specialize in salvage stock from the 1950s to the 1980s — heavy wools, authentic herringbone denim, and bulletproof military sateen cotton.');
+    setBrandStoryImage1('https://images.unsplash.com/photo-1520639888713-7851133b1ed0?auto=format&fit=crop&q=80&w=400');
+    setBrandStoryImage2('https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=400');
+    setBrandStoryLabel('Verify provenance');
+    setBrandStoryProvenanceText('Salvaged Stock Provenance: US Armed Forces (M-65, OG-107), British Commonwealth (Wool Combat), and French Foreign Legion.');
     setPromoActive(false);
     setPromoTitle('Special Archive Deployment Offer');
     setPromoSubtitle('Acquire select pristine utility items at up to 35% off. Sourced globally, validated for authenticity.');
@@ -266,7 +300,8 @@ export default function AdminSettings() {
     setPromoImage('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200');
     setPromoLink('');
     setPromoButtonText('Claim 35% Discount');
-
+    setAdminPasscode('3115');
+ 
     setSubmitting(true);
     try {
       await setDoc(doc(db, 'settings', 'global'), {
@@ -285,6 +320,13 @@ export default function AdminSettings() {
         heroTitle: 'Original vintage military surplus.',
         heroDesc: 'We salvage, catalog, and grade rare menswear utility pieces, tactical gear, and cold-weather clothing built to industrial standards. Sourced globally, curated for life.',
         heroImage: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=900',
+        brandStoryTag: 'Sourcing Protocol',
+        brandStoryTitle: 'Indestructible garments, salvaged for the modern collector.',
+        brandStoryDesc: 'Every item in our collection is hand-inspected for physical integrity, original military contract markings, and historical authenticity. We specialize in salvage stock from the 1950s to the 1980s — heavy wools, authentic herringbone denim, and bulletproof military sateen cotton.',
+        brandStoryImage1: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?auto=format&fit=crop&q=80&w=400',
+        brandStoryImage2: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=400',
+        brandStoryLabel: 'Verify provenance',
+        brandStoryProvenanceText: 'Salvaged Stock Provenance: US Armed Forces (M-65, OG-107), British Commonwealth (Wool Combat), and French Foreign Legion.',
         promoActive: false,
         promoTitle: 'Special Archive Deployment Offer',
         promoSubtitle: 'Acquire select pristine utility items at up to 35% off. Sourced globally, validated for authenticity.',
@@ -293,6 +335,7 @@ export default function AdminSettings() {
         promoImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200',
         promoLink: '',
         promoButtonText: 'Claim 35% Discount',
+        adminPasscode: '3115',
         updatedAt: Date.now()
       });
       toast.success('Restored Evia 2026 surplus originals!');
@@ -528,6 +571,116 @@ export default function AdminSettings() {
               </div>
             </div>
 
+            {/* Brand Editorial Story (Sourcing Protocol / Spread) Section Content Block */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
+                <Type className="text-amber-600" size={16} />
+                <h2 className="text-sm font-extrabold uppercase tracking-widest text-zinc-900">Homepage Editorial Spread (Brand Story)</h2>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category / Protocol Tag</label>
+                    <input 
+                      type="text" 
+                      value={brandStoryTag} 
+                      onChange={e => setBrandStoryTag(e.target.value)} 
+                      placeholder="Sourcing Protocol"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Provenance Button Label</label>
+                    <input 
+                      type="text" 
+                      value={brandStoryLabel} 
+                      onChange={e => setBrandStoryLabel(e.target.value)} 
+                      placeholder="Verify provenance"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Featured Main Title / Slogan</label>
+                  <input 
+                    type="text" 
+                    value={brandStoryTitle} 
+                    onChange={e => setBrandStoryTitle(e.target.value)} 
+                    placeholder="Indestructible garments, salvaged for the modern collector."
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description Paragraph Text</label>
+                  <textarea 
+                    value={brandStoryDesc} 
+                    onChange={e => setBrandStoryDesc(e.target.value)} 
+                    placeholder="Enter editorial text about legacy..."
+                    rows={4}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Provenance Verification Alert Details</label>
+                  <textarea 
+                    value={brandStoryProvenanceText} 
+                    onChange={e => setBrandStoryProvenanceText(e.target.value)} 
+                    placeholder="This popup displays when users verify provenance..."
+                    rows={2}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors resize-y text-stone-600"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Story Image 1 */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Left-Hand Editorial Image 1 URL</label>
+                    <div className="flex flex-col gap-2">
+                      <input 
+                        type="url" 
+                        value={brandStoryImage1} 
+                        onChange={e => setBrandStoryImage1(e.target.value)} 
+                        placeholder="Image 1 URL" 
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                      />
+                      {brandStoryImage1 && (
+                        <div className="relative w-36 h-36 rounded-xl overflow-hidden border border-stone-200 shadow-sm bg-stone-50 flex items-center justify-center mt-1">
+                          <img src={brandStoryImage1} alt="story 1" className="w-full h-full object-cover" onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=300";
+                          }} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Left Story Image 2 */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Right-Hand (Slightly Lower) Image 2 URL</label>
+                    <div className="flex flex-col gap-2">
+                      <input 
+                        type="url" 
+                        value={brandStoryImage2} 
+                        onChange={e => setBrandStoryImage2(e.target.value)} 
+                        placeholder="Image 2 URL" 
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                      />
+                      {brandStoryImage2 && (
+                        <div className="relative w-36 h-36 rounded-xl overflow-hidden border border-stone-200 shadow-sm bg-stone-50 flex items-center justify-center mt-1">
+                          <img src={brandStoryImage2} alt="story 2" className="w-full h-full object-cover" onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=300";
+                          }} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Promotional Banner Configurations Section */}
             <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm flex flex-col gap-5">
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
@@ -570,6 +723,35 @@ export default function AdminSettings() {
                 <ImageIcon size={14} />
                 Configure Banner Section (with Upload Space)
               </button>
+            </div>
+
+            {/* Admin Security & Lock Passcode settings */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
+                <Key className="text-indigo-600 animate-pulse" size={16} />
+                <h2 className="text-sm font-extrabold uppercase tracking-widest text-[#1c1c1c]">Admin Panel Lock Passcode</h2>
+              </div>
+              <p className="text-xs text-stone-550 leading-relaxed font-light">
+                Define the secret numeric passcode required to lock/unlock and access the custom Admin Management layout page. The default code is <code className="bg-amber-50 text-amber-700 px-1 py-0.5 rounded font-bold font-mono text-[11px]">3115</code>.
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Secret Lock Passcode</label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    required 
+                    value={adminPasscode} 
+                    onChange={e => setAdminPasscode(e.target.value.replace(/\D/g, ''))} 
+                    placeholder="E.g. 3115"
+                    maxLength={10}
+                    className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold tracking-widest outline-none focus:border-indigo-500 focus:bg-white transition-colors text-indigo-700"
+                  />
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Key size={14} />
+                  </div>
+                </div>
+                <span className="block text-[10px] text-gray-400 mt-1.5 leading-relaxed">Only numeric digits are permitted. For ultimate bulletproof lock and security, you can customize this field at any time.</span>
+              </div>
             </div>
 
             {/* Official SMTP & SMS OTP Gateways Card */}

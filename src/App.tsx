@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Outlet, Navigate, NavLink, Link, useLocation } from 'react-router';
 import { AppProvider, useAppContext } from './context';
 import { useEffect, useState, useMemo } from 'react';
-import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket, Sparkles } from 'lucide-react';
+import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket, Sparkles, Heart } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { db } from './lib/firebase';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
@@ -13,6 +13,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import OrderPage from './pages/OrderPage';
 import ProductPage from './pages/ProductPage';
+import WishlistPage from './pages/WishlistPage';
 
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -28,18 +29,22 @@ const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
-  const { cart, user } = useAppContext();
+  const { cart, user, wishlist } = useAppContext();
   const location = useLocation();
 
   useEffect(() => {
     const unsubCats = onSnapshot(collection(db, 'categories'), (snap) => {
       setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
+    }, (error) => {
+      console.warn("Categories listener failed or was interrupted:", error);
     });
     
     const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
       if (snap.exists()) {
         setSettings(snap.data());
       }
+    }, (error) => {
+      console.warn("Global settings listener failed or was interrupted:", error);
     });
 
     return () => {
@@ -119,6 +124,20 @@ const UserLayout = () => {
                 <span>Login</span>
               </Link>
             )}
+
+            <Link 
+              to="/wishlist" 
+              className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-background/50 hover:border-foreground/40 animate-none hover:scale-105"
+              title="Saved Items / Whistel"
+            >
+              <Heart className={`h-4 w-4 ${wishlist?.length > 0 ? 'text-red-500 fill-red-500' : 'text-stone-550'}`} />
+              <span className="hidden sm:inline">Saved</span>
+              {wishlist?.length > 0 && (
+                <span className="grid h-4 min-w-4 place-items-center rounded-full bg-red-550 px-1 text-[9px] font-black text-white leading-none">
+                  {wishlist.length}
+                </span>
+              )}
+            </Link>
             
             <Link 
               to="/cart" 
@@ -171,6 +190,7 @@ const UserLayout = () => {
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 text-foreground">
               <div className="flex flex-col gap-3">
                 <Link to="/" className="font-display text-xl text-foreground hover:text-accent transition-colors" onClick={() => setSidebarOpen(false)}>Home / Shop All</Link>
+                <Link to="/wishlist" className="font-display text-xl text-foreground hover:text-accent transition-colors" onClick={() => setSidebarOpen(false)}>Saved Items (Whistel)</Link>
                 <Link to="/order" className="font-display text-xl text-foreground hover:text-accent transition-colors" onClick={() => setSidebarOpen(false)}>My Orders</Link>
                 <Link to="/profile" className="font-display text-xl text-foreground hover:text-accent transition-colors" onClick={() => setSidebarOpen(false)}>My Account</Link>
               </div>
@@ -237,6 +257,7 @@ const UserLayout = () => {
           <div>
             <h4 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">Support</h4>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/wishlist" className="transition-colors hover:text-foreground font-bold text-accent">Saved Index (Whistel)</Link></li>
               <li><a href="#" className="transition-colors hover:text-foreground">Carbon Neutral Shipping</a></li>
               <li><a href="#" className="transition-colors hover:text-foreground">30-day Free Returns</a></li>
               <li><a href="#" className="transition-colors hover:text-foreground">Lifetime Support & Repair</a></li>
@@ -345,6 +366,14 @@ const AdminLayout = () => {
 
 import AdminCoupons from './pages/admin/AdminCoupons';
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
 const AppContent = () => {
   const [settings, setSettings] = useState<any>(null);
 
@@ -419,6 +448,8 @@ const AppContent = () => {
           }
         `;
       }
+    }, (error) => {
+      console.warn("Dynamic layout settings collection observer failed:", error);
     });
 
     return () => unsub();
@@ -449,6 +480,7 @@ const AppContent = () => {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* User Routes */}
         <Route element={<UserLayout />}>
@@ -456,6 +488,7 @@ const AppContent = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/profile" element={<ProfilePage />} />

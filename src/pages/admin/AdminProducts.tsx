@@ -21,6 +21,7 @@ export default function AdminProducts() {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [price, setPrice] = useState('');
+  const [originalPrice, setOriginalPrice] = useState('');
   const [stock, setStock] = useState('');
   const [image, setImage] = useState('');
   const [secondaryImages, setSecondaryImages] = useState(''); // comma separated
@@ -87,6 +88,7 @@ export default function AdminProducts() {
     setName('');
     setDesc('');
     setPrice('');
+    setOriginalPrice('');
     setStock('');
     setImage('');
     setNewCatName('');
@@ -107,6 +109,7 @@ export default function AdminProducts() {
     setName(prod.name);
     setDesc(prod.description || '');
     setPrice(prod.price.toString());
+    setOriginalPrice(prod.originalPrice ? prod.originalPrice.toString() : '');
     setStock(prod.stock.toString());
     setImage(prod.image);
     setNewCatName('');
@@ -160,6 +163,7 @@ export default function AdminProducts() {
         name: name.trim(), 
         description: desc.trim(), 
         price: Number(price), 
+        originalPrice: originalPrice ? Number(originalPrice) : null,
         stock: Number(stock), 
         image: image.trim(),
         secondaryImages: sImages,
@@ -307,12 +311,30 @@ export default function AdminProducts() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Price (₹)</label>
-                  <input required value={price} onChange={e=>setPrice(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" />
+                  <label className="block text-xs font-bold text-[#A38A5F] uppercase tracking-wider mb-1.5">Selling Price (₹)</label>
+                  <input required value={price} onChange={e=>setPrice(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors font-medium text-sm" placeholder="E.g. 6400" />
                 </div>
-                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Stock Qty</label>
-                  <input required value={stock} onChange={e=>setStock(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors" />
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Original MRP Price (₹)</label>
+                  <input value={originalPrice} onChange={e=>setOriginalPrice(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors font-medium text-sm text-stone-600" placeholder="E.g. 8640 (Slashed)" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 items-center">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Stock Qty</label>
+                  <input required value={stock} onChange={e=>setStock(e.target.value)} type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-colors font-medium text-sm" placeholder="E.g. 25" />
+                </div>
+                <div className="pt-4 md:pt-4">
+                  {originalPrice && Number(originalPrice) > Number(price) ? (
+                    <div className="bg-emerald-50 text-emerald-700 font-extrabold text-[11px] uppercase tracking-wider px-3 py-2.5 rounded-xl border border-emerald-100/60 inline-flex items-center gap-1.5 w-full justify-center shadow-3xs select-none">
+                      <span className="animate-pulse">✨</span>
+                      <span>Offer: {Math.round(((Number(originalPrice) - Number(price)) / Number(originalPrice)) * 100)}% Off</span>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 text-gray-450 font-medium text-[10px] tracking-wide px-3 py-2.5 rounded-xl border border-gray-100 inline-flex items-center gap-1 w-full justify-center select-none italic text-center">
+                      No custom active offer
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

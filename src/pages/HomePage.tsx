@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, getDocs, deleteDoc, doc, addDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
-import { Search, SlidersHorizontal, ChevronRight, X, Truck, RotateCcw, Shield, Mail, ArrowRight } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronRight, X, Truck, RotateCcw, Shield, Mail, ArrowRight, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAppContext } from '../context';
 
 // Helper function to normalize text for consistent searches (hyphens, spaces, punctuation)
 const normalizeText = (text: string): string => {
@@ -50,6 +51,7 @@ const getSynonyms = (word: string): string[] => {
 };
 
 export default function HomePage() {
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useAppContext();
   const [categories, setCategories] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +111,8 @@ export default function HomePage() {
       if (snap.exists()) {
         setSettings(snap.data());
       }
+    }, (err) => {
+      console.error("Global brand settings stream failed:", err);
     });
 
     return () => {
@@ -693,8 +697,10 @@ export default function HomePage() {
                 {filteredProducts.map((p, idx) => {
                   const simulatedRating = (4.0 + (idx % 10) * 0.1).toFixed(1);
                   const simulatedReviews = 11 + (idx * 11) % 94;
-                  const originalPrice = Math.round(p.price * 1.35);
-                  const discountPercent = 25;
+                  const originalPrice = p.originalPrice || Math.round(p.price * 1.35);
+                  const discountPercent = p.originalPrice && p.originalPrice > p.price
+                    ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
+                    : 25;
 
                   return (
                     <div 
@@ -710,6 +716,25 @@ export default function HomePage() {
                           loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-750 ease-out group-hover:scale-103"
                         />
+                        <div className="absolute right-2 top-2 z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isInWishlist(p.id)) {
+                                removeFromWishlist(p.id);
+                                toast.success('Removed from saved items');
+                              } else {
+                                addToWishlist(p);
+                                toast.success('Saved to Whistel list!', { icon: '❤️' });
+                              }
+                            }}
+                            className="w-7 h-7 bg-white/95 hover:bg-white text-stone-650 hover:text-red-600 rounded-full flex items-center justify-center shadow-xs transition-transform active:scale-90 border border-stone-100 cursor-pointer"
+                            aria-label="Toggle saved item"
+                          >
+                            <Heart className={`h-3.5 w-3.5 transition-colors ${isInWishlist(p.id) ? 'text-red-500 fill-red-500' : 'text-stone-500'}`} />
+                          </button>
+                        </div>
                         <div className="absolute left-2 top-2 flex flex-col gap-1 z-10">
                           {p.stock <= 5 && p.stock > 0 && (
                             <span className="rounded bg-orange-600 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
@@ -772,30 +797,32 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 md:grid-cols-2 md:items-center">
           <div className="grid grid-cols-2 gap-4">
             <img 
-              src="https://images.unsplash.com/photo-1520639888713-7851133b1ed0?auto=format&fit=crop&q=80&w=400" 
+              src={settings?.brandStoryImage1 || "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?auto=format&fit=crop&q=80&w=400"} 
               alt="Heavy-duty military grade boots" 
               className="w-full h-full aspect-square rounded-xl object-cover border border-border" 
             />
             <img 
-              src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=400" 
+              src={settings?.brandStoryImage2 || "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=400"} 
               alt="Tactical mountain rucksack detail" 
               className="w-full h-full aspect-square rounded-xl object-cover border border-border mt-10" 
             />
           </div>
           
           <div className="lg:pl-10">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">Sourcing Protocol</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">
+              {settings?.brandStoryTag || "Sourcing Protocol"}
+            </span>
             <h2 className="mt-4 font-display text-4xl text-foreground sm:text-5xl leading-none">
-              Indestructible garments, salvaged for the modern collector.
+              {settings?.brandStoryTitle || "Indestructible garments, salvaged for the modern collector."}
             </h2>
             <p className="mt-6 text-sm text-muted-foreground leading-relaxed font-light">
-              Every item in our collection is hand-inspected for physical integrity, original military contract markings, and historical authenticity. We specialize in salvage stock from the 1950s to the 1980s — heavy wools, authentic herringbone denim, and bulletproof military sateen cotton.
+              {settings?.brandStoryDesc || "Every item in our collection is hand-inspected for physical integrity, original military contract markings, and historical authenticity. We specialize in salvage stock from the 1950s to the 1980s — heavy wools, authentic herringbone denim, and bulletproof military sateen cotton."}
             </p>
             <button 
-              onClick={() => alert("Salvaged Stock Provenance: US Armed Forces (M-65, OG-107), British Commonwealth (Wool Combat), and French Foreign Legion.")}
+              onClick={() => alert(settings?.brandStoryProvenanceText || "Salvaged Stock Provenance: US Armed Forces (M-65, OG-107), British Commonwealth (Wool Combat), and French Foreign Legion.")}
               className="mt-8 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-foreground hover:opacity-80 transition-opacity cursor-pointer"
             >
-              Verify provenance <ArrowRight className="h-4.5 w-4.5" />
+              {settings?.brandStoryLabel || "Verify provenance"} <ArrowRight className="h-4.5 w-4.5" />
             </button>
           </div>
         </div>

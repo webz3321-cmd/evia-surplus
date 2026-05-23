@@ -9,9 +9,29 @@
         "phone": { "type": "string" },
         "email": { "type": "string" },
         "role": { "type": "string", "enum": ["user", "admin"] },
+        "emailVerified": { "type": "boolean" },
+        "phoneVerified": { "type": "boolean" },
+        "authType": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "lastLoginAt": { "type": "number" },
         "createdAt": { "type": "number", "description": "Timestamp in ms" }
       },
       "required": ["name", "email", "role"]
+    },
+    "LoginLog": {
+      "title": "Login Log",
+      "description": "Login session history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "authType": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "device": { "type": "string" }
+      },
+      "required": ["userId", "authType", "timestamp"]
     },
     "Category": {
       "title": "Category",
@@ -65,6 +85,38 @@
         "updatedAt": { "type": "number" }
       },
       "required": ["title", "text", "active"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Promo and discount coupons",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "discount": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["code", "discount"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global brand visual configurations",
+      "type": "object",
+      "properties": {
+        "logoText": { "type": "string" },
+        "logoImage": { "type": "string" },
+        "showTextWithImage": { "type": "boolean" },
+        "siteBgColor": { "type": "string" },
+        "brandStoryTag": { "type": "string" },
+        "brandStoryTitle": { "type": "string" },
+        "brandStoryDesc": { "type": "string" },
+        "brandStoryImage1": { "type": "string" },
+        "brandStoryImage2": { "type": "string" },
+        "brandStoryLabel": { "type": "string" },
+        "brandStoryProvenanceText": { "type": "string" },
+        "adminPasscode": { "type": "string" }
+      },
+      "required": ["logoText"]
     }
   },
   "firestore": {
@@ -72,9 +124,21 @@
       "schema": { "$ref": "#/entities/Offer" },
       "description": "Cart promotional offers"
     },
+    "/settings/{settingsId}": {
+      "schema": { "$ref": "#/entities/Settings" },
+      "description": "Global brand visual and smtp/sms configuration"
+    },
+    "/coupons/{couponId}": {
+      "schema": { "$ref": "#/entities/Coupon" },
+      "description": "Discount coupon codes"
+    },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "User profiles"
+    },
+    "/loginHistory/{logId}": {
+      "schema": { "$ref": "#/entities/LoginLog" },
+      "description": "Login history audit trail"
     },
     "/categories/{categoryId}": {
       "schema": { "$ref": "#/entities/Category" },

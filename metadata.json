@@ -2,5 +2,5 @@
   "name": "EVIA E-Commerce",
   "description": "A premium curated vintage military, workwear, and men's surplus apparel e-commerce boutique.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

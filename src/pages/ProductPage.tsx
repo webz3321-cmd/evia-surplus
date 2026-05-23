@@ -17,7 +17,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState(false);
   
-  const { addToCart } = useAppContext();
+  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useAppContext();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -173,11 +173,19 @@ export default function ProductPage() {
                   <Share2 className="h-4 w-4" />
                 </button>
                 <button 
-                  className="rounded-full p-2 hover:bg-secondary text-foreground transition-colors"
+                  className="rounded-full p-2 hover:bg-secondary text-foreground transition-all active:scale-90"
                   aria-label="Wishlist"
-                  onClick={() => toast.success('Added to wishlist')}
+                  onClick={() => {
+                    if (isInWishlist(product.id)) {
+                      removeFromWishlist(product.id);
+                      toast.success('Removed from saved items');
+                    } else {
+                      addToWishlist(product);
+                      toast.success('Added to saved items / Whistel!', { icon: '❤️' });
+                    }
+                  }}
                 >
-                  <Heart className="h-4 w-4" />
+                  <Heart className={`h-4 w-4 transition-colors ${isInWishlist(product.id) ? 'text-red-500 fill-red-500' : 'text-stone-550'}`} />
                 </button>
               </div>
             </div>
@@ -192,16 +200,22 @@ export default function ProductPage() {
 
             <div className="mt-6 flex items-center gap-3 border-b border-border pb-1 flex-wrap">
               <span className="text-3xl font-extrabold text-stone-950">₹{product.price.toLocaleString()}</span>
-              {product.price > 100 && (
-                <>
-                  <span className="text-base text-stone-400 line-through">
-                    ₹{Math.round(product.price * 1.35).toLocaleString()}
-                  </span>
-                  <span className="bg-emerald-50 text-emerald-700 font-extrabold text-xs px-2.5 py-1 rounded-full whitespace-nowrap">
-                    25% Off
-                  </span>
-                </>
-              )}
+              {product.price > 100 && (() => {
+                const originalPrice = product.originalPrice || Math.round(product.price * 1.35);
+                const discountPercent = product.originalPrice && product.originalPrice > product.price
+                  ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                  : 25;
+                return (
+                  <>
+                    <span className="text-base text-stone-400 line-through">
+                      ₹{originalPrice.toLocaleString()}
+                    </span>
+                    <span className="bg-emerald-50 text-emerald-700 font-extrabold text-xs px-2.5 py-1 rounded-full whitespace-nowrap">
+                      {discountPercent}% Off
+                    </span>
+                  </>
+                );
+              })()}
             </div>
             
             {/* Dynamic GST spec breakdown badge */}

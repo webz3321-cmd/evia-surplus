@@ -1,11 +1,19 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
 type User = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone?: string;
   role: 'user' | 'admin';
+  fullName?: string;
+  addressLine?: string;
+  address?: string;
+  landmark?: string;
+  taluq?: string;
+  state?: string;
+  pincode?: string;
+  avatarUrl?: string;
 };
 
 type CartItem = {
@@ -24,6 +32,10 @@ interface AppContextType {
   updateQuantity: (productId: any, quantity: number, size?: string) => void;
   clearCart: () => void;
   cartTotal: number;
+  wishlist: any[];
+  addToWishlist: (product: any) => void;
+  removeFromWishlist: (productId: any) => void;
+  isInWishlist: (productId: any) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -31,6 +43,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<any[]>([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('evia_user');
@@ -43,6 +56,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (storedCart) {
       try {
         setCart(JSON.parse(storedCart));
+      } catch(e) {}
+    }
+    const storedWishlist = localStorage.getItem('evia_wishlist');
+    if (storedWishlist) {
+      try {
+        setWishlist(JSON.parse(storedWishlist));
       } catch(e) {}
     }
   }, []);
@@ -93,10 +112,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('evia_cart');
   };
 
+  const addToWishlist = (product: any) => {
+    setWishlist(prev => {
+      if (prev.some(item => item.id === product.id)) return prev;
+      const newWishlist = [...prev, product];
+      localStorage.setItem('evia_wishlist', JSON.stringify(newWishlist));
+      return newWishlist;
+    });
+  };
+
+  const removeFromWishlist = (productId: any) => {
+    setWishlist(prev => {
+      const newWishlist = prev.filter(item => item.id !== productId);
+      localStorage.setItem('evia_wishlist', JSON.stringify(newWishlist));
+      return newWishlist;
+    });
+  };
+
+  const isInWishlist = (productId: any) => {
+    return wishlist.some(item => item.id === productId);
+  };
+
   const cartTotal = cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
 
   return (
-    <AppContext.Provider value={{ user, login, logout, cart, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal }}>
+    <AppContext.Provider value={{ 
+      user, login, logout, cart, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal,
+      wishlist, addToWishlist, removeFromWishlist, isInWishlist 
+    }}>
       {children}
     </AppContext.Provider>
   );
