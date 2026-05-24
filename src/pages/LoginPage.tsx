@@ -162,17 +162,8 @@ export default function LoginPage() {
         ...(view === 'signup' ? { name: finalName, phone: finalPhone } : {})
       });
     } else {
-      // Logic for missing account alert requested by user
-      if (view === 'login') {
-        toast.error('Identity not found. Please "Create Account" first.', {
-          icon: '🚫',
-          duration: 5000
-        });
-        setView('signup');
-        setLoading(false);
-        return;
-      }
-
+      // In this version, we automatically create the account even in login view 
+      // if it doesn't exist, as per the user's latest request.
       const freshProfile = {
         name: finalName,
         email: finalEmail.toLowerCase().trim(),
@@ -709,30 +700,20 @@ export default function LoginPage() {
 
                   <div className="pt-2">
                     <button
-                      type="button"
-                      onClick={() => handleGoogleAuth('popup')}
+                      type="submit"
                       disabled={loading}
-                      className="w-full h-14 bg-[#ff4b2b] hover:bg-[#ff3b1b] text-white rounded-2.5xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer group shadow-lg"
+                      className="w-full h-18 bg-[#ff4b2b] hover:bg-[#ff3b1b] text-white font-black rounded-3xl shadow-[0_20px_40px_-5px_rgba(255,75,43,0.2)] transition-all flex items-center justify-center gap-4 uppercase text-[11px] tracking-[0.3em] cursor-pointer group active:scale-[0.98] mt-4"
                     >
-                      <Chrome size={16} className="text-white" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Continue via Google</span>
+                      {loading ? (
+                        <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Chrome size={20} />
+                          <span>Initialize Identity</span>
+                        </>
+                      )}
                     </button>
                   </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-16 bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black font-black rounded-[24px] shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-[0.3em] disabled:opacity-50 cursor-pointer active:scale-[0.98] mt-4"
-                  >
-                    {loading ? (
-                      <div className="h-6 w-6 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <span>Initialize Profile</span>
-                        <ArrowRight size={14} />
-                      </>
-                    )}
-                  </button>
 
                   {/* Domain Auth Helper */}
                   {showHelper && ssoError === 'unauthorized-domain' && (
