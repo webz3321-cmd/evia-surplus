@@ -643,6 +643,37 @@ export default function LoginPage() {
                       Missing Profile? Create Account
                     </button>
                   </div>
+
+                  {/* Domain Auth Helper */}
+                  {showHelper && ssoError === 'unauthorized-domain' && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-6 p-5 rounded-2xl border border-red-500/20 bg-red-500/5 text-left space-y-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <ShieldCheck size={16} className="text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-red-500">Fix Authorization Error</p>
+                          <p className="text-[10px] text-stone-500 mt-1 leading-relaxed">
+                            Open <a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="underline font-bold text-[#A38A5F]">Firebase Console</a>. 
+                            Go to <span className="font-bold">Authentication</span> &gt; <span className="font-bold">Settings</span> &gt; <span className="font-bold">Authorized domains</span> and add these:
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
+                          <code className="text-[8px] font-mono opacity-70 truncate mr-2">{window.location.hostname}</code>
+                          <button 
+                            onClick={() => handleCopyToClipboard(window.location.hostname)}
+                            className="text-[9px] font-black uppercase tracking-tighter text-[#A38A5F] hover:underline"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               )}
 
@@ -702,6 +733,34 @@ export default function LoginPage() {
                       </>
                     )}
                   </button>
+
+                  {/* Domain Auth Helper */}
+                  {showHelper && ssoError === 'unauthorized-domain' && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-6 p-5 rounded-2xl border border-red-500/20 bg-red-500/5 text-left space-y-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <ShieldCheck size={16} className="text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-red-500">Fix Authorization Error</p>
+                          <p className="text-[10px] text-stone-500 mt-1 leading-relaxed">
+                            Add this domain to <span className="font-bold">Authorized domains</span> in <a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="underline font-bold text-[#A38A5F]">Firebase Console</a>:
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5">
+                        <code className="text-[8px] font-mono opacity-70 truncate mr-2">{window.location.hostname}</code>
+                        <button 
+                          onClick={() => handleCopyToClipboard(window.location.hostname)}
+                          className="text-[9px] font-black uppercase tracking-tighter text-[#A38A5F] hover:underline"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
                 </form>
               )}
 
