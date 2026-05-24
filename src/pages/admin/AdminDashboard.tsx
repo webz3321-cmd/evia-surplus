@@ -252,150 +252,153 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div>
-      <div className="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-stone-200 dark:border-white/5 pb-8">
         <div>
-          <h2 className="text-3xl font-black text-gray-900">EVIA <span className="text-indigo-600 font-medium text-lg">Admin Central</span></h2>
-          <p className="text-gray-500 text-sm">Monitoring active operations in real-time</p>
+          <h2 className="text-4xl font-serif font-black text-foreground lowercase">command<span className="text-[#A38A5F]">.</span>center</h2>
+          <p className="text-stone-400 text-xs font-black uppercase tracking-[0.3em] mt-2">Active Operations Real-time Telemetry</p>
+        </div>
+        
+        <div className="flex items-center gap-3 bg-stone-100/50 dark:bg-white/5 px-4 py-2 rounded-2xl border border-stone-200 dark:border-white/5">
+          <div className="w-2 h-2 rounded-full bg-[#A38A5F] animate-pulse"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#A38A5F]">Status: Live Secure Node</span>
         </div>
       </div>
       
       {loading ? (
-        <div className="flex p-10 justify-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>
+        <div className="flex p-20 justify-center">
+          <div className="relative">
+            <div className="w-12 h-12 border-2 border-[#A38A5F]/20 rounded-full"></div>
+            <div className="absolute inset-0 w-12 h-12 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
-                  <DollarSign size={24} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Annual Revenue', value: `₹${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-[#A38A5F]', bg: 'bg-[#A38A5F]/5' },
+              { label: 'Active Orders', value: stats.orders.toLocaleString(), icon: ShoppingCart, color: 'text-stone-600 dark:text-stone-400', bg: 'bg-stone-50 dark:bg-white/5' },
+              { label: 'Total Curations', value: stats.products.toLocaleString(), icon: Package, color: 'text-stone-600 dark:text-stone-400', bg: 'bg-stone-50 dark:bg-white/5' },
+              { label: 'Global Registry', value: stats.users.toLocaleString(), icon: Users, color: 'text-stone-600 dark:text-stone-400', bg: 'bg-stone-50 dark:bg-white/5' },
+            ].map((stat, i) => (
+              <div key={i} className="group bg-white dark:bg-[#0D0D0D] p-8 rounded-[32px] shadow-sm border border-stone-200 dark:border-white/5 flex flex-col hover:border-[#A38A5F]/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+                <div className={`p-4 ${stat.bg} w-fit rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
+                  <stat.icon size={22} className={stat.color} />
                 </div>
+                <p className="text-stone-400 text-[10px] font-black uppercase tracking-[0.2em]">{stat.label}</p>
+                <p className="text-3xl font-serif font-black mt-2 text-foreground">{stat.value}</p>
               </div>
-              <p className="text-gray-500 text-sm font-medium">Total Revenue</p>
-              <p className="text-3xl font-black mt-1 text-gray-900">₹{stats.revenue.toLocaleString()}</p>
-            </div>
+            ))}
+          </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
-                  <ShoppingCart size={24} />
+          <div className="bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black p-10 rounded-[40px] shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#A38A5F]/20 blur-[100px] -mr-40 -mt-40 group-hover:bg-[#A38A5F]/30 transition-all duration-700" />
+            
+            <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Database className="text-[#A38A5F]" size={20} />
+                  <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-[#A38A5F]">Catalog Curation Protocol</h3>
                 </div>
+                <h4 className="text-2xl font-serif font-black leading-tight">Master Ledger Synchronization</h4>
+                <p className="text-[13px] opacity-60 max-w-2xl leading-relaxed font-medium">
+                  Sync the global inventory archives with official Evia Surplus 2026 military-grade specifications. 
+                  This resets categories, products, and tactical gear catalogs to factory defaults. Use with caution.
+                </p>
               </div>
-              <p className="text-gray-500 text-sm font-medium">Total Orders</p>
-              <p className="text-3xl font-black mt-1 text-gray-900">{stats.orders.toLocaleString()}</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                  <Package size={24} />
-                </div>
-              </div>
-              <p className="text-gray-500 text-sm font-medium">Total Products</p>
-              <p className="text-3xl font-black mt-1 text-gray-900">{stats.products.toLocaleString()}</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-orange-50 rounded-xl text-orange-600">
-                  <Users size={24} />
-                </div>
-              </div>
-              <p className="text-gray-500 text-sm font-medium">Total Users</p>
-              <p className="text-3xl font-black mt-1 text-gray-900">{stats.users.toLocaleString()}</p>
+              <button
+                disabled={seeding}
+                onClick={runSeeder}
+                className={`h-16 px-10 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 transition-all active:scale-95 shadow-xl ${
+                  seeding 
+                    ? 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                    : 'bg-white dark:bg-black text-black dark:text-white hover:bg-[#A38A5F] hover:text-white cursor-pointer'
+                }`}
+              >
+                <RefreshCw className={seeding ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-700"} size={16} />
+                {seeding ? "Syncing..." : "Restore Master Ledger"}
+              </button>
             </div>
           </div>
 
-          {/* Curator Database & Sourcing Master Control Console */}
-          <div className="bg-stone-900 border border-stone-800 text-stone-100 p-6 rounded-2xl shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Database className="text-[#f97316] animate-pulse" size={18} />
-                <h3 className="font-extrabold text-[11px] uppercase tracking-widest text-[#f97316]">Evia Sourcing System • Master Database Console</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white dark:bg-[#0D0D0D] rounded-[32px] shadow-sm border border-stone-200 dark:border-white/5 overflow-hidden">
+              <div className="p-8 border-b border-stone-100 dark:border-white/5 flex justify-between items-center">
+                <div className="space-y-1">
+                  <h3 className="font-serif font-black text-xl flex items-center gap-3 text-foreground">
+                    <AlertTriangle size={20} className="text-[#A38A5F]" />
+                    Tactical Shortage
+                  </h3>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Critical Stock Thresholds</p>
+                </div>
+                <Link to="/admin/product" className="p-3 bg-stone-50 dark:bg-white/5 rounded-full hover:bg-[#A38A5F]/10 hover:text-[#A38A5F] transition-all">
+                  <ArrowRight size={18}/>
+                </Link>
               </div>
-              <h4 className="text-lg font-bold mb-1">Militaria Ledger Curation Protocol</h4>
-              <p className="text-xs text-stone-400 max-w-2xl leading-relaxed">
-                Manually control the inventory archive. You can reset and re-seed the digital ledger back to the original Evia 2026 military-grade defaults anytime. Custom entries you manually create in the Products panel are fully persistent and won't be replaced otherwise.
-              </p>
-            </div>
-            <button
-              disabled={seeding}
-              onClick={runSeeder}
-              className={`px-5 py-3 rounded-xl font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all ${
-                seeding 
-                  ? 'bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-750'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg active:scale-95 cursor-pointer'
-              }`}
-            >
-              <RefreshCw className={seeding ? "animate-spin" : ""} size={16} />
-              {seeding ? "Executing Reset Protocol..." : "Reset Catalog to Defaults"}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <AlertTriangle size={18} className="text-amber-500" />
-                  Low Stock Inventory
-                </h3>
-                <Link to="/admin/product" className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">View All <ArrowRight size={14}/></Link>
-              </div>
-              <div className="p-2">
+              <div className="p-4">
                 {lowStock.length === 0 ? (
-                  <p className="p-4 text-center text-sm text-gray-500 font-medium">No low stock items.</p>
+                  <p className="p-10 text-center text-xs text-stone-400 font-black uppercase tracking-widest">Inventory Fully Sustained</p>
                 ) : (
-                  lowStock.map(p => (
-                    <div key={p.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-xl transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded border border-gray-200 bg-gray-100 overflow-hidden">
-                          {p.image && <img src={p.image} alt={p.name} className="w-full h-full object-cover" />}
+                  <div className="space-y-2">
+                    {lowStock.map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-4 hover:bg-stone-50 dark:hover:bg-white/5 rounded-2xl transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-xl border border-stone-100 dark:border-white/5 bg-stone-50 dark:bg-black overflow-hidden group-hover:scale-105 transition-transform">
+                            {p.image && <img src={p.image} alt={p.name} className="w-full h-full object-cover" />}
+                          </div>
+                          <div className="space-y-1">
+                            <div className="font-bold text-sm text-foreground line-clamp-1">{p.name}</div>
+                            <div className="text-[10px] font-black text-[#A38A5F] uppercase tracking-wider">₹{p.price?.toLocaleString()}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-bold text-sm text-gray-900 line-clamp-1">{p.name}</div>
-                          <div className="text-xs text-gray-500">₹{p.price?.toLocaleString()}</div>
+                        <div className="px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase tracking-widest">
+                          {p.stock} units
                         </div>
                       </div>
-                      <div className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 text-xs font-black">
-                        {p.stock} left
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <ShoppingCart size={18} className="text-emerald-500" />
-                  Recent Orders
-                </h3>
-                <Link to="/admin/order" className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">View All <ArrowRight size={14}/></Link>
+            <div className="bg-white dark:bg-[#0D0D0D] rounded-[32px] shadow-sm border border-stone-200 dark:border-white/5 overflow-hidden">
+              <div className="p-8 border-b border-stone-100 dark:border-white/5 flex justify-between items-center">
+                <div className="space-y-1">
+                  <h3 className="font-serif font-black text-xl flex items-center gap-3 text-foreground">
+                    <ShoppingCart size={20} className="text-[#A38A5F]" />
+                    Recent Exchange
+                  </h3>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Latest Acquisition Logs</p>
+                </div>
+                <Link to="/admin/order" className="p-3 bg-stone-50 dark:bg-white/5 rounded-full hover:bg-[#A38A5F]/10 hover:text-[#A38A5F] transition-all">
+                  <ArrowRight size={18}/>
+                </Link>
               </div>
-              <div className="p-2">
+              <div className="p-4">
                 {recentOrders.length === 0 ? (
-                  <p className="p-4 text-center text-sm text-gray-500 font-medium">No recent orders.</p>
+                  <p className="p-10 text-center text-xs text-stone-400 font-black uppercase tracking-widest">No Acquisition Records Found</p>
                 ) : (
-                  recentOrders.map(o => (
-                    <div key={o.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-xl transition-colors">
-                      <div>
-                        <div className="font-bold text-sm text-gray-900">#{o.id.slice(-6)}</div>
-                        <div className="text-xs text-gray-500">{o.user_name} • {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : ''}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-sm text-gray-900">₹{o.totalAmount?.toLocaleString()}</div>
-                        <div className={`text-[10px] font-black uppercase tracking-wider ${
-                          o.status === 'Placed' ? 'text-amber-600' :
-                          o.status === 'Dispatched' ? 'text-indigo-600' :
-                          o.status === 'Delivered' ? 'text-green-600' :
-                          'text-red-600'
-                        }`}>
-                          {o.status}
+                  <div className="space-y-2">
+                    {recentOrders.map(o => (
+                      <div key={o.id} className="flex justify-between items-center p-4 hover:bg-stone-50 dark:hover:bg-white/5 rounded-2xl transition-all group">
+                        <div className="space-y-1">
+                          <div className="font-serif font-black text-base text-foreground">#{o.id.slice(-6)}</div>
+                          <div className="text-[10px] font-black uppercase tracking-wider text-stone-400">{o.user_name} • {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : ''}</div>
+                        </div>
+                        <div className="text-right space-y-1">
+                          <div className="font-black text-sm text-foreground">₹{o.totalAmount?.toLocaleString()}</div>
+                          <div className={`text-[9px] font-black uppercase tracking-[0.2em] ${
+                            o.status === 'Placed' ? 'text-amber-500' :
+                            o.status === 'Dispatched' ? 'text-indigo-500' :
+                            o.status === 'Delivered' ? 'text-emerald-500' :
+                            'text-rose-500'
+                          }`}>
+                            {o.status}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

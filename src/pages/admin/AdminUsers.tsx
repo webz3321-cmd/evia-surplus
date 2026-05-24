@@ -123,155 +123,113 @@ export default function AdminUsers() {
   const totalPhoneVerified = users.filter(u => u.phoneVerified || u.authType === 'phone_otp').length;
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 p-6 md:p-10 font-sans">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Editorial Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-stone-200 dark:border-white/5 pb-8">
         <div>
           <button 
             onClick={() => navigate('/admin')}
-            className="flex items-center gap-1.5 text-stone-400 hover:text-white text-xs uppercase tracking-widest font-bold mb-3 transition-colors"
+            className="flex items-center gap-2 text-[#A38A5F] text-[10px] uppercase tracking-[0.25em] font-black mb-3 hover:opacity-70 transition-all cursor-pointer"
           >
-            <ArrowLeft size={13} />
-            <span>Dashboard</span>
+            <ArrowLeft size={14} />
+            <span>Operational Hub</span>
           </button>
           
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-serif font-black tracking-tight text-white">Security & Registry</h1>
-            <span className="bg-stone-800 text-[10px] text-stone-300 font-mono font-bold px-2 py-0.5 rounded border border-stone-700 uppercase">
-              Admin Suite
-            </span>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-serif font-black tracking-tight text-foreground lowercase">identity<span className="text-[#A38A5F]">.</span>registry</h1>
           </div>
-          <p className="text-stone-400 text-sm font-light mt-1.5 max-w-xl">
-            Real-time telemetry audit, user collections registration, and database security rules inspector.
-          </p>
+          <p className="text-stone-400 text-[10px] font-black uppercase tracking-[0.3em] mt-2">Global Access Control & User Telemetry</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button 
             onClick={loadData}
             disabled={refreshing}
-            className="flex items-center gap-2 bg-stone-900 hover:bg-stone-850 text-stone-200 border border-stone-800 hover:border-stone-700 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all cursor-pointer"
+            className="flex items-center gap-3 bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
           >
-            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
-            <span>Refreshed Data</span>
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+            <span>Synchronize Registry</span>
           </button>
         </div>
       </div>
 
       {/* Stats Bento Grid Header */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Total Curators</span>
-            <Users size={16} className="text-teal-400" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Total Registry', value: users.length, icon: Users, color: 'text-[#A38A5F]', bg: 'bg-[#A38A5F]/5' },
+          { label: 'SSO Secured', value: totalGmailVerified, icon: Mail, color: 'text-stone-600 dark:text-stone-400', bg: 'bg-stone-50 dark:bg-white/5' },
+          { label: 'Verified SMS', value: totalPhoneVerified, icon: Smartphone, color: 'text-stone-600 dark:text-stone-400', bg: 'bg-stone-50 dark:bg-white/5' },
+          { label: 'Security Logs', value: logs.length, icon: Activity, color: 'text-stone-600 dark:text-stone-400', bg: 'bg-stone-50 dark:bg-white/5' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white dark:bg-[#0D0D0D] p-8 rounded-[32px] shadow-sm border border-stone-200 dark:border-white/5">
+            <div className="flex justify-between items-start mb-6">
+              <span className="text-[10px] uppercase tracking-[0.25em] font-black text-stone-400">{stat.label}</span>
+              <stat.icon size={18} className={stat.color} />
+            </div>
+            <p className="text-3xl font-serif font-black text-foreground">{stat.value}</p>
+            <div className="h-1 bg-stone-100 dark:bg-white/5 rounded-full mt-4 overflow-hidden">
+              <div className={`${stat.color.replace('text-', 'bg-')} h-full opacity-60`} style={{ width: '100%' }}></div>
+            </div>
           </div>
-          <p className="text-3xl font-serif font-black mt-2 text-white">{users.length}</p>
-          <div className="h-1 bg-stone-800 rounded-full mt-3 overflow-hidden">
-            <div className="bg-teal-400 h-full" style={{ width: '100%' }}></div>
-          </div>
-        </div>
-
-        <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Gmail Secured</span>
-            <Mail size={16} className="text-red-400" />
-          </div>
-          <p className="text-3xl font-serif font-black mt-2 text-white">{totalGmailVerified}</p>
-          <div className="h-1 bg-stone-800 rounded-full mt-3 overflow-hidden">
-            <div 
-              className="bg-red-400 h-full" 
-              style={{ width: `${users.length > 0 ? (totalGmailVerified / users.length) * 100 : 0}%` }}
-            ></div>
-          </div>
-        </div>
-
-        <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-stone-400">SMS Secured</span>
-            <Smartphone size={16} className="text-amber-400" />
-          </div>
-          <p className="text-3xl font-serif font-black mt-2 text-white">{totalPhoneVerified}</p>
-          <div className="h-1 bg-stone-800 rounded-full mt-3 overflow-hidden">
-            <div 
-              className="bg-amber-400 h-full" 
-              style={{ width: `${users.length > 0 ? (totalPhoneVerified / users.length) * 100 : 0}%` }}
-            ></div>
-          </div>
-        </div>
-
-        <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-stone-400">System Logins</span>
-            <History size={16} className="text-purple-400" />
-          </div>
-          <p className="text-3xl font-serif font-black mt-2 text-white">{logs.length}</p>
-          <div className="h-1 bg-stone-800 rounded-full mt-3 overflow-hidden">
-            <div className="bg-purple-400 h-full" style={{ width: '100%' }}></div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Segment Switcher */}
-      <div className="flex gap-2 border-b border-stone-800 mb-6 pb-px">
+      <div className="flex gap-1 bg-stone-100/50 dark:bg-white/5 p-1.5 rounded-2xl w-fit">
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-widest border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
             activeTab === 'users' 
-              ? 'border-white text-white font-extrabold' 
-              : 'border-transparent text-stone-400 hover:text-stone-200'
+              ? 'bg-white dark:bg-black text-foreground shadow-sm' 
+              : 'text-stone-400 hover:text-foreground'
           }`}
         >
-          <UserCheck size={13} />
-          <span>Registered Profiles</span>
+          <UserCheck size={14} />
+          <span>Curator Index</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`px-4 py-2.5 text-xs font-bold uppercase tracking-widest border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
             activeTab === 'history' 
-              ? 'border-white text-white font-extrabold' 
-              : 'border-transparent text-stone-400 hover:text-stone-200'
+              ? 'bg-white dark:bg-black text-foreground shadow-sm' 
+              : 'text-stone-400 hover:text-foreground'
           }`}
         >
-          <Activity size={13} />
-          <span>Active Login Logs</span>
+          <Activity size={14} />
+          <span>Activity Stream</span>
         </button>
       </div>
 
       {activeTab === 'users' ? (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Controls Panel */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-stone-900 border border-stone-800 p-4 rounded-xl">
-            {/* Search Input */}
-            <div className="relative w-full md:w-80">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-500" />
+          <div className="flex flex-col lg:flex-row gap-6 items-center justify-between bg-white dark:bg-[#0D0D0D] border border-stone-200 dark:border-white/5 p-6 rounded-[32px] shadow-sm">
+            <div className="relative w-full lg:w-96">
+              <Search size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-[#A38A5F]" />
               <input
                 type="text"
-                placeholder="Search name, phone, email..."
+                placeholder="Search Identity Coordinates..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 focus:border-stone-700 outline-none rounded-lg pl-9 pr-4 py-2 text-xs font-mono text-stone-100 transition-all placeholder:text-stone-600"
+                className="w-full bg-stone-50 dark:bg-black border border-stone-100 dark:border-white/5 focus:border-[#A38A5F] outline-none rounded-2xl pl-14 pr-6 py-4 text-xs font-bold text-foreground transition-all placeholder:text-stone-400 uppercase tracking-widest"
               />
             </div>
 
-            {/* Filter Pill List */}
-            <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-              <span className="text-[10px] uppercase font-bold text-stone-500 tracking-wider flex items-center gap-1 mr-2">
-                <Filter size={11} /> Filters
-              </span>
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
               {[
-                { id: 'all', label: 'All Curators' },
-                { id: 'gmail', label: 'Gmail Only' },
-                { id: 'phone', label: 'SMS Only' },
-                { id: 'google', label: 'Google Auth' },
-                { id: 'admin', label: 'Administrators' }
+                { id: 'all', label: 'All' },
+                { id: 'gmail', label: 'SSO' },
+                { id: 'phone', label: 'SMS' },
+                { id: 'google', label: 'Google' },
+                { id: 'admin', label: 'Admins' }
               ].map(f => (
                 <button
                   key={f.id}
                   onClick={() => setFilterType(f.id as any)}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md border transition-all cursor-pointer ${
+                  className={`px-5 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer border ${
                     filterType === f.id 
-                      ? 'bg-white text-stone-950 border-white font-extrabold' 
-                      : 'bg-stone-950 text-stone-400 border-stone-800 hover:border-stone-700'
+                      ? 'bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black border-transparent shadow-lg' 
+                      : 'bg-transparent text-stone-400 border-stone-100 dark:border-white/5 hover:border-[#A38A5F]/40'
                   }`}
                 >
                   {f.label}
@@ -281,106 +239,68 @@ export default function AdminUsers() {
           </div>
 
           {/* User Table Card */}
-          <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-[#0D0D0D] border border-stone-200 dark:border-white/5 rounded-[40px] overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-stone-800 text-[10px] uppercase tracking-widest text-stone-400 bg-stone-900/50">
-                    <th className="p-4 font-bold">Curator Profile</th>
-                    <th className="p-4 font-bold">Registry Channel</th>
-                    <th className="p-4 font-bold">Verification Shields</th>
-                    <th className="p-4 font-bold">System Role</th>
-                    <th className="p-4 font-bold">Last Activity</th>
-                    <th className="p-4 font-bold text-right">Acquisition Clearance</th>
+                  <tr className="border-b border-stone-100 dark:border-white/5 text-[9px] font-black uppercase tracking-[0.25em] text-[#A38A5F] bg-stone-50/30 dark:bg-black/20">
+                    <th className="p-8">Entity Profile</th>
+                    <th className="p-8">Auth Channel</th>
+                    <th className="p-8">Clearance Level</th>
+                    <th className="p-8">Activity Pulse</th>
+                    <th className="p-8 text-right">Access Control</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60">
+                <tbody className="divide-y divide-stone-50 dark:divide-white/5">
                   {loading ? (
-                    <tr>
-                      <td colSpan={6} className="text-center p-12 text-stone-600 flex justify-center">
-                        <RefreshCw size={24} className="animate-spin text-stone-500" />
-                      </td>
-                    </tr>
+                    <tr><td colSpan={5} className="p-20 text-center uppercase text-[10px] font-black tracking-widest text-[#A38A5F] animate-pulse">Retrieving Encrypted Archives...</td></tr>
                   ) : filteredUsers.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center p-12 text-stone-500 font-serif italic text-sm">
-                        No curator indices match the filter query selectors.
-                      </td>
-                    </tr>
+                    <tr><td colSpan={5} className="p-20 text-center font-serif italic text-stone-400">No registry entries found in the current sector.</td></tr>
                   ) : filteredUsers.map(user => (
-                    <tr key={user.id} className="hover:bg-stone-850/40 transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          {user.avatarUrl ? (
-                            <img 
-                              src={user.avatarUrl} 
-                              alt="Avatar" 
-                              referrerPolicy="no-referrer"
-                              className="h-10 w-10 rounded-full object-cover border border-stone-700" 
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-stone-800 border border-stone-700 flex items-center justify-center text-stone-300 font-bold uppercase text-xs">
-                              {user.name ? user.name.slice(0, 2) : 'EV'}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-serif text-sm font-bold text-white">{user.name || 'Anonymous Collector'}</p>
-                            <p className="text-[10px] text-stone-500 font-light mt-0.5 font-mono">{user.email || 'No email registered'}</p>
+                    <tr key={user.id} className="hover:bg-stone-50 dark:hover:bg-white/5 transition-colors group">
+                      <td className="p-8">
+                        <div className="flex items-center gap-5">
+                          <div className="h-14 w-14 rounded-2xl bg-stone-100 dark:bg-black border border-stone-200 dark:border-white/5 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+                            {user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              <span className="font-serif font-black text-xl text-[#A38A5F]">{user.name?.slice(0, 1) || 'E'}</span>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-serif text-lg font-black text-foreground">{user.name || 'Incognito Collector'}</p>
+                            <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{user.email || 'coordinates hidden'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 font-mono text-xs uppercase text-stone-300 font-medium">
-                        <div className="flex items-center gap-2">
-                          {user.authType === 'google' && <Chrome size={12} className="text-red-400" />}
-                          {user.authType === 'gmail_otp' && <Mail size={12} className="text-red-400" />}
-                          {user.authType === 'phone_otp' && <Smartphone size={12} className="text-amber-400" />}
-                          {user.authType === 'email' && <Terminal size={12} className="text-stone-400" />}
-                          <span>{user.authType ? user.authType.replace('_', ' ') : 'Legacy'}</span>
+                      <td className="p-8">
+                        <div className="flex items-center gap-3">
+                           {user.authType === 'google' && <Chrome size={14} className="text-[#A38A5F]" />}
+                           <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">{user.authType?.replace('_', ' ') || 'LEGACY'}</span>
                         </div>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {user.emailVerified || user.authType === 'google' || user.authType === 'gmail_otp' ? (
-                            <span className="inline-flex items-center gap-1.5 bg-emerald-950/40 text-emerald-400 text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded border border-emerald-900">
-                              <ShieldCheck size={10} /> Gmail Verified
-                            </span>
-                          ) : null}
-
-                          {user.phoneVerified || user.authType === 'phone_otp' || user.phone ? (
-                            <span className="inline-flex items-center gap-1.5 bg-amber-950/40 text-amber-500 text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded border border-amber-900">
-                              <Smartphone size={10} /> SMS Active
-                            </span>
-                          ) : null}
-
-                          {!user.emailVerified && !user.phoneVerified && !user.authType && (
-                            <span className="text-[9px] font-bold text-stone-500 uppercase tracking-widest">
-                              None
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider border ${
+                      <td className="p-8">
+                        <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
                           user.role === 'admin' 
-                            ? 'bg-red-950/40 text-red-400 border-red-900' 
-                            : 'bg-stone-950 text-stone-400 border-stone-800'
+                            ? 'bg-[#A38A5F]/10 text-[#A38A5F] border-[#A38A5F]/20' 
+                            : 'bg-stone-50 dark:bg-black text-stone-400 border-stone-100 dark:border-white/5'
                         }`}>
-                          {user.role?.toUpperCase() || 'USER'}
+                          {user.role || 'USER'}
                         </span>
                       </td>
-                      <td className="p-4 text-[10.5px] font-mono text-stone-400">
-                        {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('en-US', { hour12: false }) : 'N/A'}
+                      <td className="p-8 text-[11px] font-black text-stone-400 uppercase tracking-widest">
+                        {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : '—'}
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-8 text-right">
                         {user.role !== 'admin' ? (
                           <button
                             onClick={() => handleDeleteUser(user.id, user.name)}
-                            className="bg-stone-950 hover:bg-red-950/40 text-stone-500 hover:text-red-400 border border-stone-800 hover:border-red-900 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer"
+                            className="h-10 px-6 rounded-xl bg-rose-50/50 dark:bg-rose-950/10 text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer border border-rose-100 dark:border-rose-950/30"
                           >
-                            <Trash2 size={12} className="inline mr-1" /> Revoke access
+                            Revoke
                           </button>
                         ) : (
-                          <span className="text-stone-500 font-serif italic text-xs">Immutable Principal</span>
+                          <span className="text-stone-300 dark:text-stone-700 font-serif italic text-sm">Protected</span>
                         )}
                       </td>
                     </tr>
@@ -391,58 +311,42 @@ export default function AdminUsers() {
           </div>
         </div>
       ) : (
-        <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden shadow-xl">
-          <div className="p-4 bg-stone-900/60 border-b border-stone-850 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-widest text-stone-400 flex items-center gap-2">
-              <History size={14} className="text-purple-400" />
-              <span>Login Activity Log Auditing</span>
-            </span>
-            <span className="text-[10px] font-mono text-stone-500">Showing last 100 entries</span>
+        <div className="bg-white dark:bg-[#0D0D0D] border border-stone-200 dark:border-white/5 rounded-[40px] overflow-hidden shadow-sm">
+          <div className="p-8 border-b border-stone-100 dark:border-white/5 flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="font-serif font-black text-xl flex items-center gap-3 text-foreground">
+                <History size={20} className="text-[#A38A5F]" />
+                Acquisition Activity
+              </h3>
+              <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Real-time Session Monitoring</p>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-stone-800 text-[10px] uppercase tracking-widest text-stone-400 bg-stone-900/50">
-                  <th className="p-4 font-bold">Timestamp</th>
-                  <th className="p-4 font-bold">User Identity</th>
-                  <th className="p-4 font-bold">Authentication Channel</th>
-                  <th className="p-4 font-bold">Client User Agent</th>
+                <tr className="border-b border-stone-100 dark:border-white/5 text-[9px] font-black uppercase tracking-[0.25em] text-[#A38A5F] bg-stone-50/30 dark:bg-black/20">
+                  <th className="p-8">Timestamp Coordinates</th>
+                  <th className="p-8">Entity Identity</th>
+                  <th className="p-8">Entry Channel</th>
+                  <th className="p-8">Telemetry Payload</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-800/60">
-                {loading ? (
-                  <tr>
-                    <td colSpan={4} className="text-center p-12 text-stone-600">
-                      <RefreshCw size={24} className="animate-spin text-stone-500" />
-                    </td>
-                  </tr>
-                ) : logs.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="text-center p-12 text-stone-500 font-serif italic text-sm">
-                      No security logins logged in database audits yet.
-                    </td>
-                  </tr>
-                ) : logs.map(log => (
-                  <tr key={log.id} className="hover:bg-stone-850/40 text-stone-300 transition-colors">
-                    <td className="p-4 font-mono text-xs font-semibold text-purple-400 select-all">
+              <tbody className="divide-y divide-stone-50 dark:divide-white/5">
+                {logs.map(log => (
+                  <tr key={log.id} className="hover:bg-stone-50 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-8 font-black text-[11px] text-[#A38A5F] uppercase tracking-widest">
                       {new Date(log.timestamp).toLocaleString()}
                     </td>
-                    <td className="p-4">
-                      <p className="font-serif text-sm font-bold text-white mb-0.5">{log.name || 'Unknown User'}</p>
-                      <p className="text-[10px] font-mono text-stone-500">{log.email || log.phone || `UID: ${log.userId.slice(-8)}`}</p>
+                    <td className="p-8">
+                      <p className="font-serif text-base font-black text-foreground mb-1">{log.name || 'Unknown'}</p>
+                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest truncate max-w-[150px]">{log.email || 'No email'}</p>
                     </td>
-                    <td className="p-4 font-mono text-xs text-stone-300">
-                      <span className="inline-flex items-center gap-1.5 uppercase tracking-wider bg-stone-950 px-2.5 py-1 rounded text-[10px] font-bold text-stone-300 border border-stone-800/80">
-                        {log.authType === 'google' && <Chrome size={11} className="text-red-400" />}
-                        {log.authType === 'gmail_otp' && <Mail size={11} className="text-red-400" />}
-                        {log.authType === 'phone_otp' && <Smartphone size={11} className="text-amber-400" />}
-                        {log.authType === 'email' && <Terminal size={11} className="text-stone-400" />}
-                        {log.authType}
-                      </span>
+                    <td className="p-8">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 bg-stone-50 dark:bg-black px-3 py-1.5 rounded-lg border border-stone-100 dark:border-white/5">{log.authType}</span>
                     </td>
-                    <td className="p-4 text-[10.5px] font-mono text-stone-500 select-all truncate max-w-xs" title={log.device}>
-                      {log.device || 'N/A'}
+                    <td className="p-8 text-[10px] font-black text-stone-400 uppercase tracking-widest truncate max-w-xs" title={log.device}>
+                      {log.device}
                     </td>
                   </tr>
                 ))}

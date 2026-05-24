@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAppContext } from '../context';
-import { auth, db } from '../lib/firebase';
+import { auth, db, firebaseConfigExport } from '../lib/firebase';
 import { 
   GoogleAuthProvider, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -96,82 +98,141 @@ export default function LoginPage() {
   };
 
   // Google Single-Sign-On
-  const handleGoogleAuth = async () => {
+  const handleGoogleAuth = async (mode: 'popup' | 'redirect' = 'popup') => {
+    // If user is in signup view, ensure they filled the name and phone fields first
+    if (view === 'signup') {
+      if (!name.trim() || !email.trim()) {
+        toast.error('Identity required. Please capture your Name and Contact (+91) before proceeding.', {
+          icon: '⚠️',
+          duration: 5000
+        });
+        return;
+      }
+      if (!email.startsWith('+91')) {
+        toast.error('Identity signature must start with +91 (India).');
+        return;
+      }
+    }
+
     setLoading(true);
     setSsoError(null);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     
     try {
+      if (mode === 'redirect') {
+        await signInWithRedirect(auth, provider);
+        return; // Redirect happens here
+      }
+
       const result = await signInWithPopup(auth, provider);
-      const authUser = result.user;
-      
-      const userDocRef = doc(db, 'users', authUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      
-      const emailVal = authUser.email || '';
-      const nameVal = authUser.displayName || 'Collector Member';
-      const avatarVal = authUser.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nameVal)}`;
-      
-      let finalProfile;
-      
-      if (userDocSnap.exists()) {
-        const stored = userDocSnap.data();
-        finalProfile = {
-          id: authUser.uid,
-          name: stored.name || nameVal,
-          email: stored.email || emailVal,
-          role: stored.role || 'user',
-          avatarUrl: stored.avatarUrl || avatarVal,
-          phone: stored.phone || ''
-        };
-        await updateDoc(userDocRef, {
-          lastLoginAt: Date.now(),
-          avatarUrl: avatarVal
-        });
-      } else {
-        const freshProfile = {
-          name: nameVal,
-          email: emailVal.toLowerCase().trim(),
-          role: 'user',
-          avatarUrl: avatarVal,
-          lastLoginAt: Date.now(),
-          createdAt: Date.now()
-        };
-        await setDoc(userDocRef, freshProfile);
-        finalProfile = { id: authUser.uid, ...freshProfile };
-      }
-      
-      login(finalProfile as any);
-      toast.success(`Welcome back, ${finalProfile.name}.`, { icon: '✨' });
-      navigate('/');
+      await processAuthResult(result.user);
     } catch (err: any) {
-      console.error("SSO authentication error:", err);
-      const errCode = err.code || '';
-      const errMessage = err.message || '';
-      
-      if (errCode === 'auth/popup-blocked') {
-        setSsoError('popup-blocked');
-        toast.error('The pop-up window was blocked by your browser. Please allow pop-ups for this site to continue.');
-      } else if (
-        errCode === 'auth/unauthorized-domain' || 
-        errCode === 'auth/unauthorized-client' ||
-        errMessage.includes('unauthorized-domain') || 
-        errMessage.includes('unauthorized_client') ||
-        errMessage.includes('unauthorized_domain')
-      ) {
-        setSsoError('unauthorized-domain');
-        setShowHelper(true);
-        toast.error(`Domain Authorization Required. This domain needs to be added to your Firebase project's authorized list.`, { duration: 10000 });
-      } else {
-        setSsoError(errCode || errMessage || 'Google authentication failed');
-        setShowHelper(true);
-        toast.error(errMessage || 'Error occurred during Google Sign-In.');
-      }
+      handleAuthError(err);
     } finally {
-      setLoading(false);
+      if (mode === 'popup') setLoading(false);
     }
   };
+
+  const processAuthResult = async (authUser: any) => {
+    const userDocRef = doc(db, 'users', authUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    
+    // In signup view, we prioritize the manually entered name/phone
+    const finalEmail = authUser.email || (view === 'signup' ? `${email.replace(/\s+/g, '')}@phone.evia` : '');
+    const finalName = (view === 'signup' && name.trim()) ? name.trim() : (authUser.displayName || 'Collector Member');
+    const finalPhone = (view === 'signup' && email.trim()) ? email.trim() : '';
+    const avatarVal = authUser.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(finalName)}`;
+    
+    let finalProfile;
+    
+    if (userDocSnap.exists()) {
+      const stored = userDocSnap.data();
+      finalProfile = {
+        id: authUser.uid,
+        name: (view === 'signup' && name.trim()) ? name.trim() : (stored.name || finalName),
+        email: stored.email || finalEmail,
+        role: stored.role || 'user',
+        avatarUrl: stored.avatarUrl || avatarVal,
+        phone: (view === 'signup' && email.trim()) ? email.trim() : (stored.phone || finalPhone)
+      };
+      await updateDoc(userDocRef, {
+        lastLoginAt: Date.now(),
+        avatarUrl: avatarVal,
+        ...(view === 'signup' ? { name: finalName, phone: finalPhone } : {})
+      });
+    } else {
+      // Logic for missing account alert requested by user
+      if (view === 'login') {
+        toast.error('Identity not found. Please "Create Account" first.', {
+          icon: '🚫',
+          duration: 5000
+        });
+        setView('signup');
+        setLoading(false);
+        return;
+      }
+
+      const freshProfile = {
+        name: finalName,
+        email: finalEmail.toLowerCase().trim(),
+        role: 'user',
+        avatarUrl: avatarVal,
+        phone: finalPhone,
+        lastLoginAt: Date.now(),
+        createdAt: Date.now()
+      };
+      await setDoc(userDocRef, freshProfile);
+      finalProfile = { id: authUser.uid, ...freshProfile };
+    }
+    
+    login(finalProfile as any);
+    toast.success(view === 'signup' ? `Identity Established: ${finalProfile.name}` : `Welcome back, ${finalProfile.name}.`, { icon: '✨' });
+    navigate('/');
+  };
+
+  const handleAuthError = (err: any) => {
+    console.error("SSO authentication error:", err);
+    const errCode = err.code || '';
+    const errMessage = err.message || '';
+    
+    if (errCode === 'auth/popup-blocked') {
+      setSsoError('popup-blocked');
+      toast.error('The pop-up window was blocked. Trying to sign in with redirect might work better.');
+    } else if (
+      errCode === 'auth/unauthorized-domain' || 
+      errCode === 'auth/unauthorized-client' ||
+      errMessage.includes('unauthorized-domain') || 
+      errMessage.includes('unauthorized_client') ||
+      errMessage.includes('unauthorized_domain')
+    ) {
+      setSsoError('unauthorized-domain');
+      setShowHelper(true);
+      toast.error(`Domain Authorization Required. This domain needs to be added to your Firebase project's authorized list.`, { duration: 10000 });
+    } else {
+      setSsoError(errCode || errMessage || 'Google authentication failed');
+      setShowHelper(true);
+      toast.error(errMessage || 'Error occurred during Google Sign-In.');
+    }
+  };
+
+  // Handle Redirect Result
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setLoading(true);
+          await processAuthResult(result.user);
+          setLoading(false);
+        }
+      } catch (err: any) {
+        handleAuthError(err);
+        setLoading(false);
+      }
+    };
+    checkRedirect();
+  }, []);
 
   // Sign In
   const handleEmailLoginSubmit = async (e: React.FormEvent) => {
@@ -189,30 +250,35 @@ export default function LoginPage() {
         localStorage.removeItem('evia_remember_email');
       }
 
+      // Hardcoded Admin Bypass for specified credentials
+      const isAdminCredentials = email.trim().toLowerCase() === 'evia@admin.gmail.com' && password === 'admin1234';
+
       let userCredential;
       let isNewRegistration = false;
 
       try {
-        userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        if (isAdminCredentials) {
+          try {
+            userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+          } catch (e: any) {
+            userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+          }
+        } else {
+          userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        }
       } catch (signInErr: any) {
-        // Auto-register convenience: Create a new account if the user isn't found
         if (
           signInErr.code === 'auth/user-not-found' || 
           signInErr.code === 'auth/invalid-credential' ||
-          (signInErr.message && signInErr.message.includes('auth/invalid-credential')) ||
-          signInErr.code === 'auth/wrong-password'
+          (signInErr.message && signInErr.message.includes('auth/invalid-credential'))
         ) {
-          // Double check if wrong password for existing user
-          try {
-            userCredential = await createUserWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
-            isNewRegistration = true;
-          } catch (signUpErr: any) {
-            if (signUpErr.code === 'auth/email-already-in-use') {
-              throw new Error('This account already exists. Please make sure your password is correct.');
-            } else {
-              throw signUpErr;
-            }
-          }
+          toast.error('Identity record not found. Please "Create Account" first.', {
+            icon: '🚫',
+            duration: 5000
+          });
+          setView('signup');
+          setLoading(false);
+          return;
         } else {
           throw signInErr;
         }
@@ -225,23 +291,31 @@ export default function LoginPage() {
       let syncProfile;
       if (userDocSnap.exists() && !isNewRegistration) {
         const data = userDocSnap.data();
+        const roleVal = isAdminCredentials ? 'admin' : (data.role || 'user');
+        
         syncProfile = {
           id: authUser.uid,
-          name: data.name || email.split('@')[0],
+          name: data.name || (isAdminCredentials ? 'Evia Master Admin' : email.split('@')[0]),
           email: data.email || email,
-          role: data.role || 'user',
+          role: roleVal,
           avatarUrl: data.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(data.name || 'User')}`,
           phone: data.phone || '',
           pincode: data.pincode || '',
           addressLine: data.addressLine || ''
         };
-        await updateDoc(userDocRef, { lastLoginAt: Date.now() });
+        
+        if (roleVal !== data.role) {
+          await updateDoc(userDocRef, { role: roleVal, lastLoginAt: Date.now() });
+        } else {
+          await updateDoc(userDocRef, { lastLoginAt: Date.now() });
+        }
       } else {
+        const roleVal = isAdminCredentials ? 'admin' : 'user';
         const defaultProfile = {
-          name: email.split('@')[0],
+          name: isAdminCredentials ? 'Evia Master Admin' : email.split('@')[0],
           email: email.toLowerCase().trim(),
-          role: 'user',
-          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(email.split('@')[0])}`,
+          role: roleVal,
+          avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isAdminCredentials ? 'Admin' : email.split('@')[0])}`,
           lastLoginAt: Date.now(),
           createdAt: Date.now()
         };
@@ -253,7 +327,7 @@ export default function LoginPage() {
       await trackLoginFirestore(authUser.uid);
       
       toast.success(isNewRegistration ? `Welcome! Your modern shopping account is ready.` : `Welcome back, ${syncProfile.name}!`);
-      navigate('/');
+      navigate(syncProfile.role === 'admin' ? '/admin' : '/');
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'Signature authentication failed. Check credentials.');
@@ -266,51 +340,16 @@ export default function LoginPage() {
   const handleEmailSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('Please specify your first and last name.');
+      toast.error('Please specify your full identity name.');
       return;
     }
-    if (!email.trim() || !email.includes('@')) {
-      toast.error('Please specify a valid email address.');
+    if (!email.trim() || !email.startsWith('+91')) {
+      toast.error('Please specify an Indian contact number starting with +91.');
       return;
     }
-    if (!password || password.length < 6) {
-      toast.error('Password must be at least 6 characters long.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast.error('Confirm password does not match.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
-      const authUser = userCredential.user;
-
-      const profilePayload = {
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        role: 'user',
-        avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`,
-        createdAt: Date.now(),
-        lastLoginAt: Date.now()
-      };
-
-      await setDoc(doc(db, 'users', authUser.uid), profilePayload);
-      login({ id: authUser.uid, ...profilePayload } as any);
-      
-      toast.success('Your customer profile is successfully created!');
-      navigate('/');
-    } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/email-already-in-use') {
-        toast.error('An account is already linked to this email address.');
-      } else {
-        toast.error(err.message || 'Registration failed. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
+    
+    // In this revised model, Initialize Profile essentially triggers the final verification via Google
+    handleGoogleAuth('popup');
   };
 
   // Forgot Password
@@ -412,53 +451,87 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col justify-center items-center py-16 px-4 md:px-8 transition-colors duration-300 font-sans selection:bg-[#9E845A]/30 relative overflow-hidden ${
-      isDark ? 'bg-[#12110F] text-[#FAF8F5]' : 'bg-[#FAF8F5] text-[#201E1A]'
+    <div className={`min-h-screen flex flex-col justify-center items-center py-16 px-4 md:px-8 transition-all duration-700 font-sans selection:bg-[#A38A5F]/40 relative overflow-hidden ${
+      isDark ? 'bg-[#0A0A0A] text-[#FAF8F5]' : 'bg-[#FDFBF9] text-[#1A1A1A]'
     }`}>
       
-      {/* Absolute Aesthetic Background Gradients for Luxury Appeal without tech clutter */}
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#A38A5F]/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#A38A5F]/5 blur-[120px] pointer-events-none" />
+      {/* Dynamic Atmospheric Background - Premium Glassmorphism Depth */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden scale-110">
+        <motion.div 
+          animate={{ 
+            x: [0, 80, 0], 
+            y: [0, -120, 0],
+            rotate: [0, 20, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-[15%] -right-[5%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-[#A38A5F]/15 to-transparent blur-[140px] opacity-70" 
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -100, 0], 
+            y: [0, 150, 0],
+            rotate: [0, -20, 0]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-[#9333ea]/5 to-transparent blur-[120px] opacity-40" 
+        />
+      </div>
 
-      {/* Floating Header Actions */}
-      <div className="absolute top-6 left-6 right-6 z-40 flex items-center justify-between">
+      {/* Floating Header Actions - Minimalist Glass Elements */}
+      <div className="absolute top-8 left-8 right-8 z-40 flex items-center justify-between pointer-events-none">
         <button 
           onClick={() => navigate('/')}
-          className={`h-9 px-4 rounded-full flex items-center gap-2 border text-xs font-semibold tracking-wider transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
+          className={`h-11 px-6 rounded-full flex items-center gap-3 border text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-[1.03] active:scale-95 cursor-pointer pointer-events-auto backdrop-blur-xl ${
             isDark 
-              ? 'bg-[#1C1A17] border-[#2D2A26] text-[#FAF8F5] hover:bg-[#25221F]' 
-              : 'bg-white border-[#ECE6D8] text-[#201E1A] hover:bg-[#FAF8F5] hover:border-[#BEAA84] shadow-xs'
+              ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' 
+              : 'bg-white/80 border-stone-200 text-stone-900 hover:bg-white shadow-[0_8px_40px_rgba(0,0,0,0.06)]'
           }`}
         >
-          <ArrowLeft size={13} className="text-[#A38A5F]" />
-          <span>Back to Store</span>
+          <ArrowLeft size={14} className="text-[#A38A5F]" />
+          <span>Shop Index</span>
         </button>
 
         <button
           onClick={toggleTheme}
-          className={`h-9 w-9 rounded-full flex items-center justify-center border transition-all hover:scale-[1.05] active:scale-95 cursor-pointer ${
+          className={`h-11 w-11 rounded-full flex items-center justify-center border transition-all hover:scale-[1.1] active:scale-90 cursor-pointer pointer-events-auto backdrop-blur-xl ${
             isDark 
-              ? 'bg-[#1C1A17] border-[#2D2A26] text-amber-400 hover:text-amber-300' 
-              : 'bg-white border-[#ECE6D8] text-[#201E1A] hover:text-[#FAF8F5] hover:border-[#BEAA84] shadow-xs'
+              ? 'bg-white/5 border-white/10 text-amber-300 hover:text-amber-200 shadow-glow shadow-amber-500/20' 
+              : 'bg-white/80 border-stone-200 text-stone-800 hover:border-[#BEAA84] shadow-[0_8px_40px_rgba(0,0,0,0.06)]'
           }`}
-          title="Toggle Color Theme"
         >
-          {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </div>
 
-      <div className="w-full max-w-md z-10 flex flex-col items-center">
+      <div className="w-full max-w-[460px] z-10 flex flex-col items-center">
         
-        {/* Central Logo */}
-        <div className="text-center mb-8">
-          <Link to="/" className="font-serif text-3xl font-black tracking-tight inline-flex items-center gap-1 focus:outline-none hover:opacity-85 transition-opacity">
-            evia<span className="text-[#A38A5F]">.</span>surplus
+        {/* Central Luxury Branding */}
+        <div className="text-center mb-12 select-none group">
+          <Link to="/" className="font-serif text-4xl sm:text-5xl font-black tracking-tight inline-flex items-center gap-1 focus:outline-none transition-transform group-hover:scale-105 duration-500">
+            evia<span className="text-[#A38A5F] group-hover:animate-pulse">.</span>surplus
           </Link>
-          <p className="text-[9px] uppercase tracking-[0.3em] text-[#A38A5F] font-bold mt-1.5">Atelier Curations & Surplus</p>
+          <div className="flex items-center justify-center gap-3 mt-3">
+            <span className="h-[1px] w-6 bg-gradient-to-l from-[#A38A5F]/40 to-transparent"></span>
+            <p className="text-[10px] uppercase font-black tracking-[0.4em] text-[#A38A5F]/80">Authenticated Laboratory</p>
+            <span className="h-[1px] w-6 bg-gradient-to-r from-[#A38A5F]/40 to-transparent"></span>
+          </div>
         </div>
 
-        {/* Dynamic Authenticated Session vs Input Portal Box */}
-        {user ? (
+        {/* Unified Authentication Portal Box */}
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
+          className={`w-full p-10 sm:p-12 rounded-[40px] border backdrop-blur-3xl transition-shadow relative ${
+            isDark 
+              ? 'bg-[#121110]/85 border-white/5 shadow-[0_60px_100px_-20px_rgba(0,0,0,0.9)]' 
+              : 'bg-white/95 border-stone-200 shadow-[0_60px_100px_-20px_rgba(163,138,95,0.18)]'
+          }`}
+        >
+          {/* Internal Glow Effect */}
+          <div className="absolute inset-0 rounded-[40px] bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+          
+          {user ? (
           <motion.div 
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -506,440 +579,187 @@ export default function LoginPage() {
             </div>
           </motion.div>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className={`w-full p-8 rounded-3xl border transition-all ${
-              isDark 
-                ? 'bg-[#1C1A17] border-[#2D2A26] shadow-2xl' 
-                : 'bg-white border-[#EAE3D5] shadow-[0_24px_55px_-16px_rgba(163,138,95,0.15)]'
-            }`}
-          >
-            {/* Elegant Tab Switcher for Sign In versus Sign Up, hidden on forgot-password */}
+          <>
+            {/* Premium Interaction Switcher */}
             {view !== 'forgot' && (
-              <div className="flex border-b border-[#ECE6D8] dark:border-[#2D2A26] mb-8 pb-1 relative">
+              <div className="flex border-b border-stone-100 dark:border-white/5 mb-10 pb-0.5 relative select-none">
                 <button
                   type="button"
                   onClick={() => { setView('login'); setShowPassword(false); }}
-                  className={`flex-1 pb-3 text-xs uppercase tracking-widest font-extrabold transition-all relative cursor-pointer ${
-                    view === 'login' ? 'text-[#201E1A] dark:text-[#FAF8F5]' : 'text-stone-400 hover:text-[#A38A5F]'
+                  className={`flex-1 pb-4 text-[10px] uppercase tracking-[0.3em] font-black transition-all relative cursor-pointer ${
+                    view === 'login' ? 'text-foreground' : 'text-stone-400 hover:text-[#A38A5F]'
                   }`}
                 >
-                  Sign In
+                  Login
                   {view === 'login' && (
-                    <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#A38A5F]" />
+                    <motion.div layoutId="activeAuthIndicator" className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#A38A5F] shadow-[0_0_10px_rgba(163,138,95,0.4)] rounded-full" />
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setView('signup'); setShowPassword(false); }}
-                  className={`flex-1 pb-3 text-xs uppercase tracking-widest font-extrabold transition-all relative cursor-pointer ${
-                    view === 'signup' ? 'text-[#201E1A] dark:text-[#FAF8F5]' : 'text-stone-400 hover:text-[#A38A5F]'
+                  className={`flex-1 pb-4 text-[10px] uppercase tracking-[0.3em] font-black transition-all relative cursor-pointer ${
+                    view === 'signup' ? 'text-foreground' : 'text-stone-400 hover:text-[#A38A5F]'
                   }`}
                 >
                   Create Account
                   {view === 'signup' && (
-                    <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#A38A5F]" />
+                    <motion.div layoutId="activeAuthIndicator" className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#A38A5F] shadow-[0_0_10px_rgba(163,138,95,0.4)] rounded-full" />
                   )}
                 </button>
               </div>
             )}
 
-            {/* Quick SSO Section inside card, hidden on recovery view */}
-            {view !== 'forgot' && (
-              <div className="mb-6">
-                <button
-                  type="button"
-                  onClick={handleGoogleAuth}
-                  disabled={loading}
-                  className={`w-full h-11 flex items-center justify-center gap-3 border text-xs font-bold uppercase tracking-wider rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer shadow-3xs ${
-                    isDark 
-                      ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] hover:bg-[#201E1A]' 
-                      : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] hover:bg-white hover:border-[#BEAA84]'
-                  }`}
-                >
-                  <Chrome size={15} className="text-red-500" />
-                  <span>Continue with Google</span>
-                </button>
+            {/* Primary Entry Forms */}
+            <div className="space-y-6">
+              {view === 'login' && (
+                <div className="space-y-6 py-4">
+                  <div className="text-center space-y-2 mb-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A38A5F]">Authorized Access Only</p>
+                    <p className="text-[11px] text-stone-400 font-bold uppercase tracking-widest">{`Identity coordinates required for entry`}</p>
+                  </div>
 
-                {/* Sub-threshold troubleshooting toggle link */}
-                <div className="text-center mt-3">
                   <button
                     type="button"
-                    onClick={() => setShowHelper(!showHelper)}
-                    className="text-[10px] uppercase tracking-widest text-[#A38A5F] hover:underline transition-all cursor-pointer font-extrabold inline-flex items-center gap-1.5"
+                    onClick={() => handleGoogleAuth('popup')}
+                    disabled={loading}
+                    className="w-full h-18 bg-[#ff4b2b] hover:bg-[#ff3b1b] text-white font-black rounded-3xl shadow-[0_20px_40px_-5px_rgba(255,75,43,0.2)] transition-all flex items-center justify-center gap-4 uppercase text-[11px] tracking-[0.3em] cursor-pointer group active:scale-[0.98]"
                   >
-                    <span>🛠️ Google Sign-In helper & sandbox guide</span>
+                    {loading ? (
+                      <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Chrome size={20} />
+                        <span>Continue via Google</span>
+                      </>
+                    )}
                   </button>
-                </div>
 
-                {/* Troubleshooting Assistant Card */}
-                <AnimatePresence>
-                  {showHelper && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className={`overflow-hidden mt-4 rounded-xl border text-left font-sans leading-relaxed transition-all ${
-                        isDark 
-                          ? 'bg-[#161412] border-[#2E2B27] text-stone-300' 
-                          : 'bg-[#FDFBF9] border-[#E6DEC3] text-stone-700'
-                      }`}
-                    >
-                      <div className="p-4 space-y-4">
-                        <div className="flex gap-2.5 items-start">
-                          <div className="w-6 h-6 rounded-full bg-[#A38A5F]/20 flex items-center justify-center shrink-0 mt-0.5">
-                            <ShieldCheck size={14} className="text-[#A38A5F]" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-[10px] uppercase tracking-wider text-[#A38A5F] mb-1">Sandbox Environment Fix</p>
-                            <p className="text-[11px] font-medium leading-relaxed">
-                              Standard browsers block cross-origin auth unless the domain is authorized in Firebase.
-                            </p>
-                          </div>
-                        </div>
-
-                        {ssoError && (
-                          <div className="px-3 py-2 bg-red-500/5 rounded-lg border border-red-500/10 text-red-600 dark:text-red-400 font-mono text-[9px] leading-relaxed break-words">
-                            <span className="font-sans font-bold block mb-0.5 opacity-60">ERROR_CONTEXT:</span>
-                            {ssoError}
-                          </div>
-                        )}
-
-                        <div className="space-y-3 bg-stone-500/5 p-4 rounded-xl border border-[#A38A5F]/10">
-                          <p className="font-extrabold text-[10.5px] uppercase tracking-wider flex items-center gap-2">
-                            <span>🚀 RAPID BYPASSES</span>
-                            <span className="h-[1px] flex-1 bg-[#A38A5F]/20"></span>
-                          </p>
-                          
-                          <div className="grid grid-cols-1 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleRapidLogin('admin')}
-                              className="w-full py-2.5 bg-[#A38A5F] hover:bg-[#8F764C] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg transition-all animate-pulse hover:animate-none"
-                            >
-                              One-Click Admin Login
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRapidLogin('user')}
-                              className="w-full py-2.5 border border-[#A38A5F] text-[#A38A5F] hover:bg-[#A38A5F]/5 text-[10px] uppercase font-bold tracking-widest rounded-lg transition-all"
-                            >
-                              One-Click User Login
-                            </button>
-                          </div>
-                          <p className="text-[9px] text-center text-stone-500 italic">No configuration required. Works instantly in sandbox.</p>
-                        </div>
-
-                        <div className="space-y-1 text-[11px] leading-relaxed opacity-60 hover:opacity-100 transition-opacity">
-                          <p className="font-bold uppercase tracking-wider text-[9px]">Manual Persistence Fix:</p>
-                          <ol className="list-decimal pl-4 space-y-1.5 mt-1 font-sans">
-                            <li>
-                              Open <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline font-bold">Firebase Console</a>
-                            </li>
-                            <li>
-                              <strong>Auth</strong> &gt; <strong>Settings</strong> &gt; <strong>Authorized domains</strong>
-                            </li>
-                            <li className="space-y-1">
-                              <div>Add this active domain:</div>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <code className="font-mono text-[10px] font-semibold bg-stone-100 dark:bg-stone-900 px-2 py-1 rounded text-[#A38A5F] flex-1 truncate">
-                                  {window.location.hostname}
-                                </code>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyToClipboard(window.location.hostname)}
-                                  className="text-[9px] font-bold text-[#A38A5F] hover:underline"
-                                >
-                                  Copy
-                                </button>
-                              </div>
-                            </li>
-                          </ol>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="relative flex py-5 items-center">
-                  <div className={`flex-grow border-t ${isDark ? 'border-[#2D2A26]' : 'border-[#ECE6D8]'}`}></div>
-                  <span className="flex-shrink mx-3 text-[9px] uppercase tracking-widest text-[#A38A5F] font-extrabold">
-                    or use your credentials
-                  </span>
-                  <div className={`flex-grow border-t ${isDark ? 'border-[#2D2A26]' : 'border-[#ECE6D8]'}`}></div>
-                </div>
-              </div>
-            )}
-
-            {/* Subtitles for Views */}
-            {view === 'forgot' && (
-              <div className="mb-6 text-center">
-                <div className="mx-auto w-10 h-10 rounded-full border border-[#ECE6D8] dark:border-[#2D2A26] flex items-center justify-center mb-3 bg-[#FAF8F5] dark:bg-[#12110F] text-[#A38A5F]">
-                  <LockKeyhole size={18} />
-                </div>
-                <h2 className="font-serif text-xl font-bold tracking-tight">Recover Password</h2>
-                <p className="text-xs text-[#A38A5F] mt-1.5 leading-relaxed font-light">
-                  Provide your email address to receive a secure password recovery link.
-                </p>
-              </div>
-            )}
-
-            {/* Standard Email/Password SIGN IN Form */}
-            {view === 'login' && (
-              <form onSubmit={handleEmailLoginSubmit} className="space-y-4">
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] uppercase tracking-wider text-[#A38A5F] font-bold block ml-1">Email address</label>
-                  <div className="relative">
-                    <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/70" />
-                    <input
-                      type="email"
-                      required
-                      placeholder="name@domain.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`w-full pl-9 pr-4 py-3 border rounded-xl text-xs outline-none focus:border-[#A38A5F] transition-all font-mono ${
-                        isDark 
-                          ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] focus:bg-[#1C1A17]' 
-                          : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] focus:bg-white'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1 text-left">
-                  <div className="flex justify-between items-center ml-1">
-                    <label className="text-[9.5px] uppercase tracking-wider text-[#A38A5F] font-bold block">Password</label>
-                    <button 
-                      type="button" 
-                      onClick={() => setView('forgot')} 
-                      className="text-[9px] uppercase tracking-wider text-[#A38A5F] hover:underline font-bold transition-all cursor-pointer"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  
-                  <div className="relative">
-                    <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/70" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={`w-full pl-9 pr-10 py-3 border rounded-xl text-xs outline-none focus:border-[#A38A5F] transition-all ${
-                        isDark 
-                          ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] focus:bg-[#1C1A17]' 
-                          : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] focus:bg-white'
-                      }`}
-                    />
+                  <div className="pt-2 text-center">
                     <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F] hover:text-[#201E1A] dark:hover:text-[#FAF8F5] cursor-pointer"
-                      tabIndex={-1}
+                      onClick={() => setView('signup')}
+                      className="text-[9px] font-black uppercase tracking-[0.25em] text-[#A38A5F] hover:underline"
                     >
-                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      Missing Profile? Create Account
                     </button>
                   </div>
                 </div>
+              )}
 
-                {/* Remember Me Toggle */}
-                <div className="flex items-center justify-between py-1 px-1 text-left">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="rounded border-[#ECE6D8] dark:border-[#2D2A26] text-[#A38A5F] focus:ring-[#A38A5F] w-3.5 h-3.5"
-                    />
-                    <span className="text-[10px] uppercase tracking-wider text-[#A38A5F] font-bold">Remember my email</span>
-                  </label>
-                  <span className="text-[8px] uppercase tracking-wider text-[#A38A5F]/60 font-semibold italic">Auto Account Protection Active</span>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-[#A38A5F] hover:bg-[#8F764C] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest disabled:opacity-50 cursor-pointer shadow-md shadow-[#A38A5F]/15 active:scale-98"
-                >
-                  {loading ? (
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <span>Securely Sign In</span>
-                      <ArrowRight size={12} />
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-
-            {/* Email/Password SIGN UP form */}
-            {view === 'signup' && (
-              <form onSubmit={handleEmailSignupSubmit} className="space-y-4">
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] uppercase tracking-wider text-[#A38A5F] font-bold block ml-1">Full Name</label>
-                  <div className="relative">
-                    <UserIcon size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/70" />
-                    <input
+              {view === 'signup' && (
+                <form onSubmit={handleEmailSignupSubmit} className="space-y-6">
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[#A38A5F] ml-1 opacity-70">Identity Name</label>
+                     <input
                       type="text"
                       required
                       placeholder="Jane Doe"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className={`w-full pl-9 pr-4 py-3 border rounded-xl text-xs outline-none focus:border-[#A38A5F] transition-all ${
-                        isDark 
-                          ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] focus:bg-[#1C1A17]' 
-                          : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] focus:bg-white'
+                      className={`w-full h-15 px-6 border rounded-2.5xl text-[11px] font-bold tracking-[0.1em] outline-none transition-all ${
+                        isDark ? 'bg-black/40 border-white/5 text-white focus:border-[#A38A5F]' : 'bg-stone-50 border-stone-100 text-stone-900 focus:border-[#A38A5F]'
                       }`}
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] uppercase tracking-wider text-[#A38A5F] font-bold block ml-1">Email Address</label>
-                  <div className="relative">
-                    <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/70" />
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[#A38A5F] ml-1 opacity-70">Indian Contact Number</label>
                     <input
-                      type="email"
+                      type="tel"
                       required
-                      placeholder="name@domain.com"
-                      value={email}
+                      placeholder="+91 XXXXX XXXXX"
+                      value={email} // Using email state as proxy for phone entry
                       onChange={(e) => setEmail(e.target.value)}
-                      className={`w-full pl-9 pr-4 py-3 border rounded-xl text-xs outline-none focus:border-[#A38A5F] transition-all font-mono ${
-                        isDark 
-                          ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] focus:bg-[#1C1A17]' 
-                          : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] focus:bg-white'
+                      className={`w-full h-15 px-6 border rounded-2.5xl text-[11px] font-bold tracking-[0.1em] outline-none transition-all font-mono ${
+                        isDark ? 'bg-black/40 border-white/5 text-white focus:border-[#A38A5F]' : 'bg-stone-50 border-stone-100 text-stone-900 focus:border-[#A38A5F]'
                       }`}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] uppercase tracking-wider text-[#A38A5F] font-bold block ml-1">Create Password</label>
-                  <div className="relative">
-                    <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/70" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      placeholder="Min 6 characters"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={`w-full pl-9 pr-10 py-3 border rounded-xl text-xs outline-none focus:border-[#A38A5F] transition-all ${
-                        isDark 
-                          ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] focus:bg-[#1C1A17]' 
-                          : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] focus:bg-white'
-                      }`}
-                    />
+                  <div className="pt-2">
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/80 hover:text-[#201E1A] dark:hover:text-[#FAF8F5] cursor-pointer"
-                      tabIndex={-1}
+                      onClick={() => handleGoogleAuth('popup')}
+                      disabled={loading}
+                      className="w-full h-14 bg-[#ff4b2b] hover:bg-[#ff3b1b] text-white rounded-2.5xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer group shadow-lg"
                     >
-                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      <Chrome size={16} className="text-white" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Continue via Google</span>
                     </button>
                   </div>
-                </div>
 
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] uppercase tracking-wider text-[#A38A5F] font-bold block ml-1">Confirm Password</label>
-                  <div className="relative">
-                    <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/70" />
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      required
-                      placeholder="Repeat password string"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`w-full pl-9 pr-10 py-3 border rounded-xl text-xs outline-none focus:border-[#A38A5F] transition-all ${
-                        isDark 
-                          ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] focus:bg-[#1C1A17]' 
-                          : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] focus:bg-white'
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/80 hover:text-[#201E1A] dark:hover:text-[#FAF8F5] cursor-pointer"
-                      tabIndex={-1}
-                    >
-                      {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-16 bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black font-black rounded-[24px] shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-[0.3em] disabled:opacity-50 cursor-pointer active:scale-[0.98] mt-4"
+                  >
+                    {loading ? (
+                      <div className="h-6 w-6 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Initialize Profile</span>
+                        <ArrowRight size={14} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-[#A38A5F] hover:bg-[#8F764C] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest disabled:opacity-50 cursor-pointer shadow-md shadow-[#A38A5F]/15 active:scale-98"
-                >
-                  {loading ? (
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <span>Generate Profile</span>
-                      <ArrowRight size={12} />
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-
-            {/* PASSWORD RESET SUB-VIEW */}
-            {view === 'forgot' && (
-              <form onSubmit={handleForgotSubmit} className="space-y-4">
-                <div className="space-y-1 text-left">
-                  <label className="text-[9.5px] uppercase tracking-wider text-[#A38A5F] font-bold block ml-1">Account Email Coordinates</label>
-                  <div className="relative">
-                    <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A38A5F]/70" />
-                    <input
+              {view === 'forgot' && (
+                <form onSubmit={handleForgotSubmit} className="space-y-6">
+                  <div className="space-y-1.5">
+                     <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[#A38A5F] ml-1 opacity-70">Register Coordinates</label>
+                     <input
                       type="email"
                       required
-                      placeholder="name@domain.com"
+                      placeholder="Enter your security email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className={`w-full pl-9 pr-4 py-3 border rounded-xl text-xs outline-none focus:border-[#A38A5F] transition-all font-mono ${
-                        isDark 
-                          ? 'bg-[#12110F] border-[#2D2A26] text-[#FAF8F5] focus:bg-[#1C1A17]' 
-                          : 'bg-[#FAF8F5] border-[#ECE6D8] text-[#201E1A] focus:bg-white'
+                      className={`w-full h-15 px-6 border rounded-2.5xl text-[11px] font-bold tracking-[0.1em] outline-none transition-all font-mono ${
+                        isDark ? 'bg-black/40 border-white/5 text-white focus:border-[#A38A5F]' : 'bg-stone-50 border-stone-100 text-stone-900 focus:border-[#A38A5F]'
                       }`}
                     />
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-[#A38A5F] hover:bg-[#8F764C] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest disabled:opacity-50 cursor-pointer shadow-md shadow-[#A38A5F]/15 active:scale-98"
-                >
-                  {loading ? (
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <span>Request Recovery Link</span>
-                  )}
-                </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-16 bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black font-black rounded-[24px] shadow-xl transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-[0.3em] disabled:opacity-50 cursor-pointer active:scale-[0.98]"
+                  >
+                    {loading ? (
+                      <div className="h-6 w-6 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <span>Dispatch Recovery Link</span>
+                    )}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setView('login')}
-                  className="text-[9.5px] font-bold block mx-auto text-[#A38A5F] hover:text-[#201E1A] dark:hover:text-[#FAF8F5] uppercase tracking-widest mt-4 transition-all cursor-pointer"
-                >
-                  ← Return to Sign In
-                </button>
-              </form>
-            )}
-
-          </motion.div>
+                  <button
+                    type="button"
+                    onClick={() => setView('login')}
+                    className="w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#A38A5F] hover:underline font-mono"
+                  >
+                    <ArrowLeft size={12} />
+                    <span>Back to Portal</span>
+                  </button>
+                </form>
+              )}
+            </div>
+          </>
         )}
+      </motion.div>
 
-        {/* Brand Copyright Stamp */}
-        <p className="text-[9px] uppercase tracking-[0.2em] text-[#A38A5F]/70 mt-8 text-center font-mono">
-          © 2026 EVIA SURPLUS CO. · All transactions secured with active TLS/AES protocols
-        </p>
-
+      {/* Brand Aesthetic Footer */}
+      <div className="mt-16 flex flex-col items-center gap-3 opacity-30 select-none">
+         <div className="h-12 w-[1px] bg-gradient-to-b from-[#A38A5F] to-transparent"></div>
+         <p className="text-[9px] text-[#A38A5F] font-black uppercase tracking-[0.6em] text-center">
+           EVIA SURPLUS STUDIO · ALL RIGHTS RESERVED
+         </p>
+         <div className="flex items-center gap-4 text-[8px] font-mono uppercase tracking-[0.2em] text-[#A38A5F]">
+           <span>Secured by AES-256</span>
+           <span className="h-1 w-1 rounded-full bg-[#A38A5F]"></span>
+           <span>Global Inventory Nodes</span>
+         </div>
+      </div>
       </div>
     </div>
   );

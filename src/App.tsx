@@ -316,49 +316,88 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row relative overflow-x-hidden">
-      {/* Mobile Header */}
-      <header className="md:hidden bg-white px-4 py-3 border-b border-gray-200 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-2">
-          <button onClick={() => setSidebarOpen(true)}><Menu size={24} /></button>
-          <span className="text-xl font-black tracking-tighter text-indigo-600">EVIA Admin</span>
+    <div className="min-h-screen bg-[#FDFBF9] dark:bg-[#0A0A0A] flex flex-col md:flex-row relative overflow-x-hidden selection:bg-[#A38A5F]/30 transition-colors duration-500">
+      
+      {/* Dynamic Background Atmos for Admin */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-40">
+        <div className="absolute top-0 right-0 w-[40%] h-[40%] rounded-full bg-[#A38A5F]/5 blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[30%] h-[30%] rounded-full bg-[#A38A5F]/5 blur-[100px]" />
+      </div>
+
+      {/* Mobile Header - Luxury Glass */}
+      <header className="md:hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl px-6 py-4 border-b border-stone-200 dark:border-white/5 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
+            <Menu size={22} className="text-[#A38A5F]" />
+          </button>
+          <span className="font-serif text-xl font-bold tracking-tight text-foreground lowercase">evia<span className="text-[#A38A5F]">.</span>admin</span>
         </div>
       </header>
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 bg-white w-64 shadow-xl z-40 transform transition-transform duration-300 md:translate-x-0 md:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-black text-2xl text-gray-900 tracking-tight">EVIA <span className="text-indigo-600 font-medium text-lg">Admin</span></h2>
-          <button className="md:hidden" onClick={() => setSidebarOpen(false)}><X size={24} /></button>
+      {/* Sidebar - Premium Minimalist Design */}
+      <div className={`fixed inset-y-0 left-0 bg-white dark:bg-[#0D0D0D] w-72 shadow-2xl z-40 transform transition-transform duration-500 ease-[0.19,1,0.22,1] md:translate-x-0 md:static border-r border-stone-200 dark:border-white/5 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-8 border-b border-stone-100 dark:border-white/5 flex items-center justify-between">
+          <Link to="/" className="font-serif text-2xl font-black tracking-tight text-foreground lowercase group">
+            evia<span className="text-[#A38A5F] group-hover:animate-pulse">.</span>admin
+          </Link>
+          <button className="md:hidden p-2 rounded-full hover:bg-stone-50 dark:hover:bg-white/5" onClick={() => setSidebarOpen(false)}>
+            <X size={20} className="text-[#A38A5F]" />
+          </button>
         </div>
-        <nav className="p-2 flex flex-col gap-1 h-[calc(100vh-140px)] overflow-y-auto">
-          <NavLink to="/admin" end className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><LayoutDashboard size={20} /> Dashboard</NavLink>
-          <NavLink to="/admin/category" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Package size={20} /> Categories</NavLink>
-          <NavLink to="/admin/product" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><ShoppingBag size={20} /> Products</NavLink>
-          <NavLink to="/admin/order" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><ShoppingCart size={20} /> Orders</NavLink>
-          <NavLink to="/admin/user" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Users size={20} /> Users</NavLink>
-          <NavLink to="/admin/coupons" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Ticket size={20} /> Coupons</NavLink>
-          <NavLink to="/admin/offers" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Sparkles size={20} /> Offers</NavLink>
-          <NavLink to="/admin/settings" className={({isActive}) => `flex items-center gap-2 p-2 rounded-xl font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 hover:text-indigo-600'}`}><Settings size={20} /> Brand Settings</NavLink>
+        
+        <nav className="p-4 flex flex-col gap-2 h-[calc(100vh-160px)] overflow-y-auto scrollbar-hide">
+          <div className="px-4 py-3 mb-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#A38A5F]">Operational Master</p>
+          </div>
           
-          <div className="mt-auto pt-4 flex flex-col gap-1">
-            <div className={`mx-2 p-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${isOnline ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              {isOnline ? 'Network Online' : 'Network Offline'}
+          <NavLink to="/admin" end className={({isActive}) => `flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[10px] uppercase font-black tracking-[0.2em] transition-all group ${isActive ? 'bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black shadow-xl shadow-stone-900/10' : 'text-stone-500 hover:text-[#A38A5F] hover:bg-[#A38A5F]/5'}`}>
+            <LayoutDashboard size={18} className="group-hover:scale-110 transition-transform" /> 
+            <span>Command Center</span>
+          </NavLink>
+
+          <div className="h-[1px] bg-stone-100 dark:bg-white/5 my-2 mx-4" />
+
+          {[
+            { to: '/admin/category', icon: Package, label: 'Categories' },
+            { to: '/admin/product', icon: ShoppingBag, label: 'Products' },
+            { to: '/admin/order', icon: ShoppingCart, label: 'Orders' },
+            { to: '/admin/user', icon: Users, label: 'Registry' },
+            { to: '/admin/coupons', icon: Ticket, label: 'Coupons' },
+            { to: '/admin/offers', icon: Sparkles, label: 'Offers' },
+            { to: '/admin/settings', icon: Settings, label: 'Brand UI' },
+          ].map((item) => (
+            <NavLink key={item.to} to={item.to} className={({isActive}) => `flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[10px] uppercase font-black tracking-[0.2em] transition-all group ${isActive ? 'bg-[#A38A5F]/10 text-[#A38A5F] border border-[#A38A5F]/20' : 'text-stone-500 hover:text-[#A38A5F] hover:bg-[#A38A5F]/5'}`}>
+              <item.icon size={18} className="group-hover:rotate-6 transition-transform" />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+          
+          <div className="mt-auto pt-6 flex flex-col gap-2">
+            <div className={`mx-4 p-3 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-3 border ${isOnline ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30' : 'text-rose-600 bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30'}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
+              {isOnline ? 'Node Online' : 'Node Offline'}
             </div>
-            <Link to="/" className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 text-gray-700 font-medium transition-colors border-t"><Globe size={20} /> View Site</Link>
-            <div className="mt-1 text-center pb-2">
-              <button onClick={logout} className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold transition-colors"><LogOut size={20} /> Logout</button>
-            </div>
+            
+            <Link to="/" className="flex items-center gap-3 px-5 py-4 rounded-2xl hover:bg-stone-50 dark:hover:bg-white/5 text-stone-600 dark:text-stone-400 text-[10px] font-black uppercase tracking-widest transition-all border-t border-stone-100 dark:border-white/5">
+              <Globe size={18} /> 
+              <span>Back to Store</span>
+            </Link>
+
+            <button onClick={logout} className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/10 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] transition-all cursor-pointer">
+              <LogOut size={18} /> 
+              <span>Sign Out</span>
+            </button>
           </div>
         </nav>
       </div>
       
-      {sidebarOpen && <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-        <Outlet />
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 md:p-12 overflow-y-auto z-10">
+        <div className="max-w-6xl mx-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

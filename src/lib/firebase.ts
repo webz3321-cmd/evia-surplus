@@ -5,6 +5,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 import { doc, getDocFromServer } from 'firebase/firestore';
 
+export const firebaseConfigExport = firebaseConfig;
 const app = initializeApp(firebaseConfig);
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
