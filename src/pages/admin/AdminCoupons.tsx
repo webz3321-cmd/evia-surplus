@@ -285,8 +285,22 @@ export default function AdminCoupons() {
               </form>
             </div>
 
-            <div className="p-6 border-t border-gray-100 bg-white shrink-0">
-              <button form="coupon-form" type="submit" className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest">
+            <div className="p-6 border-t border-gray-100 bg-white shrink-0 flex gap-4">
+              {editId && (
+                <button 
+                  type="button" 
+                  onClick={(e) => { 
+                    if(confirm('Are you sure you want to delete this coupon?')) {
+                      handleDelete(e as any, editId);
+                      setShowModal(false);
+                    }
+                  }} 
+                  className="px-6 py-4 bg-rose-50 text-rose-600 font-black rounded-2xl hover:bg-rose-100 transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+              <button form="coupon-form" type="submit" className="flex-1 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest">
                 {editId ? 'Update Coupon' : 'Create Coupon'}
               </button>
             </div>
