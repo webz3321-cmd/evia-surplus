@@ -89,10 +89,6 @@ export default function AdminUsers() {
   }, []);
 
   const handleDeleteUser = async (userId: string, name: string) => {
-    if (!window.confirm(`Are you absolutely sure you want to delete profile for ${name}? This action is permanent.`)) {
-      return;
-    }
-
     try {
       await deleteDoc(doc(db, 'users', userId));
       setUsers(prev => prev.filter(u => u.id !== userId));
@@ -128,7 +124,7 @@ export default function AdminUsers() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-stone-200 dark:border-white/5 pb-8">
         <div>
           <button 
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('/admin.evia.3321')}
             className="flex items-center gap-2 text-[#A38A5F] text-[10px] uppercase tracking-[0.25em] font-black mb-3 hover:opacity-70 transition-all cursor-pointer"
           >
             <ArrowLeft size={14} />

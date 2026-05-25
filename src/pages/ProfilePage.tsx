@@ -108,7 +108,7 @@ export default function ProfilePage() {
           
           <div className="flex flex-wrap gap-3 mt-6 justify-center">
             {user.role === 'admin' && (
-              <Link to="/admin" className="bg-stone-900 hover:bg-stone-850 text-white font-bold px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer">
+              <Link to="/admin.evia.3321" className="bg-stone-900 hover:bg-stone-850 text-white font-bold px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer">
                 <Settings size={13} className="text-amber-500" />
                 <span>Admin Central</span>
               </Link>

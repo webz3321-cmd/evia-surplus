@@ -24,6 +24,7 @@ type CartItem = {
 
 interface AppContextType {
   user: User | null;
+  loading: boolean;
   login: (user: User) => void;
   logout: () => void;
   cart: CartItem[];
@@ -42,16 +43,21 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<any[]>([]);
 
   useEffect(() => {
+    // Initial load from storage to prevent flicker
     const storedUser = localStorage.getItem('evia_user');
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch(e) {}
     }
+    // Storage load is synchronous, but we'll still wait for Auth sync in App.tsx
+    // so we don't set loading=false here if we expect an auth sync
+    
     const storedCart = localStorage.getItem('evia_cart');
     if (storedCart) {
       try {
@@ -64,6 +70,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setWishlist(JSON.parse(storedWishlist));
       } catch(e) {}
     }
+    // We let App.tsx set loading to false after auth check
   }, []);
 
   const login = (newUser: User) => {
@@ -74,6 +81,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('evia_user');
+    sessionStorage.removeItem('evia_vault_unsealed');
   };
 
   const addToCart = (product: any, quantity: number, size?: string) => {
@@ -137,9 +145,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AppContext.Provider value={{ 
-      user, login, logout, cart, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal,
-      wishlist, addToWishlist, removeFromWishlist, isInWishlist 
-    }}>
+      user, loading, login, logout, cart, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal,
+      wishlist, addToWishlist, removeFromWishlist, isInWishlist,
+      setLoading // Expose setLoading to App.tsx for auth sync
+    } as any}>
       {children}
     </AppContext.Provider>
   );

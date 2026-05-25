@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, doc, updateDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Package, Calendar, User, CreditCard, Search, ExternalLink, ShieldCheck } from 'lucide-react';
 import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
 
-const OrderRow = ({ order, updateStatus }: { order: any, updateStatus: any, key?: any }) => {
+const OrderRow = ({ order, updateStatus }: any) => {
   const [expanded, setExpanded] = useState(false);
 
   const downloadPDF = () => {
@@ -44,124 +44,177 @@ const OrderRow = ({ order, updateStatus }: { order: any, updateStatus: any, key?
     doc.save(`Invoice_${order.id.slice(-6)}.pdf`);
   };
 
+  const statusColors: Record<string, string> = {
+    'Placed': 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 border-amber-200/50',
+    'Dispatched': 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 border-indigo-200/50',
+    'Delivered': 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 border-emerald-200/50',
+    'Cancelled': 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 border-rose-200/50'
+  };
+
   return (
-    <>
-      <tr className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-        <td className="p-4 font-bold text-gray-800">
-          <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2 hover:text-indigo-600">
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            #{order.id.slice(-6)}
-          </button>
-        </td>
-        <td className="p-4 font-medium text-gray-600">{order.user_name}</td>
-        <td className="p-4 font-bold">₹{order.totalAmount?.toLocaleString()}</td>
-        <td className="p-4 text-sm text-gray-500">{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</td>
-        <td className="p-4 text-right flex justify-end items-center gap-3">
-          <button onClick={downloadPDF} className="p-2 text-gray-500 hover:text-indigo-600 bg-gray-100 hover:bg-indigo-50 rounded-lg transition-colors" title="Download Invoice">
-            <Download size={16} />
-          </button>
-          <select 
-            value={order.status}
-            onChange={(e) => updateStatus(order.id, e.target.value)}
-            className={`text-xs font-bold rounded-lg px-3 py-1.5 border outline-none cursor-pointer ${
-              order.status === 'Placed' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-              order.status === 'Dispatched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-              order.status === 'Delivered' ? 'bg-green-50 text-green-700 border-green-200' :
-              order.status === 'Return Requested' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-              order.status === 'Returned' ? 'bg-gray-100 text-gray-700 border-gray-300' :
-              'bg-red-50 text-red-700 border-red-200'
-            }`}
-          >
-            <option value="Placed">Placed</option>
-            <option value="Dispatched">Dispatched</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Return Requested">Return Requested</option>
-            <option value="Returned">Returned</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-        </td>
-      </tr>
+    <div className="bg-white dark:bg-[#0D0D0D] border border-stone-200 dark:border-white/5 rounded-3xl overflow-hidden mb-4 hover:shadow-lg transition-all group">
+      {/* Desktop & Mobile Main Header Row */}
+      <div className="p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-stone-50 dark:bg-white/5 flex items-center justify-center shrink-0 border border-stone-100 dark:border-white/5">
+              <Package className="text-[#A38A5F]" size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <span className="text-sm font-black text-foreground">ORDER-#{order.id.slice(-6).toUpperCase()}</span>
+                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColors[order.status] || 'bg-stone-100 text-stone-600'}`}>
+                  {order.status}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-[10px] text-stone-400 font-extrabold uppercase tracking-widest">
+                <Calendar size={12} />
+                {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : 'N/A'}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-12">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Customer Profile</p>
+              <div className="flex items-center gap-2">
+                <User size={14} className="text-[#A38A5F]" />
+                <span className="text-sm font-black text-foreground">{order.shippingDetails?.fullName || order.user_name}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Transaction Value</p>
+              <div className="flex items-center gap-2">
+                <CreditCard size={14} className="text-[#A38A5F]" />
+                <span className="text-sm font-black text-foreground">₹{order.totalAmount?.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={downloadPDF} 
+                className="p-3 bg-stone-50 dark:bg-white/5 text-stone-400 hover:text-[#A38A5F] border border-stone-100 dark:border-white/5 rounded-2xl transition-all"
+                title="Archival Download"
+              >
+                <Download size={18} />
+              </button>
+              <button 
+                onClick={() => setExpanded(!expanded)}
+                className={`p-3 border border-stone-100 dark:border-white/5 rounded-2xl transition-all ${expanded ? 'bg-[#A38A5F] text-white' : 'bg-stone-50 dark:bg-white/5 text-stone-400'}`}
+              >
+                {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {expanded && (
-        <tr className="bg-gray-50 border-b border-gray-100">
-          <td colSpan={5} className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Customer & Shipping Details</h4>
-                <div className="bg-white p-4 rounded-xl border border-gray-200 text-sm text-gray-700 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400 font-bold uppercase text-[9px]">Name</span>
-                    <span className="font-black">{order.shippingDetails?.fullName || order.user_name}</span>
+        <div className="border-t border-stone-100 dark:border-white/5 bg-stone-50/50 dark:bg-white/[0.02] p-6 md:p-10 animate-in slide-in-from-top-4 duration-500">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Control & Logistics */}
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-[#A38A5F]" />
+                  Command Authority
+                </h4>
+                <div className="p-1.5 bg-white dark:bg-black rounded-3xl border border-stone-200 dark:border-white/10 shadow-sm">
+                  <select 
+                    value={order.status}
+                    onChange={(e) => updateStatus(order.id, e.target.value)}
+                    className="w-full bg-transparent p-4 text-xs font-black uppercase tracking-widest outline-none cursor-pointer text-foreground"
+                  >
+                    <option value="Placed">Placed</option>
+                    <option value="Dispatched">Dispatched</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Deployment Coordinates</h4>
+                <div className="bg-white dark:bg-black p-6 rounded-3xl border border-stone-200 dark:border-white/10 shadow-sm space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest">Logistics ID</p>
+                    <p className="text-xs font-bold text-foreground">{order.id}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400 font-bold uppercase text-[9px]">Phone</span>
-                    <span className="font-black">{order.shippingDetails?.phone || 'N/A'}</span>
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest">Deployment Address</p>
+                    <p className="text-xs font-bold text-foreground leading-relaxed">{order.address}</p>
                   </div>
-                  <div className="h-px bg-gray-50 my-1"></div>
-                  <div className="pt-1">
-                    <span className="text-gray-400 font-bold uppercase text-[9px] block mb-1">Full Address</span>
-                    <p className="font-bold leading-relaxed">{order.address}</p>
-                  </div>
-                  {order.shippingDetails?.landmark && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400 font-bold uppercase text-[9px]">Landmark</span>
-                      <span className="font-bold">{order.shippingDetails.landmark}</span>
+                  {order.shippingDetails?.phone && (
+                    <div className="space-y-1">
+                      <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest">Secure Comms</p>
+                      <p className="text-xs font-bold text-foreground">{order.shippingDetails.phone}</p>
                     </div>
                   )}
                 </div>
               </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Order Items</h4>
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col gap-2 p-2">
+            </div>
+
+            {/* Asset Manifest */}
+            <div className="lg:col-span-2 space-y-4">
+              <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Manifest Overview</h4>
+              <div className="bg-white dark:bg-black rounded-[40px] border border-stone-200 dark:border-white/10 shadow-sm overflow-hidden">
+                <div className="divide-y divide-stone-100 dark:divide-white/5">
                   {(order.items || []).map((item: any, i: number) => (
-                    <div key={i} className="flex gap-3 items-center p-2 hover:bg-gray-50 rounded-lg">
-                      {item.image && <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded bg-gray-100 border border-gray-200" />}
-                      <div className="flex-1">
-                        <div className="text-sm font-bold text-gray-800">{item.name || 'Unknown Product'}</div>
-                        <div className="text-xs text-gray-500">
-                          Qty: {item.quantity} × ₹{item.price?.toLocaleString()}
-                          {item.size && <span className="ml-2 font-bold px-1.5 py-0.5 bg-gray-100 rounded text-[10px] uppercase">Size: {item.size}</span>}
-                        </div>
+                    <div key={i} className="p-6 flex items-center gap-6 hover:bg-stone-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-white/5 shrink-0">
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       </div>
-                      <div className="font-bold text-sm text-indigo-600">
-                        ₹{(item.quantity * item.price)?.toLocaleString()}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-black text-sm text-foreground mb-1 flex items-center gap-3">
+                          {item.name || 'Unknown Asset'}
+                          {item.size && <span className="px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-white/10 text-[9px] font-black uppercase tracking-widest">S: {item.size}</span>}
+                        </div>
+                        <p className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
+                          Quantity: {item.quantity} × ₹{item.price?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-black text-sm text-foreground">₹{(item.quantity * item.price)?.toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
-                  <div className="mt-2 p-3 bg-gray-50 rounded-lg flex flex-col gap-1">
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Subtotal</span>
-                      <span>₹{order.subtotal?.toLocaleString() || order.totalAmount?.toLocaleString()}</span>
+                </div>
+                
+                <div className="bg-stone-50 dark:bg-white/[0.03] p-8 space-y-4 border-t border-stone-100 dark:border-white/5">
+                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
+                    <span>Base Valuation</span>
+                    <span className="text-foreground">₹{order.subtotal?.toLocaleString() || order.totalAmount?.toLocaleString()}</span>
+                  </div>
+                  {order.discount > 0 && (
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
+                      <span>Tactical Discount ({order.couponUsed})</span>
+                      <span>- ₹{order.discount.toLocaleString()}</span>
                     </div>
-                    {order.discount > 0 && (
-                      <div className="flex justify-between text-xs text-emerald-600 font-bold">
-                        <span>Discount ({order.couponUsed})</span>
-                        <span>- ₹{order.discount.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm font-black text-gray-900 border-t border-gray-200 mt-1 pt-1">
-                      <span>Total</span>
-                      <span className="text-indigo-600">₹{order.totalAmount?.toLocaleString()}</span>
-                    </div>
+                  )}
+                  <div className="pt-4 border-t border-stone-200 dark:border-white/10 flex justify-between items-center">
+                    <span className="text-xs font-black uppercase tracking-[0.3em] text-stone-400">Financial Closure</span>
+                    <span className="text-2xl font-serif font-black lowercase text-[#A38A5F]">₹{order.totalAmount?.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
             </div>
-          </td>
-        </tr>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   
   useEffect(() => {
     setLoading(true);
     let usersMap = new Map<string, string>();
 
-    // First get users to map names (users don't change as often, but we could listen to them too if needed)
     const fetchUsers = async () => {
       try {
         const usersSnap = await getDocs(collection(db, 'users'));
@@ -190,48 +243,62 @@ export default function AdminOrders() {
     });
   }, []);
 
+  const filteredOrders = orders.filter(o => 
+    o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (o.shippingDetails?.fullName || o.user_name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const updateStatus = async (id: string, status: string) => {
-    const loadingToast = toast.loading('Updating status...');
+    const loadingToast = toast.loading('Dispatching orders...');
     try {
-      console.log('Updating order status...', { id, status });
       await updateDoc(doc(db, 'orders', id), { status });
-      console.log('Order status updated successfully');
-      toast.success(`Order status updated to ${status}`, { id: loadingToast });
+      toast.success(`Protocol Updated: ${status}`, { id: loadingToast });
     } catch(err:any) {
       console.error('Error updating status:', err);
-      toast.error('Failed to update status', { id: loadingToast });
+      toast.error('Authority Failed', { id: loadingToast });
     }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Manage Orders</h1>
+    <div className="space-y-10 pb-20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-serif font-black lowercase text-foreground">deployment<span className="text-[#A38A5F]">.</span>logs</h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">Order Manifest & Fulfillment Center</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500">
-                <th className="p-4 font-bold">Order ID</th>
-                <th className="p-4 font-bold">Customer</th>
-                <th className="p-4 font-bold">Amount</th>
-                <th className="p-4 font-bold">Date</th>
-                <th className="p-4 font-bold text-right">Status / Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                 <tr><td colSpan={5} className="p-8 text-center text-gray-500 flex justify-center"><div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></td></tr>
-              ) : orders.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-gray-500 font-medium">No orders found.</td></tr>
-              ) : orders.map(order => (
-                <OrderRow key={order.id} order={order} updateStatus={updateStatus} />
-              ))}
-            </tbody>
-          </table>
+      <div className="flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative w-full max-w-md">
+          <input 
+            type="text" 
+            placeholder="Search by ID, Customer, or Status..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full bg-white dark:bg-[#0D0D0D] border border-stone-200 dark:border-white/5 rounded-2xl py-4 pl-12 pr-4 text-xs font-bold outline-none focus:border-[#A38A5F] transition-all"
+          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
         </div>
+      </div>
+
+      <div>
+        {loading ? (
+          <div className="p-20 flex justify-center">
+            <div className="w-8 h-8 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="p-20 text-center space-y-4 bg-white dark:bg-[#0D0D0D] rounded-[40px] border border-stone-200 dark:border-white/5">
+            <Package className="mx-auto text-stone-200" size={48} />
+            <p className="text-xs text-stone-400 font-black uppercase tracking-widest">No active logs in tactical registry.</p>
+          </div>
+        ) : (
+          <div className="space-y-0">
+            {filteredOrders.map(order => (
+              <OrderRow key={order.id} order={order} updateStatus={updateStatus} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

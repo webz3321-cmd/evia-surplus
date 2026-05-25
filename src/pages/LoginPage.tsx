@@ -59,6 +59,13 @@ export default function LoginPage() {
   const [ssoError, setSsoError] = useState<string | null>(null);
   const [showHelper, setShowHelper] = useState<boolean>(false);
 
+  // Auto-prefix phone entry when switching to signup
+  useEffect(() => {
+    if (view === 'signup' && !email.startsWith('+91')) {
+      setEmail('+91');
+    }
+  }, [view]);
+
   // Set page theme effects
   useEffect(() => {
     const root = window.document.documentElement;
@@ -242,7 +249,8 @@ export default function LoginPage() {
       }
 
       // Hardcoded Admin Bypass for specified credentials
-      const isAdminCredentials = email.trim().toLowerCase() === 'evia@admin.gmail.com' && password === 'admin1234';
+      const isAdminCredentials = email.trim().toLowerCase() === 'admin@evia.gmail.com' && (password === 'evia3321');
+      const adminAuthPassword = 'evia3321';
 
       let userCredential;
       let isNewRegistration = false;
@@ -250,9 +258,17 @@ export default function LoginPage() {
       try {
         if (isAdminCredentials) {
           try {
-            userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+            userCredential = await signInWithEmailAndPassword(auth, email.trim(), adminAuthPassword);
           } catch (e: any) {
-            userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+            try {
+              userCredential = await createUserWithEmailAndPassword(auth, email.trim(), adminAuthPassword);
+            } catch (createErr: any) {
+              if (createErr.code === 'auth/email-already-in-use') {
+                // Return to original sign-in error (password mismatch)
+                throw e;
+              }
+              throw createErr;
+            }
           }
         } else {
           userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -318,7 +334,7 @@ export default function LoginPage() {
       await trackLoginFirestore(authUser.uid);
       
       toast.success(isNewRegistration ? `Welcome! Your modern shopping account is ready.` : `Welcome back, ${syncProfile.name}!`);
-      navigate(syncProfile.role === 'admin' ? '/admin' : '/');
+      navigate(syncProfile.role === 'admin' ? '/admin.evia.3321' : '/');
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'Signature authentication failed. Check credentials.');
@@ -417,7 +433,7 @@ export default function LoginPage() {
 
       login(syncProfile as any);
       toast.success(`Sandbox Access Granted: Logged in as ${role === 'admin' ? 'Administrator' : 'Collector'}.`, { duration: 4000 });
-      navigate(role === 'admin' ? '/admin' : '/');
+      navigate(role === 'admin' ? '/admin.evia.3321' : '/');
     } catch (err: any) {
       console.error("Rapid login failed:", err);
       toast.error('Sandbox authentication failed. Please use manual email entry.');
@@ -691,7 +707,14 @@ export default function LoginPage() {
                       required
                       placeholder="+91 XXXXX XXXXX"
                       value={email} // Using email state as proxy for phone entry
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val.startsWith('+91')) {
+                          setEmail(val);
+                        } else if (val.length < 3) {
+                          setEmail('+91');
+                        }
+                      }}
                       className={`w-full h-15 px-6 border rounded-2.5xl text-[11px] font-bold tracking-[0.1em] outline-none transition-all font-mono ${
                         isDark ? 'bg-black/40 border-white/5 text-white focus:border-[#A38A5F]' : 'bg-stone-50 border-stone-100 text-stone-900 focus:border-[#A38A5F]'
                       }`}

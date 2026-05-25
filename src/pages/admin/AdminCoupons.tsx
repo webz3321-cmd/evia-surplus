@@ -51,13 +51,14 @@ export default function AdminCoupons() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this coupon?')) return;
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     try {
       await deleteDoc(doc(db, 'coupons', id));
       toast.success('Coupon deleted');
-    } catch (err) {
-      toast.error('Error deleting coupon');
+    } catch (err: any) {
+      console.error("Coupon delete failure:", err);
+      toast.error('Error deleting coupon: ' + (err.message || 'Permission denied'));
     }
   };
 
@@ -157,7 +158,7 @@ export default function AdminCoupons() {
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button onClick={() => handleEdit(coupon)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(coupon.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={18} /></button>
+                      <button onClick={(e) => handleDelete(e, coupon.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>
@@ -174,76 +175,79 @@ export default function AdminCoupons() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
-          <div className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-xl font-black text-gray-900 tracking-tight">{editId ? 'Edit Coupon' : 'New Coupon'}</h2>
+        <div className="fixed inset-0 bg-stone-950/80 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6 z-50">
+          <div className="bg-white w-full max-w-md max-h-[92dvh] md:max-h-[90vh] md:rounded-[40px] rounded-t-[40px] shadow-2xl flex flex-col overflow-hidden relative animate-in slide-in-from-bottom duration-500">
+            <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0 md:rounded-t-[40px]">
+              <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">{editId ? 'Edit Coupon' : 'New Coupon'}</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><Plus size={24} className="rotate-45" /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Coupon Code</label>
-                <input 
-                  required 
-                  value={code} 
-                  onChange={e => setCode(e.target.value)} 
-                  type="text" 
-                  placeholder="E.G. SAVE20"
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold placeholder:text-gray-300" 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <div className="overflow-y-auto flex-1 p-6 md:p-8 touch-pan-y">
+              <form id="coupon-form" onSubmit={handleSubmit} className="space-y-5 pb-4">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Discount Type</label>
-                  <select 
-                    value={type} 
-                    onChange={e => setType(e.target.value as any)}
-                    className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
-                  >
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (₹)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Value</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Coupon Code</label>
                   <input 
                     required 
-                    value={value} 
-                    onChange={e => setValue(e.target.value)} 
-                    type="number" 
-                    className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-indigo-600" 
+                    value={code} 
+                    onChange={e => setCode(e.target.value)} 
+                    type="text" 
+                    placeholder="E.G. SAVE20"
+                    className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold placeholder:text-gray-300" 
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Min Order Amount (Optional)</label>
-                <input 
-                  value={minAmount} 
-                  onChange={e => setMinAmount(e.target.value)} 
-                  type="number" 
-                  placeholder="0"
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" 
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Discount Type</label>
+                    <select 
+                      value={type} 
+                      onChange={e => setType(e.target.value as any)}
+                      className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
+                    >
+                      <option value="percentage">Percentage (%)</option>
+                      <option value="fixed">Fixed Amount (₹)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Value</label>
+                    <input 
+                      required 
+                      value={value} 
+                      onChange={e => setValue(e.target.value)} 
+                      type="number" 
+                      className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-indigo-600" 
+                    />
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
-                <input 
-                  type="checkbox" 
-                  id="isActive"
-                  checked={isActive} 
-                  onChange={e => setIsActive(e.target.checked)}
-                  className="w-5 h-5 rounded-lg text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                />
-                <label htmlFor="isActive" className="font-bold text-gray-700 text-sm">Active & Usable</label>
-              </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Min Order Amount (Optional)</label>
+                  <input 
+                    value={minAmount} 
+                    onChange={e => setMinAmount(e.target.value)} 
+                    type="number" 
+                    placeholder="0"
+                    className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" 
+                  />
+                </div>
 
-              <button type="submit" className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+                <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
+                  <input 
+                    type="checkbox" 
+                    id="isActive"
+                    checked={isActive} 
+                    onChange={e => setIsActive(e.target.checked)}
+                    className="w-5 h-5 rounded-lg text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                  />
+                  <label htmlFor="isActive" className="font-bold text-gray-700 text-sm">Active & Usable</label>
+                </div>
+              </form>
+            </div>
+
+            <div className="p-6 border-t border-gray-100 bg-white shrink-0">
+              <button form="coupon-form" type="submit" className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest">
                 {editId ? 'Update Coupon' : 'Create Coupon'}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       )}

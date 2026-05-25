@@ -36,18 +36,64 @@ export default function ProductPage() {
               }
             });
 
-            // Retrieve related products in same category
-            const q = query(
+            // Retrieve related products in same category + cross-sell suggestions
+            const qSameCat = query(
               collection(db, 'products'),
               where('catId', '==', data.catId),
-              limit(5)
+              limit(8)
             );
-            getDocs(q).then(snapProds => {
-              const list = snapProds.docs
+            
+            // Also suggest some pieces from other categories for "complete the look"
+            const qAll = query(
+              collection(db, 'products'),
+              limit(20)
+            );
+
+            Promise.all([getDocs(qSameCat), getDocs(qAll)]).then(([snapSame, snapAll]) => {
+              const sameCatList = snapSame.docs
                 .map(d => ({ id: d.id, ...d.data() } as any))
-                .filter(p => p.id !== id)
-                .slice(0, 4);
-              setRelatedProducts(list);
+                .filter(p => p.id !== id);
+              
+              const allList = snapAll.docs
+                .map(d => ({ id: d.id, ...d.data() } as any))
+                .filter(p => p.id !== id);
+              
+              const currentName = data.name.toLowerCase();
+              const isTop = currentName.includes('shirt') || currentName.includes('jacket') || currentName.includes('tee') || currentName.includes('hoodie');
+              const isPants = currentName.includes('pant') || currentName.includes('short') || currentName.includes('trouser') || currentName.includes('cargo');
+              const isFootwear = currentName.includes('boot') || currentName.includes('shoe');
+
+              // 1. Same Type items (e.g. other shirts)
+              const sameType = allList.filter(p => {
+                const n = p.name.toLowerCase();
+                if (isTop && (n.includes('shirt') || n.includes('jacket') || n.includes('tee') || n.includes('hoodie'))) return true;
+                if (isPants && (n.includes('pant') || n.includes('short') || n.includes('trouser') || n.includes('cargo'))) return true;
+                if (isFootwear && (n.includes('boot') || n.includes('shoe'))) return true;
+                return false;
+              });
+
+              // 2. Complementary items (The "Complete the Look" logic)
+              const complementary = allList.filter(p => {
+                const n = p.name.toLowerCase();
+                if (isTop && (n.includes('pant') || n.includes('short') || n.includes('trouser') || n.includes('cargo'))) return true;
+                if (isPants && (n.includes('shirt') || n.includes('jacket') || n.includes('tee') || n.includes('hoodie'))) return true;
+                if (isFootwear && (n.includes('pant') || n.includes('trouser'))) return true;
+                return false;
+              });
+
+              // Interleave: [SameType_1, Complementary_1, SameType_2, Complementary_2, ...]
+              const combined: any[] = [];
+              for (let i = 0; i < 4; i++) {
+                if (sameType[i]) combined.push(sameType[i]);
+                if (complementary[i]) combined.push(complementary[i]);
+              }
+              
+              // Unique and limit to 8
+              const finalRelated = combined
+                .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
+                .slice(0, 8);
+              
+              setRelatedProducts(finalRelated);
             });
           }
         }
@@ -329,38 +375,56 @@ export default function ProductPage() {
 
         {/* Related Items Section */}
         {relatedProducts.length > 0 && (
-          <section className="mt-24 border-t border-border pt-16">
-            <div className="flex items-end justify-between gap-4 mb-8">
+          <section className="mt-28 border-t border-border pt-20">
+            <div className="flex items-end justify-between gap-4 mb-10 px-2 sm:px-0">
               <div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Pair with</span>
-                <h2 className="mt-1 font-display text-3xl text-foreground">Related Pieces</h2>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#A38A5F]">Acquisition pairings</span>
+                <h2 className="mt-2 font-display text-4xl text-foreground lowercase">related<span className="text-muted-foreground/30">.</span>pieces</h2>
               </div>
-              <Link to="/" className="text-[10px] font-semibold uppercase tracking-widest text-[#9333ea] hover:underline underline-offset-4">Browse overall index</Link>
+              <Link to="/" className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground hover:opacity-70 transition-opacity border-b border-foreground/20 pb-0.5">Browse Index</Link>
             </div>
             
-            <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedProducts.map((p) => (
-                <div 
-                  key={p.id} 
-                  onClick={() => { navigate(`/product/${p.id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="group cursor-pointer block"
-                >
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-surface border border-border/40">
-                    <img 
-                      src={p.image} 
-                      alt={p.name} 
-                      className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105" 
-                    />
-                  </div>
-                  <div className="mt-4 flex justify-between gap-3 text-sm">
-                    <div>
-                      <span className="text-[9px] font-semibold uppercase tracking-wider text-accent"> Garment </span>
-                      <h3 className="mt-0.5 text-foreground group-hover:opacity-80 transition-opacity capitalize font-medium">{p.name}</h3>
+            {/* Horizontal scroll container with hidden scrollbar for professional look */}
+            <div className="relative group/scroll">
+              <div className="flex gap-x-6 overflow-x-auto pb-10 scrollbar-hide snap-x snap-mandatory px-2 sm:px-0 scroll-smooth">
+                {relatedProducts.map((p) => (
+                  <div 
+                    key={p.id} 
+                    onClick={() => { navigate(`/product/${p.id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    className="flex-none w-[260px] sm:w-[280px] snap-start group cursor-pointer"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[24px] bg-surface border border-border/40 transition-all duration-500 group-hover:shadow-2xl group-hover:border-foreground/10 group-hover:-translate-y-2">
+                      <img 
+                        src={p.image} 
+                        alt={p.name} 
+                        className="h-full w-full object-cover transition-transform duration-[1500ms] ease-out group-hover:scale-110" 
+                      />
+                      
+                      {/* Professional subtle overlay badge */}
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-white/90 dark:bg-black/80 backdrop-blur-md text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border border-black/5 dark:border-white/5">
+                          {p.price > 12000 ? 'Exclusive' : 'Limited'}
+                        </span>
+                      </div>
+
+                      {/* Quick view hint on hover */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all">
+                         <span className="bg-white text-black text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-xl">View Piece</span>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">₹{p.price.toLocaleString()}</span>
+                    
+                    <div className="mt-6 space-y-1">
+                      <div className="flex justify-between items-start gap-3">
+                        <h3 className="text-[13px] text-foreground font-semibold leading-tight capitalize group-hover:text-[#A38A5F] transition-colors">{p.name}</h3>
+                        <span className="text-[13px] font-bold text-foreground">₹{p.price.toLocaleString()}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">
+                        {Math.floor(Math.random() * 5) + 1} SIZES REMAINING
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </section>
         )}

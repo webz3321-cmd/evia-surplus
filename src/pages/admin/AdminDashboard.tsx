@@ -14,7 +14,6 @@ export default function AdminDashboard() {
 
   const runSeeder = async () => {
     if (seeding) return;
-    if (!window.confirm("WARNING: Truncating database. This will delete all existing products, categories, coupons, and active offers, and replace them with the official Evia Surplus 2026 Vintage military-grade defaults. Proceed?")) return;
 
     try {
       setSeeding(true);
@@ -242,8 +241,11 @@ export default function AdminDashboard() {
           user_name: usersMap.get(d.data().userId) || 'Unknown'
         })));
 
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        console.error("Dashboard data load failure:", err);
+        if (err.message?.includes('permission') || err.message?.includes('Insufficient')) {
+          toast.error("Critical: Security rules preventing dashboard load. Confirm admin status.");
+        }
       } finally {
         setLoading(false);
       }
@@ -331,7 +333,7 @@ export default function AdminDashboard() {
                   </h3>
                   <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Critical Stock Thresholds</p>
                 </div>
-                <Link to="/admin/product" className="p-3 bg-stone-50 dark:bg-white/5 rounded-full hover:bg-[#A38A5F]/10 hover:text-[#A38A5F] transition-all">
+                <Link to="/admin.evia.3321/product" className="p-3 bg-stone-50 dark:bg-white/5 rounded-full hover:bg-[#A38A5F]/10 hover:text-[#A38A5F] transition-all">
                   <ArrowRight size={18}/>
                 </Link>
               </div>
@@ -370,7 +372,7 @@ export default function AdminDashboard() {
                   </h3>
                   <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Latest Acquisition Logs</p>
                 </div>
-                <Link to="/admin/order" className="p-3 bg-stone-50 dark:bg-white/5 rounded-full hover:bg-[#A38A5F]/10 hover:text-[#A38A5F] transition-all">
+                <Link to="/admin.evia.3321/order" className="p-3 bg-stone-50 dark:bg-white/5 rounded-full hover:bg-[#A38A5F]/10 hover:text-[#A38A5F] transition-all">
                   <ArrowRight size={18}/>
                 </Link>
               </div>

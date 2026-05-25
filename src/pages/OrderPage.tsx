@@ -13,18 +13,16 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
   const items = order.items || [];
 
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!window.confirm(`Are you sure you want to ${newStatus === 'Cancelled' ? 'cancel' : 'return'} this order?`)) return;
-    
     setLoading(true);
     try {
       await updateDoc(doc(db, 'orders', order.id), {
         status: newStatus,
         updatedAt: Date.now()
       });
-      toast.success(`Order ${newStatus === 'Cancelled' ? 'cancelled' : 'return requested'} successfully`);
+      toast.success(`Order cancelled successfully`);
       onUpdate();
     } catch (err) {
-      toast.error('Failed to update order status');
+      toast.error('Failed to cancel order');
     } finally {
       setLoading(false);
     }
@@ -137,16 +135,6 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
                 Cancel
               </button>
             )}
-            {order.status === 'Delivered' && (
-              <button 
-                disabled={loading}
-                onClick={(e) => { e.stopPropagation(); handleStatusUpdate('Return Requested'); }}
-                className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-gray-200 transition-colors disabled:opacity-50"
-              >
-                <RotateCcw size={14} />
-                Return
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -209,8 +197,8 @@ export default function OrderPage() {
 
   if (!user) return null;
 
-  const activeOrders = orders.filter(o => ['Placed', 'Dispatched', 'Return Requested'].includes(o.status));
-  const historyOrders = orders.filter(o => ['Delivered', 'Cancelled', 'Returned'].includes(o.status));
+  const activeOrders = orders.filter(o => ['Placed', 'Dispatched'].includes(o.status));
+  const historyOrders = orders.filter(o => ['Delivered', 'Cancelled'].includes(o.status));
   
   const displayOrders = tab === 'active' ? activeOrders : historyOrders;
 

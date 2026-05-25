@@ -268,7 +268,6 @@ export default function AdminSettings() {
 
   // Reset to static Evia 2026 Default setting
   const handleResetToDefaults = async () => {
-    if (!window.confirm('Reset all brand attributes, typography parameters, and visual settings to Evia 2026 military defaults?')) return;
     const defaults = COLOR_PRESETS[0];
     setLogoText(defaults.logoText);
     setLogoImage('');
@@ -743,7 +742,7 @@ export default function AdminSettings() {
                     value={adminPasscode} 
                     onChange={e => setAdminPasscode(e.target.value.replace(/\D/g, ''))} 
                     placeholder="E.g. 3115"
-                    maxLength={10}
+                    maxLength={20}
                     className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold tracking-widest outline-none focus:border-indigo-500 focus:bg-white transition-colors text-indigo-700"
                   />
                   <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">

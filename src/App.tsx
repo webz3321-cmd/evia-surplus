@@ -3,8 +3,9 @@ import { AppProvider, useAppContext } from './context';
 import { useEffect, useState, useMemo } from 'react';
 import { Home, Search, ShoppingCart, User as UserIcon, Menu, X, LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, Globe, Ticket, Sparkles, Heart } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
-import { db } from './lib/firebase';
-import { collection, onSnapshot, doc } from 'firebase/firestore';
+import { auth, db } from './lib/firebase';
+import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -96,44 +97,36 @@ const UserLayout = () => {
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-2">
-            <Link 
-              to="/" 
-              aria-label="Search" 
-              className="rounded-full p-2 transition-colors hover:bg-secondary text-foreground flex items-center justify-center"
-            >
-              <Search className="h-[18px] w-[18px]" />
-            </Link>
-            
+          <div className="flex items-center gap-1 sm:gap-2">
             {user ? (
               <Link 
                 to="/profile" 
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-background/50 hover:border-foreground/40"
+                className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-full hover:bg-secondary text-foreground transition-all text-[10px] font-black uppercase tracking-[0.1em] border border-border bg-background/50 hover:border-foreground/20 shadow-xs"
               >
-                <UserIcon className="h-4 w-4 text-accent" />
-                <span className="truncate max-w-[70px] sm:max-w-[120px]">
+                <UserIcon className="h-3.5 w-3.5 text-accent" />
+                <span className="truncate max-w-[50px] xs:max-w-[80px]">
                   {user.name ? `${user.name.split(' ')[0]}` : 'Profile'}
                 </span>
               </Link>
             ) : (
               <Link 
                 to="/login" 
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-background/50 hover:border-foreground/40"
+                className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-full hover:bg-secondary text-foreground transition-all text-[10px] font-black uppercase tracking-[0.1em] border border-border bg-background/50 hover:border-foreground/20 shadow-xs"
               >
-                <UserIcon className="h-4 w-4" />
+                <UserIcon className="h-3.5 w-3.5" />
                 <span>Login</span>
               </Link>
             )}
 
             <Link 
               to="/wishlist" 
-              className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-background/50 hover:border-foreground/40 animate-none hover:scale-105"
-              title="Saved Items / Whistel"
+              className="relative flex items-center justify-center h-8 w-8 sm:h-auto sm:w-auto sm:px-2.5 sm:py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[10px] font-black uppercase tracking-[0.1em] border border-border bg-background/50 hover:border-foreground/20 shadow-xs hover:scale-[1.02]"
+              title="Saved Items"
             >
-              <Heart className={`h-4 w-4 ${wishlist?.length > 0 ? 'text-red-500 fill-red-500' : 'text-stone-550'}`} />
-              <span className="hidden sm:inline">Saved</span>
+              <Heart className={`h-3.5 w-3.5 ${wishlist?.length > 0 ? 'text-red-500 fill-red-500' : 'text-stone-400'}`} />
+              <span className="hidden sm:inline ml-1.5">Saved</span>
               {wishlist?.length > 0 && (
-                <span className="grid h-4 min-w-4 place-items-center rounded-full bg-red-550 px-1 text-[9px] font-black text-white leading-none">
+                <span className="absolute -top-1 -right-1 sm:static sm:ml-1.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-red-500 px-1 text-[8px] font-black text-white leading-none border border-background sm:border-none">
                   {wishlist.length}
                 </span>
               )}
@@ -141,16 +134,16 @@ const UserLayout = () => {
             
             <Link 
               to="/cart" 
-              className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary text-foreground transition-all text-[11px] font-bold uppercase tracking-wider border border-border bg-accent/5 hover:border-foreground/40"
+              className="relative flex items-center justify-center h-8 w-8 sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 rounded-full bg-foreground text-background transition-all text-[10px] font-black uppercase tracking-[0.15em] hover:opacity-90 shadow-lg shadow-foreground/10"
             >
-              <ShoppingBag className="h-4 w-4 text-accent" />
-              <span>Cart</span>
+              <ShoppingBag className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline ml-1.5">Cart</span>
               {cart.length > 0 ? (
-                <span className="grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[9px] font-black text-accent-foreground leading-none animate-bounce">
+                <span className="absolute -top-1 -right-1 sm:static sm:ml-1.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-accent px-1 text-[8px] font-black text-accent-foreground leading-none border border-background sm:border-none">
                   {cart.length}
                 </span>
               ) : (
-                <span className="grid h-4 min-w-4 place-items-center rounded-full bg-muted/20 px-1 text-[9px] font-black text-muted-foreground leading-none">
+                <span className="absolute -top-1 -right-1 sm:static sm:ml-1.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-background/20 px-1 text-[8px] font-black leading-none border border-background sm:border-none">
                   0
                 </span>
               )}
@@ -297,8 +290,9 @@ const UserLayout = () => {
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout } = useAppContext();
+  const { user, logout, loading } = useAppContext();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const location = useLocation();
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -311,92 +305,158 @@ const AdminLayout = () => {
     };
   }, []);
 
-  if (!user || user.role !== 'admin') {
-    return <Navigate to="/admin/login" />;
+  // Auto-close sidebar on mobile route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FDFBF9] dark:bg-[#0A0A0A] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
+  const isVaultUnsealed = sessionStorage.getItem('evia_vault_unsealed') === 'true';
+
+  if (!user || user.role !== 'admin' || !isVaultUnsealed) {
+    return <Navigate to="/admin.evia.3321/login" />;
+  }
+
+  const navItems = [
+    { to: '/admin.evia.3321/category', icon: Package, label: 'Categories' },
+    { to: '/admin.evia.3321/product', icon: ShoppingBag, label: 'Products' },
+    { to: '/admin.evia.3321/order', icon: ShoppingCart, label: 'Orders' },
+    { to: '/admin.evia.3321/user', icon: Users, label: 'Registry' },
+    { to: '/admin.evia.3321/coupons', icon: Ticket, label: 'Coupons' },
+    { to: '/admin.evia.3321/offers', icon: Sparkles, label: 'Offers' },
+    { to: '/admin.evia.3321/settings', icon: Settings, label: 'Brand UI' },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#FDFBF9] dark:bg-[#0A0A0A] flex flex-col md:flex-row relative overflow-x-hidden selection:bg-[#A38A5F]/30 transition-colors duration-500">
+    <div className="min-h-screen bg-[#FDFBF9] dark:bg-[#0A0A0A] flex flex-col md:flex-row relative overflow-x-hidden selection:bg-[#A38A5F]/30 transition-all duration-500 font-sans">
       
       {/* Dynamic Background Atmos for Admin */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-40">
-        <div className="absolute top-0 right-0 w-[40%] h-[40%] rounded-full bg-[#A38A5F]/5 blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[30%] h-[30%] rounded-full bg-[#A38A5F]/5 blur-[100px]" />
+        <div className="absolute top-0 right-0 w-[50%] h-[50%] rounded-full bg-[#A38A5F]/5 blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[40%] h-[40%] rounded-full bg-[#A38A5F]/5 blur-[100px]" />
       </div>
 
-      {/* Mobile Header - Luxury Glass */}
-      <header className="md:hidden bg-white/80 dark:bg-black/80 backdrop-blur-xl px-6 py-4 border-b border-stone-200 dark:border-white/5 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-4">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
-            <Menu size={22} className="text-[#A38A5F]" />
-          </button>
-          <span className="font-serif text-xl font-bold tracking-tight text-foreground lowercase">evia<span className="text-[#A38A5F]">.</span>admin</span>
+      {/* Mobile Top Bar - Optimized glassmorphism */}
+      <header className="md:hidden sticky top-0 z-40 w-full bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-stone-200 dark:border-white/5 transition-all duration-300">
+        <div className="flex h-16 items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setSidebarOpen(true)} 
+              className="p-2 -ml-2 rounded-xl hover:bg-stone-100 dark:hover:bg-white/5 transition-colors active:scale-95"
+            >
+              <Menu size={22} className="text-[#A38A5F]" />
+            </button>
+            <span className="font-serif text-xl font-black tracking-tight text-foreground lowercase">evia<span className="text-[#A38A5F]">.</span>admin</span>
+          </div>
+          <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]'} animate-pulse`}></div>
         </div>
       </header>
 
-      {/* Sidebar - Premium Minimalist Design */}
-      <div className={`fixed inset-y-0 left-0 bg-white dark:bg-[#0D0D0D] w-72 shadow-2xl z-40 transform transition-transform duration-500 ease-[0.19,1,0.22,1] md:translate-x-0 md:static border-r border-stone-200 dark:border-white/5 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 border-b border-stone-100 dark:border-white/5 flex items-center justify-between">
-          <Link to="/" className="font-serif text-2xl font-black tracking-tight text-foreground lowercase group">
-            evia<span className="text-[#A38A5F] group-hover:animate-pulse">.</span>admin
-          </Link>
-          <button className="md:hidden p-2 rounded-full hover:bg-stone-50 dark:hover:bg-white/5" onClick={() => setSidebarOpen(false)}>
-            <X size={20} className="text-[#A38A5F]" />
-          </button>
-        </div>
-        
-        <nav className="p-4 flex flex-col gap-2 h-[calc(100vh-160px)] overflow-y-auto scrollbar-hide">
-          <div className="px-4 py-3 mb-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#A38A5F]">Operational Master</p>
+      {/* Sidebar - Desktop Permanent, Mobile Drawer */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-[#0D0D0D] border-r border-stone-200 dark:border-white/10 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] md:translate-x-0 md:static md:shadow-none ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="p-8 flex items-center justify-between">
+            <Link to="/" className="font-serif text-2xl font-black tracking-tight text-foreground lowercase group flex items-center gap-1">
+              evia<span className="text-[#A38A5F] group-hover:animate-bounce">.</span>admin
+            </Link>
+            <button 
+              className="md:hidden p-2 rounded-xl hover:bg-stone-50 dark:hover:bg-white/5 transition-colors" 
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X size={20} className="text-[#A38A5F]" />
+            </button>
           </div>
           
-          <NavLink to="/admin" end className={({isActive}) => `flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[10px] uppercase font-black tracking-[0.2em] transition-all group ${isActive ? 'bg-[#1A1A1A] dark:bg-[#FAF8F5] text-white dark:text-black shadow-xl shadow-stone-900/10' : 'text-stone-500 hover:text-[#A38A5F] hover:bg-[#A38A5F]/5'}`}>
-            <LayoutDashboard size={18} className="group-hover:scale-110 transition-transform" /> 
-            <span>Command Center</span>
-          </NavLink>
-
-          <div className="h-[1px] bg-stone-100 dark:bg-white/5 my-2 mx-4" />
-
-          {[
-            { to: '/admin/category', icon: Package, label: 'Categories' },
-            { to: '/admin/product', icon: ShoppingBag, label: 'Products' },
-            { to: '/admin/order', icon: ShoppingCart, label: 'Orders' },
-            { to: '/admin/user', icon: Users, label: 'Registry' },
-            { to: '/admin/coupons', icon: Ticket, label: 'Coupons' },
-            { to: '/admin/offers', icon: Sparkles, label: 'Offers' },
-            { to: '/admin/settings', icon: Settings, label: 'Brand UI' },
-          ].map((item) => (
-            <NavLink key={item.to} to={item.to} className={({isActive}) => `flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[10px] uppercase font-black tracking-[0.2em] transition-all group ${isActive ? 'bg-[#A38A5F]/10 text-[#A38A5F] border border-[#A38A5F]/20' : 'text-stone-500 hover:text-[#A38A5F] hover:bg-[#A38A5F]/5'}`}>
-              <item.icon size={18} className="group-hover:rotate-6 transition-transform" />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-          
-          <div className="mt-auto pt-6 flex flex-col gap-2">
-            <div className={`mx-4 p-3 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-3 border ${isOnline ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30' : 'text-rose-600 bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30'}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
-              {isOnline ? 'Node Online' : 'Node Offline'}
+          {/* Sidebar Body */}
+          <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto scrollbar-hide">
+            <div className="px-5 py-4 mb-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#A38A5F] opacity-70">Operational Master</p>
             </div>
             
-            <Link to="/" className="flex items-center gap-3 px-5 py-4 rounded-2xl hover:bg-stone-50 dark:hover:bg-white/5 text-stone-600 dark:text-stone-400 text-[10px] font-black uppercase tracking-widest transition-all border-t border-stone-100 dark:border-white/5">
-              <Globe size={18} /> 
+            <NavLink 
+              to="/admin.evia.3321" 
+              end 
+              className={({isActive}) => `flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] uppercase font-bold tracking-[0.2em] transition-all group duration-300 ${
+                isActive 
+                  ? 'bg-stone-900 dark:bg-white text-white dark:text-black shadow-2xl shadow-stone-900/20 active:scale-[0.98]' 
+                  : 'text-stone-500 hover:text-[#A38A5F] hover:bg-[#A38A5F]/5 active:bg-[#A38A5F]/10'
+              }`}
+            >
+              <LayoutDashboard size={18} className="transition-transform group-hover:scale-110" /> 
+              <span>Command Center</span>
+            </NavLink>
+
+            <div className="h-[1px] bg-stone-100 dark:bg-white/5 my-4 mx-4 opacity-50" />
+
+            <div className="space-y-1">
+              {navItems.map((item) => (
+                <NavLink 
+                  key={item.to} 
+                  to={item.to} 
+                  className={({isActive}) => `flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] uppercase font-bold tracking-[0.2em] transition-all group duration-300 ${
+                    isActive 
+                      ? 'bg-[#A38A5F]/10 text-[#A38A5F] border border-[#A38A5F]/10 font-black' 
+                      : 'text-stone-500 hover:text-foreground hover:bg-stone-50 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <item.icon size={18} className="transition-all group-hover:rotate-6 group-hover:scale-110" />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </nav>
+
+          {/* Sidebar Footer */}
+          <div className="p-6 border-t border-stone-100 dark:border-white/5 space-y-4">
+            <Link 
+              to="/" 
+              className="flex items-center gap-3 px-5 py-4 rounded-2xl hover:bg-stone-50 dark:hover:bg-white/5 text-stone-600 dark:text-stone-400 text-[10px] font-black uppercase tracking-widest transition-all border border-stone-100 dark:border-white/5"
+            >
+              <Globe size={18} className="text-[#A38A5F]" /> 
               <span>Back to Store</span>
             </Link>
 
-            <button onClick={logout} className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/10 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] transition-all cursor-pointer">
-              <LogOut size={18} /> 
+            <button 
+              onClick={logout} 
+              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-rose-50/30 dark:bg-rose-950/5 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] transition-all cursor-pointer group active:scale-95"
+            >
+              <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" /> 
               <span>Sign Out</span>
             </button>
+            
+            <div className="px-2 pt-2 text-center">
+              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-stone-300 dark:text-stone-700">Ver. 2026.05.VAULT</span>
+            </div>
           </div>
-        </nav>
-      </div>
+        </div>
+      </aside>
       
-      {sidebarOpen && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-40 md:hidden transition-all duration-500" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto z-10">
-        <div className="max-w-6xl mx-auto">
-          <Outlet />
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative selection:bg-[#A38A5F]/20">
+        <div className="flex-1 overflow-y-auto p-6 md:p-12 scroll-smooth">
+          <div className="max-w-6xl mx-auto pb-12">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>
@@ -415,8 +475,34 @@ const ScrollToTop = () => {
 
 const AppContent = () => {
   const [settings, setSettings] = useState<any>(null);
+  const { login, setLoading } = useAppContext();
 
   useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        try {
+          // Sync with Firestore for latest role/profile
+          const userDocRef = doc(db, 'users', authUser.uid);
+          const snap = await getDoc(userDocRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            login({
+              id: authUser.uid,
+              name: data.name,
+              email: data.email,
+              role: data.role || 'user',
+              avatarUrl: data.avatarUrl || authUser.photoURL,
+              phone: data.phone || ''
+            } as any);
+          }
+        } catch (err) {
+          console.error("Auth sync error:", err);
+        }
+      }
+      // Force short delay for transition smooth feel
+      setTimeout(() => (setLoading as any)(false), 500);
+    });
+
     const unsub = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
       if (snap.exists()) {
         const data = snap.data();
@@ -534,7 +620,10 @@ const AppContent = () => {
       console.warn("Dynamic layout settings collection observer failed:", error);
     });
 
-    return () => unsub();
+    return () => {
+      unsubscribeAuth();
+      unsub();
+    };
   }, []);
 
   useEffect(() => {
@@ -577,8 +666,8 @@ const AppContent = () => {
         </Route>
 
         {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin.evia.3321/login" element={<AdminLoginPage />} />
+        <Route path="/admin.evia.3321" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="category" element={<AdminCategories />} />
           <Route path="product" element={<AdminProducts />} />
