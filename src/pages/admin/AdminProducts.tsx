@@ -127,14 +127,15 @@ export default function AdminProducts() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (!window.confirm('Delete this asset permanentely?')) return;
     
+    const loadId = toast.loading('Erasing record...');
     try {
-      console.log('Initiating asset erasure protocol for ID:', id);
       await deleteDoc(doc(db, 'products', id));
-      toast.success('Record Erased');
+      toast.success('Record Erased', { id: loadId });
     } catch(err:any) {
-      console.error("Critical Asset Disposal Error:", err);
-      toast.error('Access Denied: ' + (err.message || 'Permission denied'));
+      console.error("Asset Disposal Error:", err);
+      toast.error('Access Denied: ' + (err.message || 'Permission denied'), { id: loadId });
     }
   };
 
@@ -281,11 +282,10 @@ export default function AdminProducts() {
 
       {showModal && (
         <div className="fixed inset-0 bg-stone-950/80 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6 z-50">
-          <div className="bg-white dark:bg-[#0D0D0D] w-full max-w-2xl max-h-[92dvh] md:max-h-[90vh] md:rounded-[40px] rounded-t-[40px] shadow-2xl flex flex-col border border-stone-200 dark:border-white/10 animate-in slide-in-from-bottom duration-500 overflow-hidden relative">
-            <div className="p-6 md:p-8 border-b border-stone-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#0D0D0D] md:rounded-t-[40px] shrink-0">
+          <div className="bg-white dark:bg-[#0D0D0D] w-full max-w-2xl max-h-[96dvh] md:max-h-[90vh] md:rounded-[40px] rounded-t-[40px] shadow-2xl flex flex-col border border-stone-200 dark:border-white/10 animate-in slide-in-from-bottom duration-500 overflow-hidden relative">
+            <div className="p-5 md:p-8 border-b border-stone-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#0D0D0D] md:rounded-t-[40px] shrink-0">
               <div className="space-y-1">
                 <h3 className="text-xl md:text-2xl font-serif font-black lowercase text-foreground">{editId ? 'Edit Asset' : 'Register New Asset'}</h3>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#A38A5F]">Archive Catalog Synchronization</p>
               </div>
               <button 
                 onClick={() => setShowModal(false)}
@@ -295,7 +295,7 @@ export default function AdminProducts() {
               </button>
             </div>
             
-            <div className="overflow-y-auto flex-1 p-6 md:p-8 touch-pan-y">
+            <div className="overflow-y-auto flex-1 min-h-0 p-5 md:p-8 touch-pan-y">
               <form id="product-form" onSubmit={handleSubmit} className="space-y-8 pb-4">
                 <div className="space-y-6">
                   {/* Category Selection */}
@@ -446,11 +446,11 @@ export default function AdminProducts() {
               </form>
             </div>
             
-            <div className="p-8 border-t border-stone-100 dark:border-white/5 flex gap-4 bg-white dark:bg-[#0D0D0D] shrink-0">
+            <div className="p-5 md:p-8 border-t border-stone-100 dark:border-white/5 flex gap-4 bg-white dark:bg-[#0D0D0D] shrink-0">
               <button type="button" disabled={submitting} onClick={() => setShowModal(false)} className="flex-1 py-4 bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-stone-300 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-stone-200 dark:hover:bg-white/10 transition-colors disabled:opacity-50">Discard</button>
               <button form="product-form" type="submit" disabled={submitting} className="flex-1 py-4 bg-[#A38A5F] text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-[#8B7350] transition-colors disabled:opacity-50 flex justify-center items-center gap-2">
                  {submitting && <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>}
-                {editId ? 'Apply Update' : 'Commit to Archives'}
+                {editId ? 'Apply Update' : 'Register'}
               </button>
             </div>
           </div>

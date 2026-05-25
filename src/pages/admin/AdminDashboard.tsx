@@ -17,7 +17,7 @@ export default function AdminDashboard() {
 
     try {
       setSeeding(true);
-      const loadingToast = toast.loading("Executing Database Curation Protocol...");
+      const loadingToast = toast.loading("Syncing...");
 
       // Get snapshot of existing items of previous catalogs
       const catSnap = await getDocs(collection(db, 'categories'));
@@ -300,12 +300,12 @@ export default function AdminDashboard() {
               <div className="flex-1 space-y-4">
                 <div className="flex items-center gap-3">
                   <Database className="text-[#A38A5F]" size={20} />
-                  <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-[#A38A5F]">Catalog Curation Protocol</h3>
+                  <h3 className="font-black text-[10px] uppercase tracking-[0.3em] text-[#A38A5F]">Catalog Synchronization</h3>
                 </div>
-                <h4 className="text-2xl font-serif font-black leading-tight">Master Ledger Synchronization</h4>
+                <h4 className="text-2xl font-serif font-black leading-tight">Master Ledger Reset</h4>
                 <p className="text-[13px] opacity-60 max-w-2xl leading-relaxed font-medium">
-                  Sync the global inventory archives with official Evia Surplus 2026 military-grade specifications. 
-                  This resets categories, products, and tactical gear catalogs to factory defaults. Use with caution.
+                  Sync the global inventory archives with default specifications. 
+                  This resets categories, products, and catalogs to factory defaults.
                 </p>
               </div>
               <button

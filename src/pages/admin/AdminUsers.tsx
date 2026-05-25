@@ -249,7 +249,7 @@ export default function AdminUsers() {
                 </thead>
                 <tbody className="divide-y divide-stone-50 dark:divide-white/5">
                   {loading ? (
-                    <tr><td colSpan={5} className="p-20 text-center uppercase text-[10px] font-black tracking-widest text-[#A38A5F] animate-pulse">Retrieving Encrypted Archives...</td></tr>
+                    <tr><td colSpan={5} className="p-20 text-center uppercase text-[10px] font-black tracking-widest text-[#A38A5F] animate-pulse">Syncing...</td></tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr><td colSpan={5} className="p-20 text-center font-serif italic text-stone-400">No registry entries found in the current sector.</td></tr>
                   ) : filteredUsers.map(user => (

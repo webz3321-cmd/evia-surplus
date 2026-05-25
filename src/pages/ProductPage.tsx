@@ -109,7 +109,7 @@ export default function ProductPage() {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs uppercase tracking-widest text-[#9333ea] animate-pulse">Retrieving artifact...</p>
+        <p className="text-xs uppercase tracking-widest text-[#9333ea] animate-pulse">Syncing...</p>
       </div>
     );
   }
@@ -360,9 +360,8 @@ export default function ProductPage() {
             {/* Value cards strip */}
             <ul className="mt-8 grid gap-3.5 text-xs text-muted-foreground border-t border-border pt-6">
               {[
-                { i: Truck, t: "Free shipping over ₹1,500 · ships in 1–2 days" },
-                { i: RotateCcw, t: "30-day free simple returns" },
-                { i: Shield, t: "Carbon neutral production guarantee" },
+                { i: Truck, t: "Free shipping over ₹1,500" },
+                { i: Shield, t: "Quality assurance guarantee" },
               ].map(({ i: Icon, t }) => (
                 <li key={t} className="flex items-center gap-3">
                   <Icon className="h-4 w-4 text-foreground shrink-0" /> 

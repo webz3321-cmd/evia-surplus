@@ -372,7 +372,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 flex items-center justify-center gap-4 sm:gap-8 text-[10px] sm:text-xs font-semibold text-stone-600 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="text-[#9333ea] text-xs sm:text-sm">✓</span>
-              <span>7 Days Easy Returns</span>
+              <span>Quality Assurance</span>
             </div>
             <div className="h-3.5 w-[1px] bg-purple-200"></div>
             <div className="flex items-center gap-1.5">
@@ -390,11 +390,10 @@ export default function HomePage() {
 
       {/* Value Strip */}
       <section className="border-y border-border">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-3">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-2">
           {[
-            { i: Truck, t: "Free Shipping Over $150", s: "Carbon-neutral delivery, worldwide." },
-            { i: RotateCcw, t: "30-Day Free Returns", s: "Easy, hassle-free returns program." },
-            { i: Shield, t: "Made to Last Forever", s: "Lifetime repair warranty on every order." },
+            { i: Truck, t: "Free Shipping Over ₹1,500", s: "Reliable delivery, nationwide." },
+            { i: Shield, t: "Quality Guarantee", s: "Every product is inspected before shipping." },
           ].map(({ i: Icon, t, s }) => (
             <div key={t} className="flex items-start gap-4">
               <div className="rounded-full bg-secondary p-3"><Icon className="h-4 w-4 text-foreground" /></div>
@@ -672,7 +671,6 @@ export default function HomePage() {
             {loading && products.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 bg-white/50 rounded-2xl border border-stone-200/50">
                 <div className="w-8 h-8 border-2 border-stone-900 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-4 text-[10px] uppercase tracking-widest text-[#9333ea] animate-pulse font-extrabold font-mono">Gathering archive...</p>
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs">
