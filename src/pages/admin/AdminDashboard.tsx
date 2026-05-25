@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Users, ShoppingCart, DollarSign, Package, AlertTriangle, ArrowRight, Database, RefreshCw } from 'lucide-react';
+import { Users, ShoppingCart, DollarSign, Package, AlertTriangle, ArrowRight, Database, RefreshCw, Bell, BellOff, X } from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, query, orderBy, limit, where, deleteDoc, doc, addDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where, deleteDoc, doc, addDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { Link } from 'react-router';
 import toast from 'react-hot-toast';
 
@@ -9,6 +9,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, orders: 0, revenue: 0, products: 0 });
   const [lowStock, setLowStock] = useState<any[]>([]);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
 
@@ -205,6 +206,12 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    // Real-time notifications
+    const notifQuery = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10));
+    const unsubscribeNotifs = onSnapshot(notifQuery, (snapshot) => {
+      setNotifications(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     async function fetchData() {
       try {
         const uSnap = await getDocs(collection(db, 'users'));
@@ -251,7 +258,27 @@ export default function AdminDashboard() {
       }
     }
     fetchData();
+
+    return () => {
+      unsubscribeNotifs();
+    };
   }, []);
+
+  const markNotifRead = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'notifications', id), { status: 'read' });
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+    }
+  };
+
+  const deleteNotif = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'notifications', id));
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+    }
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -321,6 +348,81 @@ export default function AdminDashboard() {
                 {seeding ? "Syncing..." : "Restore Master Ledger"}
               </button>
             </div>
+          </div>
+
+          {/* New Notifications Panel */}
+          <div className="bg-white dark:bg-[#0D0D0D] rounded-[40px] shadow-sm border border-stone-200 dark:border-white/5 overflow-hidden">
+             <div className="p-8 border-b border-stone-100 dark:border-white/5 flex justify-between items-center bg-stone-50/30 dark:bg-white/5">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <Bell size={24} className="text-[#A38A5F]" />
+                    {notifications.filter(n => n.status === 'unread').length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 border-2 border-white dark:border-black rounded-full"></span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-black text-xl text-foreground">Operational Intelligence</h3>
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-stone-400">Incoming Event Stream</p>
+                  </div>
+                </div>
+             </div>
+             <div className="divide-y divide-stone-100 dark:divide-white/5 max-h-[400px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="py-20 text-center flex flex-col items-center gap-4">
+                    <BellOff size={32} className="text-stone-300" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">No active intel reports</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div key={notif.id} className={`p-6 flex items-start justify-between gap-4 transition-all hover:bg-stone-50/50 dark:hover:bg-white/5 ${notif.status === 'unread' ? 'bg-[#A38A5F]/5 border-l-4 border-l-[#A38A5F]' : ''}`}>
+                      <div className="flex gap-4">
+                        <div className={`mt-1 p-2 rounded-xl ${
+                          notif.type === 'new_order' ? 'bg-emerald-100 text-emerald-600' :
+                          notif.type === 'order_cancelled' ? 'bg-rose-100 text-rose-600' :
+                          notif.type === 'return_request' ? 'bg-indigo-100 text-indigo-600' :
+                          'bg-stone-100 text-stone-600'
+                        }`}>
+                          {notif.type === 'new_order' ? <ShoppingCart size={18} /> : 
+                           notif.type === 'order_cancelled' ? <AlertTriangle size={18} /> : 
+                           notif.type === 'return_request' ? <RefreshCw size={18} /> : <Bell size={18} />}
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[11px] font-black uppercase tracking-widest text-[#A38A5F]">
+                            {notif.type?.replace('_', ' ')}
+                          </p>
+                          <h4 className="text-sm font-bold text-foreground">
+                            {notif.type === 'new_order' ? `Identity ${notif.userName} placed a new order for ₹${notif.totalAmount?.toLocaleString()}` :
+                             notif.type === 'order_cancelled' ? `Order #${notif.orderId?.slice(-6)} was cancelled by ${notif.userName}` :
+                             notif.type === 'return_request' ? `Return requested for Order #${notif.orderId?.slice(-6)} by ${notif.userName}` :
+                             `New operational update regarding ${notif.orderId}`}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[10px] text-stone-400 font-medium">
+                            <span>{notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ''}</span>
+                            <span>•</span>
+                            <span className="font-bold">ID: #{notif.id?.slice(-4)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {notif.status === 'unread' && (
+                          <button 
+                            onClick={() => markNotifRead(notif.id)}
+                            className="text-[9px] font-black uppercase tracking-widest text-[#A38A5F] hover:underline px-3 py-1.5 bg-[#A38A5F]/10 rounded-lg cursor-pointer transition-all"
+                          >
+                            Acknowledge
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => deleteNotif(notif.id)}
+                          className="p-1.5 text-stone-300 hover:text-rose-500 transition-colors cursor-pointer"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

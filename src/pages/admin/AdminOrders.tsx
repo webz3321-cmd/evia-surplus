@@ -48,6 +48,8 @@ const OrderRow = ({ order, updateStatus }: any) => {
     'Placed': 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 border-amber-200/50',
     'Dispatched': 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 border-indigo-200/50',
     'Delivered': 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 border-emerald-200/50',
+    'Return Requested': 'bg-purple-50 dark:bg-purple-950/20 text-purple-600 border-purple-200/50',
+    'Returned': 'bg-fuchsia-50 dark:bg-fuchsia-950/20 text-fuchsia-600 border-fuchsia-200/50',
     'Cancelled': 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 border-rose-200/50'
   };
 
@@ -129,6 +131,8 @@ const OrderRow = ({ order, updateStatus }: any) => {
                     <option value="Placed">Placed</option>
                     <option value="Dispatched">Dispatched</option>
                     <option value="Delivered">Delivered</option>
+                    <option value="Return Requested">Return Requested</option>
+                    <option value="Returned">Returned</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
@@ -252,7 +256,11 @@ export default function AdminOrders() {
   const updateStatus = async (id: string, status: string) => {
     const loadingToast = toast.loading('Dispatching orders...');
     try {
-      await updateDoc(doc(db, 'orders', id), { status });
+      const updateData: any = { status };
+      if (status === 'Delivered') {
+        updateData.deliveredAt = Date.now();
+      }
+      await updateDoc(doc(db, 'orders', id), updateData);
       toast.success(`Protocol Updated: ${status}`, { id: loadingToast });
     } catch(err:any) {
       console.error('Error updating status:', err);

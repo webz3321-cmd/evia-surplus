@@ -3,7 +3,7 @@ import { useAppContext } from '../context';
 import { Package, Truck, CheckCircle, ChevronDown, ChevronUp, Download, XCircle, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
 
@@ -19,10 +19,23 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
         status: newStatus,
         updatedAt: Date.now()
       });
-      toast.success(`Order cancelled successfully`);
+
+      if (newStatus === 'Cancelled') {
+        // Add Admin Notification for cancellation
+        await addDoc(collection(db, 'notifications'), {
+          type: 'order_cancelled',
+          orderId: order.id,
+          userName: order.shippingDetails?.fullName || 'Customer',
+          totalAmount: order.totalAmount,
+          status: 'unread',
+          createdAt: Date.now()
+        });
+      }
+
+      toast.success(`Order ${newStatus.toLowerCase()} successfully`);
       onUpdate();
     } catch (err) {
-      toast.error('Failed to cancel order');
+      toast.error(`Failed to ${newStatus.toLowerCase()} order`);
     } finally {
       setLoading(false);
     }
@@ -56,6 +69,45 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
     doc.save(`Invoice_${order.id.slice(-6)}.pdf`);
   };
 
+  const handleReturnRequest = async () => {
+    setLoading(true);
+    try {
+      await updateDoc(doc(db, 'orders', order.id), {
+        status: 'Return Requested',
+        returnRequestDate: Date.now(),
+        updatedAt: Date.now()
+      });
+
+      // Add Admin Notification for return
+      await addDoc(collection(db, 'notifications'), {
+        type: 'return_request',
+        orderId: order.id,
+        userName: order.shippingDetails?.fullName || 'Customer',
+        totalAmount: order.totalAmount,
+        status: 'unread',
+        createdAt: Date.now()
+      });
+
+      toast.success(`Return request submitted successfully`);
+      onUpdate();
+    } catch (err) {
+      toast.error('Failed to submit return request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const withinReturnWindow = () => {
+    if (order.status !== 'Delivered') return false;
+    
+    // Fallback to updatedAt if deliveredAt is missing (for older orders)
+    const referenceDate = order.deliveredAt || order.updatedAt || order.createdAt;
+    if (!referenceDate) return true; // Default to allowing if no date info exists
+
+    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+    return (Date.now() - referenceDate) < sevenDaysInMs;
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-xs border border-stone-200/80 overflow-hidden mb-4 relative hover:border-stone-450 transition-all">
       <div className="absolute top-4 right-4 z-10">
@@ -76,6 +128,8 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
             order.status === 'Placed' ? 'bg-amber-50 text-amber-700 border-amber-200/50' :
             order.status === 'Dispatched' ? 'bg-stone-100 text-stone-850 border-stone-200/80' :
             order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' :
+            order.status === 'Return Requested' ? 'bg-indigo-50 text-indigo-700 border-indigo-200/50' :
+            order.status === 'Returned' ? 'bg-purple-50 text-purple-700 border-purple-200/50' :
             'bg-red-50 text-red-650 border-red-200/50'
           }`}>
             {order.status}
@@ -83,34 +137,34 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
         </div>
 
         {/* Progress Tracker Horizontal */}
-        <div className="mt-6 mb-4 px-2">
+        <div className="mt-6 mb-4 px-2 text-left">
           <div className="relative flex justify-between items-center px-4">
             {/* Progress lines */}
             <div className="absolute top-5 left-8 right-8 h-[2px] bg-stone-100 -z-10 rounded-full"></div>
             <div className="absolute top-5 left-8 h-[2px] rounded-full -z-10 transition-all duration-500" style={{
-              width: order.status === 'Delivered' ? 'calc(100% - 4rem)' : order.status === 'Dispatched' ? 'calc(50% - 2rem)' : '0%',
-              backgroundColor: order.status === 'Cancelled' ? '#ef4444' : '#1c1917'
+              width: order.status === 'Delivered' || order.status === 'Return Requested' || order.status === 'Returned' ? 'calc(100% - 4rem)' : order.status === 'Dispatched' ? 'calc(50% - 2rem)' : '0%',
+              backgroundColor: order.status === 'Cancelled' ? '#ef4444' : (order.status === 'Return Requested' || order.status === 'Returned' ? '#6366f1' : '#1c1917')
             }}></div>
 
             <div className="relative flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${['Placed', 'Dispatched', 'Delivered'].includes(order.status) ? 'bg-stone-900 shadow-sm' : (order.status === 'Cancelled' ? 'bg-red-600 shadow-sm' : 'bg-stone-100 text-stone-400')}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${['Placed', 'Dispatched', 'Delivered', 'Return Requested', 'Returned'].includes(order.status) ? 'bg-stone-900 shadow-sm' : (order.status === 'Cancelled' ? 'bg-red-600 shadow-sm' : 'bg-stone-100 text-stone-400')}`}>
                 <Package size={15} />
               </div>
-              <p className="text-[9px] font-bold text-stone-800 uppercase tracking-widest mt-2">Placed</p>
+              <p className="text-[9px] font-bold text-stone-800 uppercase tracking-widest mt-2 text-center">Placed</p>
             </div>
             
             <div className="relative flex flex-col items-center">
-               <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${['Dispatched', 'Delivered'].includes(order.status) ? 'bg-stone-900 shadow-sm' : 'bg-stone-100 text-stone-450'}`}>
+               <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${['Dispatched', 'Delivered', 'Return Requested', 'Returned'].includes(order.status) ? 'bg-stone-900 shadow-sm' : 'bg-stone-100 text-stone-450'}`}>
                 <Truck size={15} />
               </div>
-              <p className={`text-[9px] font-bold mt-2 uppercase tracking-widest ${['Dispatched', 'Delivered'].includes(order.status) ? 'text-stone-800' : 'text-stone-400'}`}>Dispatched</p>
+              <p className={`text-[9px] font-bold mt-2 uppercase tracking-widest text-center ${['Dispatched', 'Delivered', 'Return Requested', 'Returned'].includes(order.status) ? 'text-stone-800' : 'text-stone-400'}`}>Dispatch</p>
             </div>
             
             <div className="relative flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${order.status === 'Delivered' ? 'bg-emerald-600 shadow-sm' : 'bg-stone-100 text-stone-450'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ring-4 ring-white ${['Delivered', 'Return Requested', 'Returned'].includes(order.status) ? 'bg-emerald-600 shadow-sm' : 'bg-stone-100 text-stone-450'}`}>
                 <CheckCircle size={15} />
               </div>
-              <p className={`text-[9px] font-bold mt-2 uppercase tracking-widest ${order.status === 'Delivered' ? 'text-stone-800' : 'text-stone-400'}`}>Delivered</p>
+              <p className={`text-[9px] font-bold mt-2 uppercase tracking-widest text-center ${['Delivered', 'Return Requested', 'Returned'].includes(order.status) ? 'text-stone-800' : 'text-stone-400'}`}>Delivered</p>
             </div>
           </div>
         </div>
@@ -133,6 +187,16 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
               >
                 <XCircle size={14} />
                 Cancel
+              </button>
+            )}
+            {withinReturnWindow() && (
+              <button 
+                disabled={loading}
+                onClick={(e) => { e.stopPropagation(); handleReturnRequest(); }}
+                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-indigo-100 transition-colors disabled:opacity-50"
+              >
+                <RotateCcw size={14} />
+                Return Items
               </button>
             )}
           </div>
@@ -197,8 +261,8 @@ export default function OrderPage() {
 
   if (!user) return null;
 
-  const activeOrders = orders.filter(o => ['Placed', 'Dispatched'].includes(o.status));
-  const historyOrders = orders.filter(o => ['Delivered', 'Cancelled'].includes(o.status));
+  const activeOrders = orders.filter(o => ['Placed', 'Dispatched', 'Return Requested'].includes(o.status));
+  const historyOrders = orders.filter(o => ['Delivered', 'Cancelled', 'Returned'].includes(o.status));
   
   const displayOrders = tab === 'active' ? activeOrders : historyOrders;
 

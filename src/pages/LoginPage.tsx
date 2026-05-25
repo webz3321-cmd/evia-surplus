@@ -120,7 +120,7 @@ export default function LoginPage() {
       // Strict equality check for requested email vs authenticated email
       if (email.trim().toLowerCase() !== result.user.email?.toLowerCase()) {
         await signOut(auth);
-        throw new Error(`Identity mismatch: Authenticated as ${result.user.email}, but expected ${email}.`);
+        throw new Error(`Restricted Access: You requested access for ${email}, but authenticated as ${result.user.email}. Please ensure you select the correct Google account matching the specified coordinates.`);
       }
 
       await processAuthResult(result.user);
@@ -140,9 +140,21 @@ export default function LoginPage() {
       localStorage.setItem('evia_remember_email', authUser.email);
     }
 
-    const finalEmail = authUser.email;
+    const isAdminEmail = (emailAddr?: string | null) => {
+      if (!emailAddr) return false;
+      const adminList = [
+        'admin@evia.gmail.com',
+        'admin@evia.com',
+        'webz3321@gmail.com',
+        'tks@admin.gmail.com'
+      ];
+      return adminList.includes(emailAddr.toLowerCase().trim());
+    };
+
+    const finalEmail = (authUser.email || '').toLowerCase();
     const finalName = authUser.displayName || name.trim() || 'Collector Member';
     const avatarVal = authUser.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(finalName)}`;
+    const assignedRole = isAdminEmail(finalEmail) ? 'admin' : 'user';
     
     let finalProfile;
     
@@ -152,19 +164,22 @@ export default function LoginPage() {
         id: authUser.uid,
         name: stored.name || finalName,
         email: stored.email || finalEmail,
-        role: stored.role || 'user',
+        role: assignedRole || stored.role || 'user',
         avatarUrl: stored.avatarUrl || avatarVal,
         phone: stored.phone || ''
       };
+
+      // Update basic details on every login
       await updateDoc(userDocRef, {
         lastLoginAt: Date.now(),
-        avatarUrl: avatarVal
+        avatarUrl: avatarVal,
+        role: finalProfile.role // Sync role based on email list
       });
     } else {
       const freshProfile = {
         name: finalName,
-        email: finalEmail.toLowerCase().trim(),
-        role: 'user',
+        email: finalEmail,
+        role: assignedRole,
         avatarUrl: avatarVal,
         phone: '',
         lastLoginAt: Date.now(),

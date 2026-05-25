@@ -15,6 +15,8 @@ service cloud.firestore {
       return isSignedIn() && (
         request.auth.token.email == "admin@evia.gmail.com" ||
         request.auth.token.email == "admin@evia.com" ||
+        request.auth.token.email == "webz3321@gmail.com" ||
+        request.auth.token.email == "tks@admin.gmail.com" ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
@@ -67,7 +69,16 @@ service cloud.firestore {
       // For collection queries, the filters must match these conditions
       allow read: if isAdmin() || (isSignedIn() && (resource == null || resource.data.userId == request.auth.uid));
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn() && 
+        resource.data.userId == request.auth.uid && 
+        request.resource.data.userId == request.auth.uid &&
+        (
+          (request.resource.data.status == 'Return Requested' && resource.data.status == 'Delivered') ||
+          (request.resource.data.status == 'Cancelled' && (resource.data.status == 'Placed' || resource.data.status == 'Pending'))
+        )
+      );
+      allow delete: if isAdmin();
     }
 
     // Security & administrative logging
@@ -75,6 +86,17 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if isSignedIn(); 
       allow update, delete: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    match /notifications/{notifId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isSignedIn();
     }
   }
 }

@@ -6,6 +6,8 @@ import { db } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
+import ProductReviews from '../components/ProductReviews';
+
 export default function ProductPage() {
   const { id } = useParams();
   const [product, setProduct] = useState<any>(null);
@@ -371,6 +373,11 @@ export default function ProductPage() {
             </ul>
           </div>
         </div>
+
+        {/* Community Feedback Section */}
+        {product && (
+          <ProductReviews productId={product.id} />
+        )}
 
         {/* Related Items Section */}
         {relatedProducts.length > 0 && (

@@ -162,7 +162,18 @@ export default function CheckoutPage() {
         });
       }
 
-      await addDoc(collection(db, 'orders'), orderData);
+      const orderRef = await addDoc(collection(db, 'orders'), orderData);
+      
+      // Add Admin Notification
+      await addDoc(collection(db, 'notifications'), {
+        type: 'new_order',
+        orderId: orderRef.id,
+        userName: user?.name || 'Customer',
+        totalAmount: discountedTotal,
+        status: 'unread',
+        createdAt: Date.now()
+      });
+
       clearCart();
       toast.success('Order placed successfully!');
       navigate('/order');
