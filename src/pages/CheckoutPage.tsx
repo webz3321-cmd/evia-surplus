@@ -71,6 +71,26 @@ export default function CheckoutPage() {
 
       const coupon = snap.docs[0].data();
       
+      const now = new Date();
+      now.setHours(0,0,0,0);
+
+      if (coupon.startDate) {
+        const start = new Date(coupon.startDate);
+        if (now < start) {
+          toast.error(`Coupon is only valid from ${coupon.startDate}`);
+          return;
+        }
+      }
+
+      if (coupon.endDate) {
+        const end = new Date(coupon.endDate);
+        end.setHours(23, 59, 59, 999);
+        if (now > end) {
+          toast.error('Coupon has expired');
+          return;
+        }
+      }
+      
       if (!coupon.isActive) {
         toast.error('Coupon is no longer active');
         return;

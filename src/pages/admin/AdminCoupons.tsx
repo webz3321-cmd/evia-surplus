@@ -16,6 +16,8 @@ export default function AdminCoupons() {
   const [value, setValue] = useState('');
   const [minAmount, setMinAmount] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -38,6 +40,8 @@ export default function AdminCoupons() {
     setValue('');
     setMinAmount('');
     setIsActive(true);
+    setStartDate('');
+    setEndDate('');
     setEditId(null);
   };
 
@@ -48,6 +52,8 @@ export default function AdminCoupons() {
     setValue(coupon.value.toString());
     setMinAmount(coupon.minAmount?.toString() || '');
     setIsActive(coupon.isActive);
+    setStartDate(coupon.startDate || '');
+    setEndDate(coupon.endDate || '');
     setShowModal(true);
   };
 
@@ -77,6 +83,8 @@ export default function AdminCoupons() {
         value: Number(value),
         minAmount: minAmount ? Number(minAmount) : 0,
         isActive,
+        startDate: startDate || null,
+        endDate: endDate || null,
         updatedAt: Date.now()
       };
 
@@ -125,6 +133,7 @@ export default function AdminCoupons() {
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Code</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Value</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Validity</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
@@ -147,6 +156,18 @@ export default function AdminCoupons() {
                     <span className="font-black text-indigo-600">
                       {coupon.type === 'percentage' ? `${coupon.value}%` : `₹${coupon.value}`}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1">
+                      {coupon.startDate ? (
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tighter">Start: {coupon.startDate}</span>
+                          <span className="text-[8px] font-black text-rose-600 uppercase tracking-tighter">End: {coupon.endDate || 'No Limit'}</span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-gray-400 font-bold italic">Always Valid</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
@@ -228,6 +249,27 @@ export default function AdminCoupons() {
                     placeholder="0"
                     className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" 
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Valid From</label>
+                    <input 
+                      value={startDate} 
+                      onChange={e => setStartDate(e.target.value)} 
+                      type="date" 
+                      className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Expiry Date</label>
+                    <input 
+                      value={endDate} 
+                      onChange={e => setEndDate(e.target.value)} 
+                      type="date" 
+                      className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold" 
+                    />
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
