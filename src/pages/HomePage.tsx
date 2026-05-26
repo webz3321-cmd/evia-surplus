@@ -668,11 +668,7 @@ export default function HomePage() {
 
           {/* Right Column: Grid listings of products matched */}
           <div className="md:col-span-3">
-            {loading && products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 bg-white/50 rounded-2xl border border-stone-200/50">
-                <div className="w-8 h-8 border-2 border-stone-900 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : filteredProducts.length === 0 ? (
+            {loading && products.length === 0 ? null : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs">
                 <h3 className="font-display text-2xl text-stone-805">No pieces discovered</h3>
                 <p className="text-stone-500 text-xs font-light mt-2 max-w-sm leading-relaxed">
@@ -711,7 +707,6 @@ export default function HomePage() {
                         <img
                           src={p.image}
                           alt={p.name}
-                          loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-750 ease-out group-hover:scale-103"
                         />
                         <div className="absolute right-2 top-2 z-20">

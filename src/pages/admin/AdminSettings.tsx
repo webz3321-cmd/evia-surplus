@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Settings, Save, RotateCcw, Image as ImageIcon, Sparkles, Upload, Grid, Type, Check, Eye, X, Server, Smartphone, Key, Mail } from 'lucide-react';
+import { Settings, Save, RotateCcw, Image as ImageIcon, Sparkles, Upload, Grid, Type, Check, Eye, X, Server, Smartphone, Key, Mail, UploadCloud } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AVAILABLE_FONTS = [
@@ -81,6 +81,71 @@ export const COLOR_PRESETS = [
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Refs for uploads
+  const logoRef = useRef<HTMLInputElement>(null);
+  const heroRef = useRef<HTMLInputElement>(null);
+  const story1Ref = useRef<HTMLInputElement>(null);
+  const story2Ref = useRef<HTMLInputElement>(null);
+  const promoRef = useRef<HTMLInputElement>(null);
+
+  // Image processing utility
+  const processImage = (file: File, maxSize = 1000): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Invalid file type: Must be an image'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) {
+              height *= maxSize / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width *= maxSize / height;
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          const result = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(result);
+        };
+        img.onerror = () => reject(new Error('Failed to load image object'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file source'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleManualUpload = async (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const loadId = toast.loading('Synchronizing Visual Data...');
+    try {
+      const result = await processImage(files[0]);
+      setter(result);
+      toast.success('Visual Synchronized', { id: loadId });
+    } catch (err: any) {
+      toast.error(err.message || 'Processing failed', { id: loadId });
+    } finally {
+      e.target.value = '';
+    }
+  };
 
   // Dynamic Theme variables
   const [logoText, setLogoText] = useState('evia surplus');
@@ -467,14 +532,31 @@ export default function AdminSettings() {
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Custom Brand Symbol / Graphic Image URL</label>
                 <div className="flex flex-col gap-3">
                   <input 
-                    type="url" 
-                    value={logoImage} 
-                    onChange={e => setLogoImage(e.target.value)} 
-                    placeholder="E.g., https://images.unsplash.com/photo-..." 
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={logoRef}
+                    onChange={(e) => handleManualUpload(e, setLogoImage)}
                   />
+                  <div className="flex gap-2">
+                    <input 
+                      type="url" 
+                      value={logoImage} 
+                      onChange={e => setLogoImage(e.target.value)} 
+                      placeholder="E.g., https://images.unsplash.com/photo-..." 
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => logoRef.current?.click()}
+                      className="p-3 bg-white border border-gray-200 hover:bg-gray-50 text-indigo-600 rounded-xl transition-all shadow-sm flex-shrink-0 active:scale-95"
+                      title="Upload from gallery"
+                    >
+                      <UploadCloud size={20} />
+                    </button>
+                  </div>
                   <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
-                    Please use an external secure image URL (from holding services or CDNs) to optimize brand settings database boundaries.
+                    Upload from gallery or use an external secure image URL to optimize brand settings database boundaries.
                   </p>
                   {logoImage && (
                     <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-stone-200 bg-stone-50 p-1 flex items-center justify-center self-start shadow-sm mt-1">
@@ -541,14 +623,31 @@ export default function AdminSettings() {
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Right-Side Hero Presentation Image URL</label>
                   <div className="flex flex-col gap-3">
                     <input 
-                      type="url" 
-                      value={heroImage} 
-                      onChange={e => setHeroImage(e.target.value)} 
-                      placeholder="E.g., https://images.unsplash.com/photo-..." 
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={heroRef}
+                      onChange={(e) => handleManualUpload(e, setHeroImage)}
                     />
+                    <div className="flex gap-2">
+                      <input 
+                        type="url" 
+                        value={heroImage} 
+                        onChange={e => setHeroImage(e.target.value)} 
+                        placeholder="E.g., https://images.unsplash.com/photo-..." 
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => heroRef.current?.click()}
+                        className="p-3 bg-white border border-gray-200 hover:bg-gray-50 text-indigo-600 rounded-xl transition-all shadow-sm flex-shrink-0 active:scale-95"
+                        title="Upload from gallery"
+                      >
+                        <UploadCloud size={20} />
+                      </button>
+                    </div>
                     <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
-                      Please use an external secure image URL (from Unsplash, Imgur, or hosting servers) to scale Hero presentations without exceeding Firestore limits.
+                      Upload from gallery or use an external secure image URL to scale Hero presentations.
                     </p>
                     {heroImage && (
                       <div className="relative w-36 h-44 rounded-xl overflow-hidden border border-stone-200 shadow-sm bg-stone-50 flex items-center justify-center self-start mt-1">
@@ -639,13 +738,29 @@ export default function AdminSettings() {
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Left-Hand Editorial Image 1 URL</label>
                     <div className="flex flex-col gap-2">
-                      <input 
-                        type="url" 
-                        value={brandStoryImage1} 
-                        onChange={e => setBrandStoryImage1(e.target.value)} 
-                        placeholder="Image 1 URL" 
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                       <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={story1Ref}
+                        onChange={(e) => handleManualUpload(e, setBrandStoryImage1)}
                       />
+                      <div className="flex gap-2">
+                        <input 
+                          type="url" 
+                          value={brandStoryImage1} 
+                          onChange={e => setBrandStoryImage1(e.target.value)} 
+                          placeholder="Image 1 URL" 
+                          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => story1Ref.current?.click()}
+                          className="p-3 bg-white border border-gray-200 hover:bg-gray-50 text-indigo-600 rounded-xl transition-all shadow-sm flex-shrink-0 active:scale-95"
+                        >
+                          <UploadCloud size={20} />
+                        </button>
+                      </div>
                       {brandStoryImage1 && (
                         <div className="relative w-36 h-36 rounded-xl overflow-hidden border border-stone-200 shadow-sm bg-stone-50 flex items-center justify-center mt-1">
                           <img src={brandStoryImage1} alt="story 1" className="w-full h-full object-cover" onError={(e) => {
@@ -661,12 +776,28 @@ export default function AdminSettings() {
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Right-Hand (Slightly Lower) Image 2 URL</label>
                     <div className="flex flex-col gap-2">
                       <input 
-                        type="url" 
-                        value={brandStoryImage2} 
-                        onChange={e => setBrandStoryImage2(e.target.value)} 
-                        placeholder="Image 2 URL" 
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={story2Ref}
+                        onChange={(e) => handleManualUpload(e, setBrandStoryImage2)}
                       />
+                      <div className="flex gap-2">
+                        <input 
+                          type="url" 
+                          value={brandStoryImage2} 
+                          onChange={e => setBrandStoryImage2(e.target.value)} 
+                          placeholder="Image 2 URL" 
+                          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => story2Ref.current?.click()}
+                          className="p-3 bg-white border border-gray-200 hover:bg-gray-50 text-indigo-600 rounded-xl transition-all shadow-sm flex-shrink-0 active:scale-95"
+                        >
+                          <UploadCloud size={20} />
+                        </button>
+                      </div>
                       {brandStoryImage2 && (
                         <div className="relative w-36 h-36 rounded-xl overflow-hidden border border-stone-200 shadow-sm bg-stone-50 flex items-center justify-center mt-1">
                           <img src={brandStoryImage2} alt="story 2" className="w-full h-full object-cover" onError={(e) => {
@@ -1389,16 +1520,35 @@ export default function AdminSettings() {
                     {/* Big Promotional Banner Image input place */}
                     <div>
                       <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1">Banner image asset URL / Upload path</label>
-                      <input 
-                        type="url" 
-                        value={promoImage} 
-                        onChange={e => setPromoImage(e.target.value)} 
-                        placeholder="E.g., https://images.unsplash.com/photo-..." 
-                        className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium outline-none focus:border-purple-500 transition-colors"
-                      />
-                      <p className="text-[10px] text-stone-400 mt-1 leading-normal">
-                        Input any custom image URL above or click to select from our professional curated layouts below:
-                      </p>
+                      <div className="flex flex-col gap-3">
+                         <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          ref={promoRef}
+                          onChange={(e) => handleManualUpload(e, setPromoImage)}
+                        />
+                        <div className="flex gap-2">
+                          <input 
+                            type="url" 
+                            value={promoImage} 
+                            onChange={e => setPromoImage(e.target.value)} 
+                            placeholder="E.g., https://images.unsplash.com/photo-..." 
+                            className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium outline-none focus:border-purple-500 transition-colors"
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => promoRef.current?.click()}
+                            className="p-2.5 bg-white border border-stone-200 hover:bg-stone-50 text-purple-600 rounded-xl transition-all shadow-sm flex-shrink-0 active:scale-95"
+                            title="Upload banner"
+                          >
+                            <UploadCloud size={18} />
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-stone-400 mt-1 leading-normal">
+                          Input custom image URL above, upload from device, or select a preset:
+                        </p>
+                      </div>
 
                       {/* Professional Unsplash presets to offer instant high-fidelity banners */}
                       <div className="grid grid-cols-3 gap-2 mt-2">

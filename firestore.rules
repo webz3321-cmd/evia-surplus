@@ -13,10 +13,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == "admin@evia.gmail.com" ||
-        request.auth.token.email == "admin@evia.com" ||
-        request.auth.token.email == "webz3321@gmail.com" ||
-        request.auth.token.email == "tks@admin.gmail.com" ||
+        request.auth.token.email in ["admin@evia.gmail.com", "admin@evia.com", "webz3321@gmail.com", "tks@admin.gmail.com"] ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
@@ -57,9 +54,9 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // User profiles - MUST allow reading and writing for self to enable first-time setup
+    // User profiles
     match /users/{userId} {
-      allow read: if isSignedIn(); // Allow reading profile info if signed in (admins need to list, users need to see status)
+      allow read: if isOwner(userId) || isAdmin();
       allow write: if isOwner(userId) || isAdmin();
       allow create: if isSignedIn();
     }

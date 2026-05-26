@@ -108,12 +108,7 @@ export default function ProductPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 bg-background">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs uppercase tracking-widest text-[#9333ea] animate-pulse">Syncing...</p>
-      </div>
-    );
+    return null;
   }
 
   if (!product) {

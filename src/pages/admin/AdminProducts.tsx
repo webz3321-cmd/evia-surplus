@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, Upload, Image as ImageIcon, FileText, X, Search, Package, Sparkles, RefreshCw } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Plus, Edit2, Trash2, Upload, Image as ImageIcon, FileText, X, Search, Package, Sparkles, RefreshCw, UploadCloud } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../../lib/firestoreUtils';
@@ -14,6 +14,11 @@ export default function AdminProducts() {
   const [editId, setEditId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // refs
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const catFileInputRef = useRef<HTMLInputElement>(null);
+  const multiFileInputRef = useRef<HTMLInputElement>(null);
+
   // form state
   const [catId, setCatId] = useState('');
   const [isNewCat, setIsNewCat] = useState(false);
@@ -33,6 +38,85 @@ export default function AdminProducts() {
 
   // Drag over states
   const [dragOverDesc, setDragOverDesc] = useState(false);
+
+  // Image processing utility
+  const processImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Invalid file type: Must be an image'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 1000;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Using slightly lower quality for secondary to save space if needed
+          const result = canvas.toDataURL('image/jpeg', 0.85);
+
+          // Firestore limit is 1MB. Base64 is larger. 
+          if (result.length > 900000) {
+             // Second pass compression if still too large
+             resolve(canvas.toDataURL('image/jpeg', 0.5));
+          } else {
+             resolve(result);
+          }
+        };
+        img.onerror = () => reject(new Error('Failed to load image object'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file source'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'product' | 'category' | 'multi') => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const loadId = toast.loading('Processing tactical visuals...');
+    try {
+      if (target === 'multi') {
+        const processed = await Promise.all(Array.from(files).map(processImage));
+        const current = secondaryImages ? secondaryImages.split(',').map(s => s.trim()).filter(Boolean) : [];
+        setSecondaryImages([...current, ...processed].join(', '));
+        toast.success(`${files.length} Viewports Captured`, { id: loadId });
+      } else {
+        const result = await processImage(files[0]);
+        if (target === 'product') {
+          setImage(result);
+        } else {
+          setNewCatImage(result);
+        }
+        toast.success('Visual Synchronized', { id: loadId });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Image processing failed', { id: loadId });
+    } finally {
+      e.target.value = ''; // Reset input
+    }
+  };
 
   // File loading utility functions
   const handleDescFile = (file: File) => {
@@ -222,11 +306,7 @@ export default function AdminProducts() {
       </div>
 
       <div className="bg-white dark:bg-[#0D0D0D] rounded-[32px] shadow-sm border border-stone-200 dark:border-white/5 overflow-hidden">
-        {loading ? (
-          <div className="p-20 flex justify-center">
-            <div className="w-8 h-8 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : filteredProducts.length === 0 ? (
+        {loading ? null : filteredProducts.length === 0 ? (
           <div className="p-20 text-center space-y-4">
             <Package className="mx-auto text-stone-200" size={48} />
             <p className="text-xs text-stone-400 font-black uppercase tracking-widest">No matching assets found in ledger.</p>
@@ -335,7 +415,36 @@ export default function AdminProducts() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <input required value={newCatName} onChange={e=>setNewCatName(e.target.value)} type="text" placeholder="Category Name" className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-white/5 rounded-xl p-3.5 text-xs font-bold outline-none focus:border-[#A38A5F]" />
-                          <input required value={newCatImage} onChange={e=>setNewCatImage(e.target.value)} type="url" placeholder="Cover Image URL" className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-white/5 rounded-xl p-3.5 text-xs font-bold outline-none focus:border-[#A38A5F]" />
+                          
+                          <div className="relative group">
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              ref={catFileInputRef}
+                              onChange={(e) => handleImageUpload(e, 'category')}
+                            />
+                            {newCatImage ? (
+                              <div className="relative h-full min-h-[46px] rounded-xl overflow-hidden border border-[#A38A5F]/30">
+                                <img src={newCatImage} className="w-full h-full object-cover" alt="cat-prev" />
+                                <button 
+                                  type="button"
+                                  onClick={() => setNewCatImage('')}
+                                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[8px] font-black uppercase tracking-widest"
+                                >
+                                  Replace
+                                </button>
+                              </div>
+                            ) : (
+                              <button 
+                                type="button"
+                                onClick={() => catFileInputRef.current?.click()}
+                                className="w-full h-full min-h-[46px] bg-white dark:bg-stone-900 border border-stone-200 dark:border-white/5 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#A38A5F] hover:bg-[#A38A5F]/5 transition-all"
+                              >
+                                <UploadCloud size={14} /> Upload Cover
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -387,22 +496,95 @@ export default function AdminProducts() {
                   </div>
 
                   <div className="space-y-4">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-500 ml-1">Visual Registry (Main)</label>
-                    <div className="flex gap-4 items-start">
-                      <div className="flex-1">
-                        <input required value={image} onChange={e=>setImage(e.target.value)} type="url" placeholder="Primary Image URL" className="w-full bg-stone-50 dark:bg-black border border-stone-200 dark:border-white/10 rounded-2xl p-4 text-xs font-bold outline-none focus:border-[#A38A5F] transition-all" />
-                      </div>
-                      {image && (
-                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-stone-200 dark:border-white/10 shrink-0">
-                          <img src={image} className="w-full h-full object-cover" alt="prev" />
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-500 ml-1">Visual Registry (Main Assets)</label>
+                    <div className="relative group">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={fileInputRef}
+                        onChange={(e) => handleImageUpload(e, 'product')}
+                      />
+                      
+                      {image ? (
+                        <div className="relative aspect-video rounded-3xl overflow-hidden border border-stone-200 dark:border-white/10 group-hover:border-[#A38A5F]/40 transition-all bg-stone-50 dark:bg-black">
+                          <img src={image} className="w-full h-full object-cover" alt="Primary visual" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 text-white">
+                             <button 
+                               type="button" 
+                               onClick={() => fileInputRef.current?.click()}
+                               className="px-6 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-[#A38A5F] hover:text-white transition-all shadow-xl"
+                             >
+                               Modify Core Visual
+                             </button>
+                             <button 
+                               type="button" 
+                               onClick={() => setImage('')}
+                               className="text-[9px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 hover:text-rose-500 transition-all"
+                             >
+                               Erase from registry
+                             </button>
+                          </div>
                         </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full py-16 border-2 border-dashed border-stone-200 dark:border-white/10 rounded-[32px] hover:border-[#A38A5F]/40 hover:bg-[#A38A5F]/5 transition-all flex flex-col items-center justify-center gap-4 text-stone-400 group/btn"
+                        >
+                          <div className="w-16 h-16 rounded-full bg-stone-50 dark:bg-white/5 flex items-center justify-center group-hover/btn:scale-110 transition-transform shadow-sm">
+                            <UploadCloud size={28} className="text-[#A38A5F] group-hover/btn:animate-bounce" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Initiate Visual Uplink</p>
+                            <p className="text-[9px] font-bold uppercase tracking-tighter mt-1 opacity-50">Studio-grade visuals preferred (JPG, PNG)</p>
+                          </div>
+                        </button>
                       )}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-500 ml-1">Secondary Viewports (URLs)</label>
-                    <textarea value={secondaryImages} onChange={e=>setSecondaryImages(e.target.value)} rows={3} placeholder="Comma-separated URLs" className="w-full bg-stone-50 dark:bg-black border border-stone-200 dark:border-white/10 rounded-2xl p-4 text-[11px] font-bold outline-none focus:border-[#A38A5F] transition-all font-mono" />
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center px-1">
+                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-500">Secondary Viewports (Telemetry Array)</label>
+                       <span className="text-[9px] font-black text-stone-400 uppercase">{secondaryImages.split(',').filter(Boolean).length} Active Slots</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-4 md:grid-cols-5 gap-3">
+                       {secondaryImages.split(',').map(s => s.trim()).filter(Boolean).map((s, idx) => (
+                         <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-stone-100 dark:border-white/5 group">
+                           <img src={s} className="w-full h-full object-cover" alt="Aux" />
+                           <button 
+                             type="button"
+                             onClick={() => {
+                               const arr = secondaryImages.split(',').map(img => img.trim()).filter(Boolean);
+                               arr.splice(idx, 1);
+                               setSecondaryImages(arr.join(', '));
+                             }}
+                             className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600"
+                           >
+                             <X size={10} />
+                           </button>
+                         </div>
+                       ))}
+                       
+                       <input 
+                         type="file" 
+                         multiple 
+                         accept="image/*" 
+                         className="hidden" 
+                         ref={multiFileInputRef}
+                         onChange={(e) => handleImageUpload(e, 'multi')}
+                       />
+                       
+                       <button
+                         type="button"
+                         onClick={() => multiFileInputRef.current?.click()}
+                         className="aspect-square rounded-xl border border-dashed border-stone-200 dark:border-white/10 flex items-center justify-center text-stone-400 hover:border-[#A38A5F] hover:bg-[#A38A5F]/5 transition-all"
+                       >
+                         <Plus size={18} />
+                       </button>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

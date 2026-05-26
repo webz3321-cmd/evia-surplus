@@ -311,11 +311,7 @@ const AdminLayout = () => {
   }, [location.pathname]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FDFBF9] dark:bg-[#0A0A0A] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return null;
   }
 
   const isVaultUnsealed = sessionStorage.getItem('evia_vault_unsealed') === 'true';

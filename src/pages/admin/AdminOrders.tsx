@@ -1,12 +1,86 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, doc, updateDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, query, orderBy, onSnapshot, addDoc } from 'firebase/firestore';
 import { ChevronDown, ChevronUp, Download, Package, Calendar, User, CreditCard, Search, ExternalLink, ShieldCheck } from 'lucide-react';
+import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
 
 const OrderRow = ({ order, updateStatus }: any) => {
   const [expanded, setExpanded] = useState(false);
+
+  const downloadLabel = async () => {
+    try {
+      const qrDataUrl = await QRCode.toDataURL(order.id);
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [100, 150]
+      });
+
+      // Header
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('EVIA SURPLUS /', 50, 15, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.text('TACTICAL SHIPMENT LABEL', 50, 22, { align: 'center' });
+      
+      doc.setLineWidth(0.5);
+      doc.line(10, 25, 90, 25);
+
+      // Order info
+      doc.setFontSize(8);
+      doc.text('DEP-LOG ID:', 10, 32);
+      doc.setFontSize(10);
+      doc.text(`#${order.id.toUpperCase()}`, 10, 37);
+
+      doc.setFontSize(8);
+      doc.text('DATE:', 70, 32);
+      doc.setFontSize(10);
+      doc.text(new Date(order.createdAt).toLocaleDateString(), 70, 37);
+
+      // Recipient
+      doc.setLineWidth(0.2);
+      doc.line(10, 42, 90, 42);
+      
+      doc.setFontSize(8);
+      doc.text('CONSIGNEE:', 10, 49);
+      doc.setFontSize(12);
+      doc.text(order.shippingDetails?.fullName || order.user_name || 'N/A', 10, 55);
+
+      doc.setFontSize(8);
+      doc.text('DELIVERY COORDINATES:', 10, 65);
+      doc.setFontSize(10);
+      const addrLines = doc.splitTextToSize(order.address || 'N/A', 80);
+      doc.text(addrLines, 10, 71);
+
+      // Manifest
+      let nextY = 71 + (addrLines.length * 5) + 5;
+      doc.setLineWidth(0.2);
+      doc.line(10, nextY - 3, 90, nextY - 3);
+      
+      doc.setFontSize(8);
+      doc.text('MANIFEST CONTENT:', 10, nextY);
+      nextY += 6;
+      doc.setFontSize(9);
+      (order.items || []).slice(0, 4).forEach((item: any) => {
+        doc.text(`${item.quantity}x ${item.name?.slice(0, 30)}`, 10, nextY);
+        nextY += 5;
+      });
+
+      // QR Code
+      doc.addImage(qrDataUrl, 'PNG', 30, 105, 40, 40);
+      
+      doc.setFontSize(14);
+      doc.text(`TOTAL: Rs. ${order.totalAmount?.toLocaleString()}`, 50, 100, { align: 'center' });
+
+      doc.save(`Label_${order.id.slice(-6)}.pdf`);
+    } catch (err) {
+      console.error('Label generation error:', err);
+      toast.error('Failed to generate tactical label');
+    }
+  };
 
   const downloadPDF = () => {
     const doc = new jsPDF();
@@ -50,7 +124,8 @@ const OrderRow = ({ order, updateStatus }: any) => {
     'Delivered': 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 border-emerald-200/50',
     'Return Requested': 'bg-purple-50 dark:bg-purple-950/20 text-purple-600 border-purple-200/50',
     'Returned': 'bg-fuchsia-50 dark:bg-fuchsia-950/20 text-fuchsia-600 border-fuchsia-200/50',
-    'Cancelled': 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 border-rose-200/50'
+    'Cancelled': 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 border-rose-200/50',
+    'Failed': 'bg-red-50 dark:bg-red-950/20 text-red-700 border-red-200/50'
   };
 
   return (
@@ -95,11 +170,24 @@ const OrderRow = ({ order, updateStatus }: any) => {
 
             <div className="flex items-center gap-3">
               <button 
+                onClick={downloadLabel} 
+                className="p-3 bg-stone-50 dark:bg-white/5 text-[#A38A5F] hover:bg-[#A38A5F]/10 border border-stone-100 dark:border-white/5 rounded-2xl transition-all"
+                title="Download Shipping Label"
+              >
+                <div className="flex flex-col items-center gap-0.5">
+                  <Download size={14} />
+                  <span className="text-[7px] font-black uppercase">Label</span>
+                </div>
+              </button>
+              <button 
                 onClick={downloadPDF} 
                 className="p-3 bg-stone-50 dark:bg-white/5 text-stone-400 hover:text-[#A38A5F] border border-stone-100 dark:border-white/5 rounded-2xl transition-all"
                 title="Archival Download"
               >
-                <Download size={18} />
+                <div className="flex flex-col items-center gap-0.5">
+                  <Download size={14} />
+                  <span className="text-[7px] font-black uppercase">Invoice</span>
+                </div>
               </button>
               <button 
                 onClick={() => setExpanded(!expanded)}
@@ -134,6 +222,7 @@ const OrderRow = ({ order, updateStatus }: any) => {
                     <option value="Return Requested">Return Requested</option>
                     <option value="Returned">Returned</option>
                     <option value="Cancelled">Cancelled</option>
+                    <option value="Failed">Failed</option>
                   </select>
                 </div>
               </div>
@@ -261,6 +350,18 @@ export default function AdminOrders() {
         updateData.deliveredAt = Date.now();
       }
       await updateDoc(doc(db, 'orders', id), updateData);
+      
+      if (status === 'Failed') {
+        await addDoc(collection(db, 'notifications'), {
+          type: 'order_failed',
+          orderId: id,
+          userName: orders.find(o => o.id === id)?.shippingDetails?.fullName || 'Customer',
+          totalAmount: orders.find(o => o.id === id)?.totalAmount,
+          status: 'unread',
+          createdAt: Date.now()
+        });
+      }
+      
       toast.success(`Protocol Updated: ${status}`, { id: loadingToast });
     } catch(err:any) {
       console.error('Error updating status:', err);
@@ -291,11 +392,7 @@ export default function AdminOrders() {
       </div>
 
       <div>
-        {loading ? (
-          <div className="p-20 flex justify-center">
-            <div className="w-8 h-8 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : filteredOrders.length === 0 ? (
+        {loading ? null : filteredOrders.length === 0 ? (
           <div className="p-20 text-center space-y-4 bg-white dark:bg-[#0D0D0D] rounded-[40px] border border-stone-200 dark:border-white/5">
             <Package className="mx-auto text-stone-200" size={48} />
             <p className="text-xs text-stone-400 font-black uppercase tracking-widest">No active logs in tactical registry.</p>

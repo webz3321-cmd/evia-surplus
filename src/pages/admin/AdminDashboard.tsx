@@ -294,14 +294,7 @@ export default function AdminDashboard() {
         </div>
       </div>
       
-      {loading ? (
-        <div className="flex p-20 justify-center">
-          <div className="relative">
-            <div className="w-12 h-12 border-2 border-[#A38A5F]/20 rounded-full"></div>
-            <div className="absolute inset-0 w-12 h-12 border-2 border-[#A38A5F] border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        </div>
-      ) : (
+      {loading ? null : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -380,11 +373,13 @@ export default function AdminDashboard() {
                           notif.type === 'new_order' ? 'bg-emerald-100 text-emerald-600' :
                           notif.type === 'order_cancelled' ? 'bg-rose-100 text-rose-600' :
                           notif.type === 'return_request' ? 'bg-indigo-100 text-indigo-600' :
+                          notif.type === 'order_failed' ? 'bg-red-100 text-red-600' :
                           'bg-stone-100 text-stone-600'
                         }`}>
                           {notif.type === 'new_order' ? <ShoppingCart size={18} /> : 
                            notif.type === 'order_cancelled' ? <AlertTriangle size={18} /> : 
-                           notif.type === 'return_request' ? <RefreshCw size={18} /> : <Bell size={18} />}
+                           notif.type === 'return_request' ? <RefreshCw size={18} /> : 
+                           notif.type === 'order_failed' ? <X size={18} /> : <Bell size={18} />}
                         </div>
                         <div className="space-y-1">
                           <p className="text-[11px] font-black uppercase tracking-widest text-[#A38A5F]">
@@ -394,8 +389,14 @@ export default function AdminDashboard() {
                             {notif.type === 'new_order' ? `Identity ${notif.userName} placed a new order for ₹${notif.totalAmount?.toLocaleString()}` :
                              notif.type === 'order_cancelled' ? `Order #${notif.orderId?.slice(-6)} was cancelled by ${notif.userName}` :
                              notif.type === 'return_request' ? `Return requested for Order #${notif.orderId?.slice(-6)} by ${notif.userName}` :
+                             notif.type === 'order_failed' ? `Order #${notif.orderId?.slice(-6)} is marked as FAILED for ${notif.userName}` :
                              `New operational update regarding ${notif.orderId}`}
                           </h4>
+                          {notif.type === 'return_request' && notif.reason && (
+                            <p className="mt-2 text-[10px] text-stone-500 bg-stone-100 p-2 rounded-lg border border-stone-200">
+                              <span className="font-bold text-[#A38A5F]">Reason:</span> {notif.reason}
+                            </p>
+                          )}
                           <div className="flex items-center gap-2 text-[10px] text-stone-400 font-medium">
                             <span>{notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ''}</span>
                             <span>•</span>

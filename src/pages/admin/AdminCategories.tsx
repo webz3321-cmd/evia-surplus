@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, Image as ImageIcon, X } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Plus, Edit2, Trash2, Image as ImageIcon, X, UploadCloud } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
@@ -13,6 +13,67 @@ export default function AdminCategories() {
   const [name, setName] = useState('');
   const [image, setImage] = useState('');
   const [isMoving, setIsMoving] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image processing utility
+  const processImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Invalid file type: Must be an image'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 800; // Smaller target for categories
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          const result = canvas.toDataURL('image/jpeg', 0.82);
+          resolve(result);
+        };
+        img.onerror = () => reject(new Error('Failed to load image object'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file source'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const loadId = toast.loading('Synchronizing Visual Data...');
+    try {
+      const result = await processImage(files[0]);
+      setImage(result);
+      toast.success('Visual Uplink Complete', { id: loadId });
+    } catch (err: any) {
+      toast.error(err.message || 'Processing failed', { id: loadId });
+    } finally {
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -163,32 +224,50 @@ export default function AdminCategories() {
                   </div>
                   
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3">Category Image URL</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3">Category Asset (Gallery)</label>
                     <div className="flex flex-col gap-3">
                       <input 
-                        required 
-                        value={image} 
-                        onChange={e=>setImage(e.target.value)} 
-                        type="url" 
-                        placeholder="E.g. https://images.unsplash.com/photo-..." 
-                        className="w-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-foreground outline-none focus:border-[#A38A5F] transition-colors" 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
                       />
-                      <p className="text-[10px] text-stone-500 font-medium">
-                        Please use an external secure image URL (e.g. from Unsplash or Pexels) to optimize Firestore database performance.
-                      </p>
-                      {image && (
-                        <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-black mt-2">
-                          <img src={image} alt="preview" className="w-full h-full object-cover" onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=300";
-                          }} />
-                          <button 
-                            type="button" 
-                            onClick={() => setImage('')} 
-                            className="absolute top-2 right-2 p-1.5 bg-black/50 backdrop-blur-md hover:bg-rose-500 text-white rounded-full transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
+                      
+                      {image ? (
+                        <div className="relative group aspect-square w-full sm:w-48 rounded-2xl overflow-hidden border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-black p-0 shadow-sm transition-all hover:border-[#A38A5F]/40">
+                          <img src={image} alt="preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                             <button 
+                               type="button" 
+                               onClick={() => fileInputRef.current?.click()}
+                               className="px-4 py-2 bg-white text-black text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-[#A38A5F] hover:text-white transition-all shadow-xl"
+                             >
+                               Change
+                             </button>
+                             <button 
+                               type="button" 
+                               onClick={() => setImage('')} 
+                               className="text-[9px] font-black uppercase tracking-widest text-white/60 hover:text-rose-500 transition-all"
+                             >
+                               Remove
+                             </button>
+                          </div>
                         </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full py-12 border-2 border-dashed border-stone-200 dark:border-white/10 rounded-[32px] hover:border-[#A38A5F]/40 hover:bg-[#A38A5F]/5 transition-all flex flex-col items-center justify-center gap-4 text-stone-400 group/btn"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-stone-50 dark:bg-white/5 flex items-center justify-center group-hover/btn:scale-110 transition-transform shadow-sm">
+                            <UploadCloud size={24} className="text-[#A38A5F]" />
+                          </div>
+                          <div className="text-center px-4">
+                            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Upload Visual</p>
+                            <p className="text-[9px] font-bold uppercase tracking-tighter mt-1 opacity-50">Local Archive / Camera Roll</p>
+                          </div>
+                        </button>
                       )}
                     </div>
                   </div>

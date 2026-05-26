@@ -70,10 +70,18 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
   };
 
   const handleReturnRequest = async () => {
+    const reason = window.prompt('Please provide a reason for the return (e.g., Size mismatch, Damaged product):');
+    if (reason === null) return; // User cancelled
+    if (reason.trim() === '') {
+      toast.error('Return reason is required');
+      return;
+    }
+
     setLoading(true);
     try {
       await updateDoc(doc(db, 'orders', order.id), {
         status: 'Return Requested',
+        returnReason: reason.trim(),
         returnRequestDate: Date.now(),
         updatedAt: Date.now()
       });
@@ -84,6 +92,7 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
         orderId: order.id,
         userName: order.shippingDetails?.fullName || 'Customer',
         totalAmount: order.totalAmount,
+        reason: reason.trim(),
         status: 'unread',
         createdAt: Date.now()
       });
@@ -130,6 +139,7 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
             order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' :
             order.status === 'Return Requested' ? 'bg-indigo-50 text-indigo-700 border-indigo-200/50' :
             order.status === 'Returned' ? 'bg-purple-50 text-purple-700 border-purple-200/50' :
+            order.status === 'Failed' ? 'bg-red-50 text-red-700 border-red-200/50' :
             'bg-red-50 text-red-650 border-red-200/50'
           }`}>
             {order.status}
@@ -290,11 +300,7 @@ export default function OrderPage() {
       </div>
 
       <div className="pb-16">
-        {loading ? (
-          <div className="flex justify-center p-16">
-            <div className="w-8 h-8 border-2 border-stone-950 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : displayOrders.length === 0 ? (
+        {loading ? null : displayOrders.length === 0 ? (
           <div className="bg-white p-10 rounded-2xl border border-stone-200/80 text-center shadow-xs">
             <Package size={36} className="mx-auto text-stone-300 mb-4" />
             <h3 className="font-serif text-sm font-bold text-stone-900 uppercase tracking-wider">No Orders Found</h3>
