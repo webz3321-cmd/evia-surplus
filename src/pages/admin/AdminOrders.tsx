@@ -23,9 +23,6 @@ const OrderRow = ({ order, updateStatus }: any) => {
       doc.setFont('helvetica', 'bold');
       doc.text('EVIA SURPLUS /', 50, 15, { align: 'center' });
       
-      doc.setFontSize(10);
-      doc.text('TACTICAL SHIPMENT LABEL', 50, 22, { align: 'center' });
-      
       doc.setLineWidth(0.5);
       doc.line(10, 25, 90, 25);
 
