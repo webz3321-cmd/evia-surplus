@@ -761,20 +761,20 @@ export default function HomePage() {
                           </div>
                         </div>
 
-                        <div className="mt-3 pt-2.5 border-t border-stone-100">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-sm font-extrabold text-stone-900">
-                              ₹{p.price.toLocaleString()}
-                            </span>
-                            <span className="text-[10px] text-stone-400 line-through">
-                              ₹{originalPrice.toLocaleString()}
-                            </span>
-                            <span className="text-emerald-600 font-bold text-[10px]">
-                              {discountPercent}% Off
-                            </span>
+                          <div className="mt-3 pt-2.5 border-t border-stone-100">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-sm font-extrabold text-stone-900">
+                                ₹{(p.price || 0).toLocaleString()}
+                              </span>
+                              <span className="text-[10px] text-stone-400 line-through">
+                                ₹{(originalPrice || 0).toLocaleString()}
+                              </span>
+                              <span className="text-emerald-600 font-bold text-[10px]">
+                                {discountPercent}% Off
+                              </span>
+                            </div>
+                            <p className="text-[9px] text-[#9333ea] font-semibold mt-1">Special Price Enabled</p>
                           </div>
-                          <p className="text-[9px] text-[#9333ea] font-semibold mt-1">Special Price Enabled</p>
-                        </div>
                       </div>
                     </div>
                   );

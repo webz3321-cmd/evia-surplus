@@ -1,4 +1,6 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { db } from './lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 type User = {
   id: string;
@@ -37,6 +39,8 @@ interface AppContextType {
   addToWishlist: (product: any) => void;
   removeFromWishlist: (productId: any) => void;
   isInWishlist: (productId: any) => boolean;
+  settings: any;
+  setLoading: (loading: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -80,9 +84,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Fetch global settings (like shipping threshold)
-    const { doc, getDoc, onSnapshot } = require('firebase/firestore');
-    const { db } = require('./lib/firebase');
-    
     const unsub = onSnapshot(doc(db, 'settings', 'global'), (snap: any) => {
       if (snap.exists()) {
         const data = snap.data();

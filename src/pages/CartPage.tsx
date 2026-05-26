@@ -7,7 +7,7 @@ import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, cartTotal, user } = useAppContext();
+  const { cart, updateQuantity, removeFromCart, cartTotal, user, settings } = useAppContext();
   const navigate = useNavigate();
   const [offers, setOffers] = useState<any[]>([]);
 
@@ -138,8 +138,12 @@ export default function CartPage() {
                   <span className="text-foreground font-semibold">₹{cartTotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground/80">Premium Shipping</span>
-                  <span className="text-emerald-700 font-semibold uppercase tracking-wider text-xs">Free Delivery</span>
+                  <span className="text-muted-foreground/80">Shipping</span>
+                  {(settings?.shippingThreshold && cartTotal >= settings.shippingThreshold) ? (
+                    <span className="text-emerald-700 font-semibold uppercase tracking-wider text-xs">Free Delivery</span>
+                  ) : (
+                    <span className="text-foreground font-semibold">₹{(settings?.shippingCharge || 0).toLocaleString()}</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground/80">Service taxes</span>
@@ -164,7 +168,9 @@ export default function CartPage() {
 
               <div className="flex justify-between items-baseline pt-4 mb-6">
                 <span className="text-sm font-medium text-foreground">Estimate Total</span>
-                <span className="font-display text-3xl text-foreground">₹{cartTotal.toLocaleString()}</span>
+                <span className="font-display text-3xl text-foreground">
+                  ₹{(cartTotal + ((settings?.shippingThreshold && cartTotal >= settings.shippingThreshold) ? 0 : (settings?.shippingCharge || 0))).toLocaleString()}
+                </span>
               </div>
 
               <button 

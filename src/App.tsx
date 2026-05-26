@@ -15,6 +15,7 @@ import ProfilePage from './pages/ProfilePage';
 import OrderPage from './pages/OrderPage';
 import ProductPage from './pages/ProductPage';
 import WishlistPage from './pages/WishlistPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -29,9 +30,13 @@ import AdminSettings, { AVAILABLE_FONTS } from './pages/admin/AdminSettings';
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>(null);
-  const { cart, user, wishlist } = useAppContext();
+  const { cart, user, wishlist, settings: contextSettings } = useAppContext();
   const location = useLocation();
+
+  const settings = contextSettings || {
+    logoText: 'evia surplus',
+    showTextWithImage: true
+  };
 
   useEffect(() => {
     const unsubCats = onSnapshot(collection(db, 'categories'), (snap) => {
@@ -40,17 +45,8 @@ const UserLayout = () => {
       console.warn("Categories listener failed or was interrupted:", error);
     });
     
-    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
-      if (snap.exists()) {
-        setSettings(snap.data());
-      }
-    }, (error) => {
-      console.warn("Global settings listener failed or was interrupted:", error);
-    });
-
     return () => {
       unsubCats();
-      unsubSettings();
     };
   }, []);
 
@@ -499,6 +495,9 @@ const AppContent = () => {
       setTimeout(() => (setLoading as any)(false), 500);
     });
 
+    // Safety fallback: ensure loading is cleared even if auth fails
+    const safetyTimer = setTimeout(() => (setLoading as any)(false), 8000);
+
     const unsub = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
       if (snap.exists()) {
         const data = snap.data();
@@ -619,6 +618,7 @@ const AppContent = () => {
     return () => {
       unsubscribeAuth();
       unsub();
+      clearTimeout(safetyTimer);
     };
   }, []);
 
@@ -680,9 +680,11 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <Toaster position="top-center" />
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <Toaster position="top-center" />
+        <AppContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }

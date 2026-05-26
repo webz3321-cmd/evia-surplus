@@ -1249,6 +1249,52 @@ export default function AdminSettings() {
               </div>
             </div>
 
+            {/* Logistics & Shipping Policy block */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
+                <Truck className="text-indigo-600" size={16} />
+                <h2 className="text-sm font-extrabold uppercase tracking-widest text-zinc-900">Logistics & Shipping Policy</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Free Shipping Threshold (₹)</label>
+                  <input 
+                    type="number" 
+                    value={shippingThreshold} 
+                    onChange={e => setShippingThreshold(Number(e.target.value))} 
+                    placeholder="E.g., 1500"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Orders above this amount get free shipping.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Standard Shipping Charge (₹)</label>
+                  <input 
+                    type="number" 
+                    value={shippingCharge} 
+                    onChange={e => setShippingCharge(Number(e.target.value))} 
+                    placeholder="E.g., 100"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Charge applied if order is below threshold.</p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Shipping Information Text</label>
+                  <input 
+                    type="text" 
+                    value={shippingText} 
+                    onChange={e => setShippingText(e.target.value)} 
+                    placeholder="Free shipping over ₹1,500"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">This text appears on product pages and home banners.</p>
+                </div>
+              </div>
+            </div>
+
             {/* Save Buttons block */}
             <div className="flex gap-3">
               <button
