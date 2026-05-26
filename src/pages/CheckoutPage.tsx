@@ -4,10 +4,12 @@ import { useAppContext } from '../context';
 import { db } from '../lib/firebase';
 import { collection, addDoc, getDocs, query, where, limit, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
-import { MapPin, AlertCircle, ShoppingBag, CreditCard, CheckCircle2 } from 'lucide-react';
+import { MapPin, AlertCircle, ShoppingBag, CreditCard, CheckCircle2, ChevronRight, Heart } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import confetti from 'canvas-confetti';
 
 export default function CheckoutPage() {
-  const { user, cart, cartTotal, clearCart } = useAppContext();
+  const { user, cart, cartTotal, clearCart, settings } = useAppContext();
   const navigate = useNavigate();
   
   const [currentUserData, setCurrentUserData] = useState<any>(null);
@@ -17,6 +19,8 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState('');
 
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [shippingForm, setShippingForm] = useState({
@@ -56,6 +60,8 @@ export default function CheckoutPage() {
   }, [user]);
 
   const discountedTotal = Math.max(0, cartTotal - discount);
+  const shippingCharge = (settings?.shippingThreshold && cartTotal >= settings.shippingThreshold) ? 0 : (settings?.shippingCharge || 0);
+  const finalTotal = discountedTotal + shippingCharge;
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -157,7 +163,8 @@ export default function CheckoutPage() {
         userId: user!.id,
         subtotal: cartTotal,
         discount: discount,
-        totalAmount: discountedTotal,
+        shippingFee: shippingCharge,
+        totalAmount: finalTotal,
         couponUsed: appliedCoupon ? appliedCoupon.code : null,
         address: printableAddress,
         shippingDetails: finalShipping,
@@ -183,6 +190,7 @@ export default function CheckoutPage() {
       }
 
       const orderRef = await addDoc(collection(db, 'orders'), orderData);
+      setLastOrderId(orderRef.id);
       
       // Add Admin Notification
       await addDoc(collection(db, 'notifications'), {
@@ -195,8 +203,19 @@ export default function CheckoutPage() {
       });
 
       clearCart();
-      toast.success('Order placed successfully!');
-      navigate('/order');
+      
+      // Success Experience: Sound + Confetti
+      const successSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/success-notification-alert-2144.wav');
+      successSound.play().catch(e => console.error("Audio block:", e));
+      
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#ffffff', '#6366f1']
+      });
+
+      setShowSuccess(true);
     } catch (err) {
       setError('Network error: ' + (err instanceof Error ? err.message : 'Unknown'));
     } finally {
@@ -210,6 +229,68 @@ export default function CheckoutPage() {
 
   return (
     <div className="p-6 bg-[#FAFAFB] min-h-screen pb-24">
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-[#10b981] flex flex-col items-center justify-center p-6 text-center text-white"
+          >
+            <motion.div 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', damping: 10, stiffness: 100, delay: 0.2 }}
+              className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-8 border-4 border-white/30"
+            >
+              <CheckCircle2 size={60} strokeWidth={3} />
+            </motion.div>
+            <motion.h2 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="font-black text-4xl sm:text-5xl uppercase tracking-tighter mb-4"
+            >
+              Order Confirmed
+            </motion.h2>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-lg font-black opacity-90 mb-2 tracking-widest uppercase flex items-center gap-2"
+            >
+              Thankyou shop again <Heart size={20} className="fill-white" />
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="mb-12 bg-white/10 px-4 py-1.5 rounded-full border border-white/20"
+            >
+              <span className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-80">Order Ref: #{lastOrderId.slice(-8).toUpperCase()}</span>
+            </motion.div>
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="flex flex-col sm:flex-row gap-4 w-full max-w-sm"
+            >
+              <button 
+                onClick={() => navigate('/order')}
+                className="flex-1 py-4 bg-white text-emerald-700 font-black rounded-2xl uppercase tracking-widest shadow-2xl hover:bg-stone-50 transition-all active:scale-95 cursor-pointer"
+              >
+                View History
+              </button>
+              <button 
+                onClick={() => navigate('/')}
+                className="flex-1 py-4 bg-emerald-700 border-2 border-white/30 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-emerald-800 transition-all active:scale-95 cursor-pointer"
+              >
+                Back Home
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -567,7 +648,11 @@ export default function CheckoutPage() {
 
                     <div className="flex justify-between text-[11px] font-bold text-stone-500">
                       <span>Delivery & Handling</span>
-                      <span className="text-emerald-600 font-extrabold uppercase tracking-wide">FREE DELIVERY</span>
+                      {shippingCharge === 0 ? (
+                        <span className="text-emerald-600 font-extrabold uppercase tracking-wide">FREE DELIVERY</span>
+                      ) : (
+                        <span className="text-stone-900 font-mono font-bold">₹{shippingCharge.toLocaleString()}</span>
+                      )}
                     </div>
 
                     <div className="h-px bg-stone-300/80 my-2"></div>
@@ -575,7 +660,7 @@ export default function CheckoutPage() {
                     <div className="flex justify-between items-end">
                       <div className="flex flex-col">
                         <span className="font-black text-stone-400 uppercase text-[8.5px] tracking-[0.18em]">Grand Total (GST Inc)</span>
-                        <span className="font-black text-2xl text-stone-900 tracking-tight font-mono mt-0.5">₹{grandTotal.toLocaleString()}</span>
+                        <span className="font-black text-2xl text-stone-900 tracking-tight font-mono mt-0.5">₹{finalTotal.toLocaleString()}</span>
                       </div>
                       <span className="text-[9px] font-extrabold text-[#9333ea] bg-purple-50 px-2 py-1 rounded border border-purple-150 uppercase tracking-widest select-none">
                         COD Approved

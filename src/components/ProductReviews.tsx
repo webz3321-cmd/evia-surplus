@@ -28,6 +28,8 @@ export default function ProductReviews({ productId }: { productId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   useEffect(() => {
     const q = query(
       collection(db, 'reviews'),
@@ -332,13 +334,19 @@ export default function ProductReviews({ productId }: { productId: string }) {
                 </p>
 
                 {review.imageUrl && (
-                  <div className="relative mt-4 aspect-square rounded-2xl overflow-hidden border border-border group-hover:shadow-lg transition-all">
+                  <button 
+                    onClick={() => setSelectedImage(review.imageUrl!)}
+                    className="relative mt-4 w-20 h-20 rounded-xl overflow-hidden border border-border group-hover:border-[#A38A5F]/40 transition-all hover:scale-105 active:scale-95"
+                  >
                     <img 
                       src={review.imageUrl} 
                       alt="Customer review" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                      className="w-full h-full object-cover transition-transform duration-700" 
                     />
-                  </div>
+                    <div className="absolute inset-0 bg-black/5 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <ImageIcon size={14} className="text-white drop-shadow-md" />
+                    </div>
+                  </button>
                 )}
 
                 <div className="mt-5 pt-4 border-t border-border/20 flex items-center justify-between">
@@ -354,6 +362,39 @@ export default function ProductReviews({ productId }: { productId: string }) {
           </div>
         )}
       </div>
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 md:p-10"
+          >
+            <motion.button 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all"
+            >
+              <X size={24} />
+            </motion.button>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-5xl w-full h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={selectedImage} 
+                alt="Product review full size" 
+                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

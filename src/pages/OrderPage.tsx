@@ -233,6 +233,7 @@ const OrderItem = ({ order, onUpdate }: { order: any, onUpdate: () => void, key?
           ))}
           <div className="mt-2 text-xs text-gray-500 flex flex-col gap-1">
             <span>Order Date: {new Date(order.createdAt).toLocaleDateString()}</span>
+            {order.shippingFee > 0 && <span>Shipping Fee: ₹{order.shippingFee.toLocaleString()}</span>}
             {order.address && <span>Delivery Address: {order.address}</span>}
           </div>
         </div>

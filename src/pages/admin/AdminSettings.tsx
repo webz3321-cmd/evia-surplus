@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Settings, Save, RotateCcw, Image as ImageIcon, Sparkles, Upload, Grid, Type, Check, Eye, X, Server, Smartphone, Key, Mail, UploadCloud } from 'lucide-react';
+import { Settings, Save, RotateCcw, Image as ImageIcon, Sparkles, Upload, Grid, Type, Check, Eye, X, Server, Smartphone, Key, Mail, UploadCloud, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AVAILABLE_FONTS = [
@@ -198,6 +198,9 @@ export default function AdminSettings() {
   const [twilioToken, setTwilioToken] = useState('');
   const [twilioFrom, setTwilioFrom] = useState('');
   const [adminPasscode, setAdminPasscode] = useState('3115');
+  const [shippingThreshold, setShippingThreshold] = useState(1500);
+  const [shippingText, setShippingText] = useState('Free shipping over ₹1,500');
+  const [shippingCharge, setShippingCharge] = useState(0);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -249,6 +252,9 @@ export default function AdminSettings() {
           if (data.twilioToken !== undefined) setTwilioToken(data.twilioToken);
           if (data.twilioFrom !== undefined) setTwilioFrom(data.twilioFrom);
           if (data.adminPasscode !== undefined) setAdminPasscode(data.adminPasscode);
+          if (data.shippingThreshold !== undefined) setShippingThreshold(data.shippingThreshold);
+          if (data.shippingText !== undefined) setShippingText(data.shippingText);
+          if (data.shippingCharge !== undefined) setShippingCharge(data.shippingCharge);
         }
       } catch (err) {
         console.error('Error reading settings doc:', err);
@@ -319,6 +325,9 @@ export default function AdminSettings() {
         twilioToken: twilioToken.trim(),
         twilioFrom: twilioFrom.trim(),
         adminPasscode: adminPasscode.trim(),
+        shippingThreshold: Number(shippingThreshold) || 1500,
+        shippingText: shippingText.trim(),
+        shippingCharge: Number(shippingCharge) || 0,
         updatedAt: Date.now()
       };
       await setDoc(doc(db, 'settings', 'global'), payload);
@@ -365,6 +374,9 @@ export default function AdminSettings() {
     setPromoLink('');
     setPromoButtonText('Claim 35% Discount');
     setAdminPasscode('3115');
+    setShippingThreshold(1500);
+    setShippingText('Free shipping over ₹1,500');
+    setShippingCharge(0);
  
     setSubmitting(true);
     try {
@@ -400,6 +412,9 @@ export default function AdminSettings() {
         promoLink: '',
         promoButtonText: 'Claim 35% Discount',
         adminPasscode: '3115',
+        shippingThreshold: 1500,
+        shippingText: 'Free shipping over ₹1,500',
+        shippingCharge: 0,
         updatedAt: Date.now()
       });
       toast.success('Restored Evia 2026 surplus originals!');
@@ -853,6 +868,55 @@ export default function AdminSettings() {
                 <ImageIcon size={14} />
                 Configure Banner Section (with Upload Space)
               </button>
+            </div>
+
+            {/* Shipping & Delivery Logistics Section */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
+                <Truck className="text-emerald-600" size={16} />
+                <h2 className="text-sm font-extrabold uppercase tracking-widest text-[#1c1c1c]">Shipping & Delivery Logistics</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Free Shipping Threshold</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-xs font-mono">₹</span>
+                    <input 
+                      type="number" 
+                      value={shippingThreshold} 
+                      onChange={e => setShippingThreshold(Number(e.target.value))} 
+                      placeholder="e.g. 1500"
+                      className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-colors text-stone-700"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Non-Free Delivery Charge</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-xs font-mono">₹</span>
+                    <input 
+                      type="number" 
+                      value={shippingCharge} 
+                      onChange={e => setShippingCharge(Number(e.target.value))} 
+                      placeholder="e.g. 99"
+                      className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-colors text-stone-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Shipping Display Text (Banner / Details)</label>
+                <input 
+                  type="text" 
+                  value={shippingText} 
+                  onChange={e => setShippingText(e.target.value)} 
+                  placeholder="e.g., Free shipping over ₹1,500"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 focus:bg-white transition-colors"
+                />
+                <p className="text-[10px] text-stone-400 mt-2 font-medium">This text will be dynamically replicated on home features and product technical detail labels.</p>
+              </div>
             </div>
 
             {/* Admin Security & Lock Passcode settings */}

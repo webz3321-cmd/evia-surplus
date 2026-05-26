@@ -19,7 +19,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState(false);
   
-  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useAppContext();
+  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist, settings } = useAppContext();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -357,7 +357,7 @@ export default function ProductPage() {
             {/* Value cards strip */}
             <ul className="mt-8 grid gap-3.5 text-xs text-muted-foreground border-t border-border pt-6">
               {[
-                { i: Truck, t: "Free shipping over ₹1,500" },
+                { i: Truck, t: settings?.shippingText || "Free shipping over ₹1,500" },
                 { i: Shield, t: "Quality assurance guarantee" },
               ].map(({ i: Icon, t }) => (
                 <li key={t} className="flex items-center gap-3">

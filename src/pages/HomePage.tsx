@@ -392,7 +392,7 @@ export default function HomePage() {
       <section className="border-y border-border">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-2">
           {[
-            { i: Truck, t: "Free Shipping Over ₹1,500", s: "Reliable delivery, nationwide." },
+            { i: Truck, t: settings?.shippingText || "Free Shipping Over ₹1,500", s: "Reliable delivery, nationwide." },
             { i: Shield, t: "Quality Guarantee", s: "Every product is inspected before shipping." },
           ].map(({ i: Icon, t, s }) => (
             <div key={t} className="flex items-start gap-4">

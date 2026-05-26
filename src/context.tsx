@@ -46,6 +46,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>({
+    shippingThreshold: 1500,
+    shippingText: 'Free shipping over ₹1,500',
+    shippingCharge: 0
+  });
 
   useEffect(() => {
     // Initial load from storage to prevent flicker
@@ -71,6 +76,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       } catch(e) {}
     }
     // We let App.tsx set loading to false after auth check
+  }, []);
+
+  useEffect(() => {
+    // Fetch global settings (like shipping threshold)
+    const { doc, getDoc, onSnapshot } = require('firebase/firestore');
+    const { db } = require('./lib/firebase');
+    
+    const unsub = onSnapshot(doc(db, 'settings', 'global'), (snap: any) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setSettings(prev => ({
+          ...prev,
+          shippingThreshold: data.shippingThreshold ?? 1500,
+          shippingText: data.shippingText ?? 'Free shipping over ₹1,500',
+          shippingCharge: data.shippingCharge ?? 0
+        }));
+      }
+    });
+
+    return () => unsub();
   }, []);
 
   const login = (newUser: User) => {
@@ -147,6 +172,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider value={{ 
       user, loading, login, logout, cart, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal,
       wishlist, addToWishlist, removeFromWishlist, isInWishlist,
+      settings,
       setLoading // Expose setLoading to App.tsx for auth sync
     } as any}>
       {children}
