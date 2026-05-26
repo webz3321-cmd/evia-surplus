@@ -127,7 +127,8 @@ export default function AdminCoupons() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-left">
+          {/* Desktop Table View */}
+          <table className="w-full text-left hidden md:table">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Code</th>
@@ -184,13 +185,46 @@ export default function AdminCoupons() {
                   </td>
                 </tr>
               ))}
-              {coupons.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-gray-500 font-medium italic">No coupons found. Create your first one.</td>
-                </tr>
-              )}
             </tbody>
           </table>
+
+          {/* Mobile Card View */}
+          <div className="divide-y divide-gray-50 md:hidden">
+            {coupons.map(coupon => (
+              <div key={coupon.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-4 flex-1" onClick={() => handleEdit(coupon)}>
+                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                    <Ticket size={24} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-black text-gray-900 tracking-tight">{coupon.code}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{coupon.type}</span>
+                      <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
+                      <span className="text-[10px] font-black text-indigo-600 uppercase">
+                        {coupon.type === 'percentage' ? `${coupon.value}%` : `₹${coupon.value}`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 pl-4">
+                   <button 
+                    onClick={(e) => handleDelete(e, coupon.id)} 
+                    className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {coupons.length === 0 && (
+            <div className="px-6 py-20 text-center text-gray-400 font-medium italic bg-white flex flex-col items-center gap-4">
+              <Ticket size={40} className="text-gray-200" />
+              <span>No coupons found in registry.</span>
+            </div>
+          )}
         </div>
       )}
 
