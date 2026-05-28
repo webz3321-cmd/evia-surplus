@@ -5,6 +5,7 @@ import { ArrowLeft, Minus, Plus, ShoppingBag, Truck, RotateCcw, Shield, Share2, 
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import { motion } from 'motion/react';
 
 import ProductReviews from '../components/ProductReviews';
 
@@ -24,38 +25,38 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (id) {
+      window.scrollTo(0, 0);
       setLoading(true);
-      getDoc(doc(db, 'products', id)).then(snap => {
+      
+      const productRef = doc(db, 'products', id);
+      
+      getDoc(productRef).then(snap => {
         if (snap.exists()) {
           const data = snap.data();
           const prodObj = { id: snap.id, ...data };
           setProduct(prodObj);
           
+          const promises: Promise<any>[] = [];
+          
           if (data.catId) {
-            getDoc(doc(db, 'categories', data.catId)).then(catSnap => {
+            promises.push(getDoc(doc(db, 'categories', data.catId)).then(catSnap => {
               if (catSnap.exists()) {
                 setCategory({ id: catSnap.id, ...catSnap.data() });
               }
-            });
+            }));
 
-            // Retrieve related products in same category + cross-sell suggestions
+            // Related products fetch
             const qSameCat = query(
               collection(db, 'products'),
               where('catId', '==', data.catId),
               limit(8)
             );
-            
-            // Also suggest some pieces from other categories for "complete the look"
             const qAll = query(
               collection(db, 'products'),
               limit(20)
             );
-
-            Promise.all([getDocs(qSameCat), getDocs(qAll)]).then(([snapSame, snapAll]) => {
-              const sameCatList = snapSame.docs
-                .map(d => ({ id: d.id, ...d.data() } as any))
-                .filter(p => p.id !== id);
-              
+            
+            promises.push(Promise.all([getDocs(qSameCat), getDocs(qAll)]).then(([snapSame, snapAll]) => {
               const allList = snapAll.docs
                 .map(d => ({ id: d.id, ...d.data() } as any))
                 .filter(p => p.id !== id);
@@ -65,7 +66,6 @@ export default function ProductPage() {
               const isPants = currentName.includes('pant') || currentName.includes('short') || currentName.includes('trouser') || currentName.includes('cargo');
               const isFootwear = currentName.includes('boot') || currentName.includes('shoe');
 
-              // 1. Same Type items (e.g. other shirts)
               const sameType = allList.filter(p => {
                 const n = p.name.toLowerCase();
                 if (isTop && (n.includes('shirt') || n.includes('jacket') || n.includes('tee') || n.includes('hoodie'))) return true;
@@ -74,7 +74,6 @@ export default function ProductPage() {
                 return false;
               });
 
-              // 2. Complementary items (The "Complete the Look" logic)
               const complementary = allList.filter(p => {
                 const n = p.name.toLowerCase();
                 if (isTop && (n.includes('pant') || n.includes('short') || n.includes('trouser') || n.includes('cargo'))) return true;
@@ -83,23 +82,27 @@ export default function ProductPage() {
                 return false;
               });
 
-              // Interleave: [SameType_1, Complementary_1, SameType_2, Complementary_2, ...]
               const combined: any[] = [];
               for (let i = 0; i < 4; i++) {
                 if (sameType[i]) combined.push(sameType[i]);
                 if (complementary[i]) combined.push(complementary[i]);
               }
               
-              // Unique and limit to 8
               const finalRelated = combined
                 .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
                 .slice(0, 8);
               
               setRelatedProducts(finalRelated);
-            });
+            }));
           }
+
+          // Wait for essential category data at least, or just show product first
+          // Actually, we can show product immediately if we want
+          setLoading(false);
+        } else {
+          setLoading(false);
+          setProduct(null);
         }
-        setLoading(false);
       }).catch(err => {
         console.error(err);
         setLoading(false);
@@ -108,7 +111,33 @@ export default function ProductPage() {
   }, [id]);
 
   if (loading) {
-    return null;
+    return (
+      <div className="bg-background min-h-screen animate-pulse">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+          <div className="mb-8 flex items-center justify-between">
+            <div className="h-3 w-48 bg-stone-200 rounded-full"></div>
+            <div className="h-3 w-16 bg-stone-200 rounded-full"></div>
+          </div>
+          <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
+            <div className="aspect-[4/5] w-full bg-stone-100 rounded-2xl"></div>
+            <div className="space-y-6">
+              <div className="h-4 w-24 bg-stone-200 rounded-full"></div>
+              <div className="h-12 w-3/4 bg-stone-200 rounded-2xl"></div>
+              <div className="h-4 w-full bg-stone-100 rounded-full"></div>
+              <div className="h-8 w-32 bg-stone-200 rounded-full"></div>
+              <div className="space-y-3 pt-6">
+                <div className="h-4 w-full bg-stone-100 rounded-full"></div>
+                <div className="h-4 w-5/6 bg-stone-100 rounded-full"></div>
+              </div>
+              <div className="flex gap-4 pt-8">
+                <div className="h-14 flex-1 bg-stone-200 rounded-full"></div>
+                <div className="h-14 flex-[2] bg-stone-900/10 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {
@@ -151,10 +180,20 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="bg-background min-h-screen"
+    >
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {/* Editorial Breadcrumbs */}
-        <nav className="mb-8 flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+        <motion.nav 
+          initial={{ y: -10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="mb-8 flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground"
+        >
           <div className="flex items-center gap-2">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <span>/</span>
@@ -169,12 +208,17 @@ export default function ProductPage() {
           >
             <ArrowLeft size={12} /> Go Back
           </button>
-        </nav>
+        </motion.nav>
 
         {/* Dynamic Presentation Layout */}
         <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
           {/* Images Gallery */}
-          <div className="space-y-4">
+          <motion.div 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="space-y-4"
+          >
             <div className="overflow-hidden rounded-2xl bg-surface border border-border/50">
               <img 
                 src={allImages[activeImageIndex]} 
@@ -198,10 +242,15 @@ export default function ProductPage() {
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Product Specifications & Purchase Form */}
-          <div className="md:sticky md:top-24 md:self-start">
+          <motion.div 
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="md:sticky md:top-24 md:self-start"
+          >
             <div className="flex items-center justify-between gap-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent">
                 {category?.name || 'Exclusive artifact'}
@@ -366,7 +415,7 @@ export default function ProductPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
         </div>
 
         {/* Community Feedback Section */}
@@ -430,6 +479,6 @@ export default function ProductPage() {
           </section>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
