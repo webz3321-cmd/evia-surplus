@@ -8,9 +8,10 @@
     "start": "node dist/server.cjs",
     "build": "vite build && npm run build:server",
     "build:server": "npx esbuild server.ts --bundle --platform=node --format=cjs --external:express --external:better-sqlite3 --external:vite --outfile=dist/server.cjs",
-    "preview": "vite preview",
+    "preview": "npm run build && wrangler dev",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
@@ -37,6 +38,7 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.42.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
@@ -48,6 +50,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "wrangler": "^4.104.0"
   }
 }
